@@ -21,6 +21,43 @@ export class SentimentService {
     }
   }
 
+  async getDatasets(): Promise<any> {
+    return this.fetchJson('datasets.json');
+  }
+
+  async loadDataset(datasetId: string): Promise<{ bootstrap: any[]; comments: any[] }> {
+    // 1. Primeiro, carrega a lista de todos os datasets
+    const datasets = await this.getDatasets();
+    if (!datasets || !datasets[datasetId]) {
+      throw new Error(`Dataset com o ID '${datasetId}' não foi encontrado.`);
+    }
+
+    // 2. Obtém os nomes dos ficheiros para o dataset específico
+    const config = datasets[datasetId];
+    const bootstrapFilePath = config.bootstrapFile;
+  const commentsFilePath = config.commentsFile;
+
+  if (!bootstrapFilePath || !commentsFilePath) {
+    throw new Error(`Configuração de ficheiros incompleta para o dataset '${datasetId}'.`);
+  }
+
+  // 2. Remove o prefixo "data/" dos caminhos, pois o serviço já o adiciona
+  const bootstrapFile = bootstrapFilePath.replace('data/', '');
+  const commentsFile = commentsFilePath.replace('data/', '');
+
+    // 3. Carrega os ficheiros de dados corretos em paralelo
+    const [bootstrap, comments] = await Promise.all([
+      this.fetchJson(bootstrapFile),
+      this.fetchJson(commentsFile)
+    ]);
+
+    // 4. Retorna os dados carregados
+    return {
+      bootstrap: Array.isArray(bootstrap) ? bootstrap : [],
+      comments: Array.isArray(comments) ? comments : []
+    };
+  }
+
   async listAll(): Promise<{ datasets: any; bootstrap: any[]; comments: any[] }> {
     const [datasets, bootstrap, comments] = await Promise.all([
       this.fetchJson('datasets.json'),

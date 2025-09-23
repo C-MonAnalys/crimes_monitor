@@ -1,6 +1,6 @@
 {
   "nordeste_2021": {
-    "title": "Análise de Sentimento - Nordeste (2021)",
+    "title": "Análise de Posicionamento - Nordeste (2021)",
     "commentsFile": "data/comentarios_2021_nordeste_newBERT.json",
     "bootstrapFile": "data/bootstrap_results_211124.json"
   }
