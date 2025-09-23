@@ -4,6 +4,7 @@ import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ChartModule } from 'primeng/chart';
 import { SentimentService } from '../../services/sentiment.service';
+import { ActivatedRoute } from '@angular/router';
 
 import { AnalysisStatCardComponent } from '../../components/opinion-analysis/analysis-stat-card/analysis-stat-card';
 import { PositioningDistributionComponent } from '../../components/opinion-analysis/positioning-distribution/positioning-distribution';
@@ -161,17 +162,27 @@ export class OpinionAnalysisComponent implements OnInit {
   sampleComments: any[] = [];
   datasetInfo: any = {};
 
-  constructor(private sentimentService: SentimentService) {}
+  constructor(
+    private sentimentService: SentimentService,
+    private route: ActivatedRoute
+  ) {}
 
   async ngOnInit() {
-    await this.loadAllData();
-    this.prepareSentimentChart();
-    this.prepareMetricsChart();
+    this.route.paramMap.subscribe(params => {
+      const datasetId = params.get('datasetId');
+
+      if (datasetId) {
+        this.loadAllData(datasetId);
+      } else {
+        console.error('Nenhum ID de dataset foi fornecido na URL.');
+        this.isLoading = false;
+      }
+    });
   }
 
-  async loadAllData() {
+  async loadAllData(datasetId: string) {
     try {
-      const data = await this.sentimentService.listAll();
+      const data = await this.sentimentService.loadDataset(datasetId);
 
       // Dados dos comentários
       this.totalComments = data.comments.length;
@@ -224,6 +235,9 @@ export class OpinionAnalysisComponent implements OnInit {
           this.calculateModelAccuracy(metricsData);
         }
       }
+
+      this.prepareSentimentChart();
+      this.prepareMetricsChart();
 
     } catch (error) {
       console.error('Erro ao carregar dados:', error);

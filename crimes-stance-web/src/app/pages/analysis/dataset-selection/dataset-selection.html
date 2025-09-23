@@ -1,0 +1,30 @@
+<div class="space-y-6">
+  <div>
+    <h1 class="text-3xl font-bold text-slate-900">Análise de Posicionamento</h1>
+    <p class="text-slate-600 mt-2">Selecione um cenário para visualizar a análise detalhada.</p>
+  </div>
+
+  <div *ngIf="!isLoading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+    <a *ngFor="let dataset of datasets"
+       [routerLink]="['/analises/posicionamento', dataset.key]"
+       class="group block bg-white rounded-lg shadow-sm border border-slate-200 p-6 text-center hover:border-blue-500 hover:shadow-md transition-all duration-300">
+
+      <div class="text-5xl mb-4 transition-transform duration-300 group-hover:scale-110">
+        📊
+      </div>
+
+      <h2 class="text-lg font-semibold text-slate-800">
+        {{ dataset.config.title }}
+      </h2>
+
+      <p class="text-sm text-slate-500 mt-1">
+        {{ dataset.config.description }}
+      </p>
+    </a>
+  </div>
+
+  <div *ngIf="isLoading" class="text-center py-10">
+    <p class="text-slate-500">Carregando datasets...</p>
+  </div>
+</div>
