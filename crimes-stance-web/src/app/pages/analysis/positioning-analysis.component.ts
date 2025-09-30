@@ -16,6 +16,7 @@ import { BootstrapResultsCardComponent } from '../../components/opinion-analysis
 import { DetailedMetricsCardComponent } from '../../components/opinion-analysis/detailed-metrics-card/detailed-metrics-card';
 import { CommentsSampleCardComponent } from '../../components/opinion-analysis/comments-sample-card/comments-sample-card';
 import { ModelAccuracyCardComponent } from '../../components/opinion-analysis/model-accuracy-card/model-accuracy-card';
+import { WeeklyStackedChartComponent } from '../../components/opinion-analysis/weekly-stacked-chart/weekly-stacked-chart';
 
 @Component({
   selector: 'app-opinion-analysis',
@@ -35,6 +36,7 @@ import { ModelAccuracyCardComponent } from '../../components/opinion-analysis/mo
     DetailedMetricsCardComponent,
     CommentsSampleCardComponent,
     ModelAccuracyCardComponent,
+    WeeklyStackedChartComponent,
   ],
   template: `
     <div class="space-y-6">
@@ -91,6 +93,13 @@ import { ModelAccuracyCardComponent } from '../../components/opinion-analysis/mo
         <!-- Tópicos mais discutidos -->
         <app-topics-card [topicCounts]="topicCounts"></app-topics-card>
       </div>
+
+      <app-weekly-stacked-chart
+        *ngIf="comments.length > 0"
+        [comments]="comments"
+        [bootstrapData]="bootstrapStats">
+      </app-weekly-stacked-chart>
+
 
       <!-- Evolução temporal dos posicinamento -->
       <app-temporal-evolution-chart></app-temporal-evolution-chart>
@@ -162,6 +171,10 @@ export class OpinionAnalysisComponent implements OnInit {
   sampleComments: any[] = [];
   datasetInfo: any = {};
 
+  comments: any[] = [];
+
+  weeklyChartInputData: { comments: any[], bootstrapData: any[] } | null = null;
+
   constructor(
     private sentimentService: SentimentService,
     private route: ActivatedRoute
@@ -183,6 +196,8 @@ export class OpinionAnalysisComponent implements OnInit {
   async loadAllData(datasetId: string) {
     try {
       const data = await this.sentimentService.loadDataset(datasetId);
+
+      this.comments = data.comments;
 
       // Dados dos comentários
       this.totalComments = data.comments.length;
@@ -221,6 +236,7 @@ export class OpinionAnalysisComponent implements OnInit {
 
       // Dados de bootstrap
       this.bootstrapStats = data.bootstrap;
+      console.log('[PAI] Dados de bootstrap carregados do serviço:', this.bootstrapStats);
       this.bootstrapGroups = this.groupBootstrapResults(this.bootstrapStats);
 
       // Dados de métricas
@@ -238,6 +254,8 @@ export class OpinionAnalysisComponent implements OnInit {
 
       this.prepareSentimentChart();
       this.prepareMetricsChart();
+
+      this.weeklyChartInputData = { comments: data.comments, bootstrapData: this.bootstrapStats };
 
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
