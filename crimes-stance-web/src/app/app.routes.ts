@@ -15,9 +15,7 @@ export const routes: Routes = [
 	{
     path: 'analises',
     children: [
-      // 2. A rota 'posicionamento' agora aponta para a página de SELEÇÃO
       { path: 'posicionamento', component: DatasetSelectionComponent },
-      // 3. A página de ANÁLISE agora espera um parâmetro 'datasetId' na URL
       { path: 'posicionamento/:datasetId', component: OpinionAnalysisComponent },
       { path: 'eventos', component: EventsAnalysisComponent },
     ]

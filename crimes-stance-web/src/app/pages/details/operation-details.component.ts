@@ -6,13 +6,14 @@ import { ChartModule } from 'primeng/chart';
 import { EventsService } from '../../services/events.service';
 import { Chart, registerables } from 'chart.js';
 import zoomPlugin from 'chartjs-plugin-zoom';
+import { FooterComponent } from "../../components/footer/footer.component";
 
 Chart.register(...registerables, zoomPlugin);
 
 @Component({
   selector: 'app-operation-details',
   standalone: true,
-  imports: [CommonModule, FormsModule, ChartModule],
+  imports: [CommonModule, FormsModule, ChartModule, FooterComponent],
   template: `
     <div class="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       <!-- Header Section -->
@@ -292,6 +293,7 @@ Chart.register(...registerables, zoomPlugin);
         </div>
       </div>
     </div>
+    <app-footer></app-footer>
   `,
   styles: [`
     .line-clamp-2 {

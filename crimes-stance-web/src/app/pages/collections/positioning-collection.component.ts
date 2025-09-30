@@ -1,11 +1,12 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { FooterComponent } from "../../components/footer/footer.component";
 
 @Component({
   selector: 'app-opinion-collection',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, FooterComponent],
   template: `
     <div class="space-y-6">
       <!-- Header Section -->
@@ -168,6 +169,7 @@ import { RouterModule } from '@angular/router';
         </div>
       </div>
     </div>
+    <app-footer></app-footer>
   `,
   styles: []
 })

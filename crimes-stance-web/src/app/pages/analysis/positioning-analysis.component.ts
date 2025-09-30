@@ -16,6 +16,7 @@ import { BootstrapResultsCardComponent } from '../../components/opinion-analysis
 import { DetailedMetricsCardComponent } from '../../components/opinion-analysis/detailed-metrics-card/detailed-metrics-card';
 import { CommentsSampleCardComponent } from '../../components/opinion-analysis/comments-sample-card/comments-sample-card';
 import { ModelAccuracyCardComponent } from '../../components/opinion-analysis/model-accuracy-card/model-accuracy-card';
+import { FooterComponent } from "../../components/footer/footer.component";
 
 @Component({
   selector: 'app-opinion-analysis',
@@ -35,6 +36,7 @@ import { ModelAccuracyCardComponent } from '../../components/opinion-analysis/mo
     DetailedMetricsCardComponent,
     CommentsSampleCardComponent,
     ModelAccuracyCardComponent,
+    FooterComponent,
   ],
   template: `
     <div class="space-y-6">
@@ -135,6 +137,7 @@ import { ModelAccuracyCardComponent } from '../../components/opinion-analysis/mo
         [f1Score]="modelAccuracy.f1Score">
       </app-model-accuracy-card>
     </div>
+    <app-footer></app-footer>
   `,
   styles: []
 })

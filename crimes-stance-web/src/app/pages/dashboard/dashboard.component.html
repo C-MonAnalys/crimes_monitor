@@ -17,10 +17,10 @@
   <div class="mx-auto py-8">
     <!-- Metrics Overview -->
     <div class="mb-8">
-      <h2 class="text-2xl font-semibold text-slate-900 mb-6 flex items-center">
+      <!--<h2 class="text-2xl font-semibold text-slate-900 mb-6 flex items-center">
         <i class="bi bi-graph-up text-blue-600 mr-2"></i>
         Resumo Executivo
-      </h2>
+      </h2>-->
 
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- Eventos Section -->
@@ -35,7 +35,7 @@
             </div>
           </div>
           <div class="p-6 flex-1 flex items-center">
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full">
+            <div class="grid grid-cols-3 gap-4 w-full">
               <div class="text-center p-4 bg-blue-50 rounded-xl border border-blue-100 flex flex-col justify-center">
                 <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-2">
                   <i class="bi bi-collection-play text-blue-600 text-xl"></i>
@@ -93,13 +93,13 @@
     <div *ngIf="datasets && datasets.length" class="space-y-8">
       <!-- Temporal and Operations Analysis -->
       <div>
-        <h2 class="text-2xl font-semibold text-slate-900 mb-6 flex items-center">
+        <!--<h2 class="text-2xl font-semibold text-slate-900 mb-6 flex items-center">
           <i class="bi bi-bar-chart text-blue-600 mr-2"></i>
           Análise Temporal e Operacional
-        </h2>
+        </h2>-->
 
-        <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
-          <div class="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden md:col-span-1">
             <div class="p-6 border-b border-slate-100">
               <h3 class="text-lg font-semibold text-slate-900 flex items-center">
                 <i class="bi bi-calendar3 text-blue-600 mr-2"></i>
@@ -108,14 +108,14 @@
               <p class="text-sm text-slate-600 mt-1">Volume de vídeos coletados ao longo dos anos</p>
             </div>
             <div class="p-6">
-              <div class="h-[400px]">
+              <div class="h-[200px]">
                 <p-chart type="bar" [data]="videosByYearChartData" [options]="videosByYearChartOptions"
                   class="w-full h-full"></p-chart>
               </div>
             </div>
           </div>
 
-          <div class="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
+          <div class="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden md:col-span-2">
             <div class="p-6 border-b border-slate-100">
               <h3 class="text-lg font-semibold text-slate-900 flex items-center">
                 <i class="bi bi-trophy text-orange-600 mr-2"></i>
@@ -124,7 +124,7 @@
               <p class="text-sm text-slate-600 mt-1">Operações com maior volume de vídeos</p>
             </div>
             <div class="p-6">
-              <div class="h-[400px]">
+              <div class="h-[200px]">
                 <p-chart type="bar" [data]="topOpsChartData" [options]="topOpsChartOptions"
                   class="w-full h-full"></p-chart>
               </div>
@@ -135,12 +135,12 @@
 
       <!-- Sentiment Analysis -->
       <div>
-        <h2 class="text-2xl font-semibold text-slate-900 mb-6 flex items-center">
+        <!--<h2 class="text-2xl font-semibold text-slate-900 mb-6 flex items-center">
           <i class="bi bi-emoji-smile text-emerald-600 mr-2"></i>
           Análise de Posicionamento e Opinião
-        </h2>
+        </h2>-->
 
-        <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <div class="grid grid-cols-1 gap-6">
           <div class="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
             <div class="p-6 border-b border-slate-100">
               <h3 class="text-lg font-semibold text-slate-900 flex items-center">
@@ -166,7 +166,7 @@
               <p class="text-sm text-slate-600 mt-1">Análises estatísticas e validação</p>
             </div>
             <div class="p-6">
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div class="grid grid-cols-3 gap-4">
                 <div *ngFor="let bc of bootstrapCharts" class="bg-slate-50 rounded-xl p-4 border border-slate-200">
                   <h5 class="text-slate-700 text-sm font-semibold mb-3 capitalize flex items-center">
                     <i class="bi bi-bar-chart-line text-purple-600 mr-1"></i>
