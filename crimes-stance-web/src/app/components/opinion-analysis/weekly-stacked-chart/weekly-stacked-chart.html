@@ -1,0 +1,69 @@
+<div>
+
+  <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-6 flex flex-col h-full">
+    <h3 class="text-lg font-semibold text-slate-900 mb-4">Volume Semanal por Classe</h3>
+
+    <div class="flex flex-wrap items-center gap-4 mb-4">
+      <label class="flex items-center gap-2 text-sm">
+        Início:
+        <input type="date" [(ngModel)]="startDate" class="border border-slate-300 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500">
+      </label>
+      <label class="flex items-center gap-2 text-sm">
+        Fim:
+        <input type="date" [(ngModel)]="endDate" class="border border-slate-300 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500">
+      </label>
+      <button (click)="applyFilter()" class="bg-blue-600 text-white px-3 py-1 rounded-md text-sm hover:bg-blue-700 transition-colors">Aplicar</button>
+      <button (click)="clearFilter()" class="bg-slate-200 text-slate-700 px-3 py-1 rounded-md text-sm hover:bg-slate-300 transition-colors">Limpar</button>
+    </div>
+
+    <div class="relative flex-grow min-h-[400px]">
+      <div *ngIf="hasData; else noDataTemplate" class="absolute top-0 left-0 w-full h-full">
+        <p-chart
+          type="bar"
+          [data]="chartData"
+          [options]="chartOptions"
+          [plugins]="[hoverBandPlugin]"
+          height="100%">
+        </p-chart>
+      </div>
+
+      <ng-template #noDataTemplate>
+        <div class="flex items-center justify-center h-full text-slate-500">
+          <p>Sem dados no período selecionado.</p>
+        </div>
+      </ng-template>
+    </div>
+  </div>
+
+  <div *ngIf="isModalVisible" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-4xl mx-4">
+      <div class="flex justify-between items-center mb-4">
+        <div>
+          <h3 class="text-xl font-bold text-slate-900">Análise da Semana</h3>
+          <p *ngIf="selectedWeek" class="text-sm text-slate-600">{{ selectedWeek.range }}</p>
+        </div>
+        <button (click)="isModalVisible = false" class="text-slate-500 hover:text-slate-800 text-2xl">&times;</button>
+      </div>
+
+      <div class="mb-4">
+        <label class="text-sm font-medium text-slate-700 mr-2">Métrica de Erro:</label>
+        <select [(ngModel)]="selectedMetric" (change)="updateDrillDownChart()" class="border border-slate-300 rounded-md px-2 py-1 text-sm">
+          <option value="precision">Precisão</option>
+          <option value="recall">Revocação (Recall)</option>
+          <option value="f1">F1-Score</option>
+        </select>
+      </div>
+
+      <div class="relative h-96">
+        <p-chart
+          type="bar"
+          [data]="drillDownChartData"
+          [options]="drillDownChartOptions"
+          [plugins]="[errorBarPlugin]"
+          height="100%">
+        </p-chart>
+      </div>
+    </div>
+  </div>
+
+</div>
