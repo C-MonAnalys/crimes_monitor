@@ -3,10 +3,5 @@
     "title": "Análise de Posicionamento - Nordeste (2021)",
     "commentsFile": "data/comentarios_2021_nordeste_newBERT.json",
     "bootstrapFile": "data/bootstrap_results_211124.json"
-  },
-  "brasil_2021": {
-    "title": "Análise de Posicionamento - Geral (2021)",
-    "commentsFile": "data/comentarios_2021_brasil_newBERT.json",
-    "bootstrapFile": "data/bootstrap_results_211124.json"
   }
 }
