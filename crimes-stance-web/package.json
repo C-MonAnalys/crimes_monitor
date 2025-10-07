@@ -5,7 +5,7 @@
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
-  "build:ghpages": "ng build --configuration production --base-href /crimes_stance_site/ && npx angular-cli-ghpages --dir=dist/crimes-stance-web/browser --branch=gh-pages",
+    "build:ghpages": "ng build --configuration production --base-href /crimes_stance_site/ && npx angular-cli-ghpages --dir=dist/crimes-stance-web/browser --branch=gh-pages",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
   },
