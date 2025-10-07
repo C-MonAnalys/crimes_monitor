@@ -8,20 +8,21 @@ import { CommonModule } from '@angular/common';
   imports: [RouterModule, CommonModule],
   template: `
     <aside
-      class="flex flex-col h-full bg-slate-900 text-slate-100 transition-all duration-300 flex-shrink-0 shadow-lg"
+      class="flex flex-col h-full bg-gradient-to-b from-slate-900 via-slate-900 to-slate-800 text-slate-100 transition-all duration-300 flex-shrink-0 shadow-xl"
       [ngClass]="{
         'w-64': !isCollapsed,
         'w-16': isCollapsed
       }"
     >
       <div class="flex items-center justify-between p-4 border-b border-white/10">
-        <div class="flex items-center gap-2 font-semibold text-lg">
-          <img src="assets/img/logo-paad.png" alt="Crimes Stance" [ngClass]="isCollapsed ? 'w-6 h-6' : 'w-8 h-8'" class="bg-white/5 flex-shrink-0" />
+        <a [routerLink]="'/dashboard'" (click)="onNavigate()" class="flex items-center gap-2 font-semibold text-lg no-underline text-inherit">
+          <img src="assets/img/logo-paad.png" alt="Crimes Stance" [ngClass]="isCollapsed ? 'w-6 h-6' : 'w-8 h-8'" class="bg-white/5 flex-shrink-0 rounded" />
           <span class="ml-1" *ngIf="!isCollapsed">Crimes Stance</span>
-        </div>
+        </a>
       </div>
 
-      <nav class="flex-1 py-4 overflow-y-auto overflow-x-hidden">
+
+      <nav class="flex-1 py-4 overflow-y-auto overflow-x-hidden custom-scroll">
         <ul class="space-y-1">
           <li class="relative group" *ngFor="let item of navItems">
             <!-- Item sem submenu -->
@@ -29,7 +30,8 @@ import { CommonModule } from '@angular/common';
               <a
                 [routerLink]="item.link"
                 routerLinkActive="active-link"
-                class="flex items-center gap-3 px-4 py-3 text-slate-100 no-underline transition-all border-l-4 border-transparent hover:bg-white/5 hover:text-slate-200 hover:border-blue-400"
+                (click)="onNavigate()"
+                class="flex items-center gap-3 px-4 py-3 text-slate-100 no-underline transition-all border-l-4 border-transparent hover:bg-white/5 hover:text-slate-200 hover:border-blue-400 rounded-r-full"
               >
                 <i class="bi" [ngClass]="item.icon + ' text-blue-400 text-lg'"></i>
                 <span *ngIf="!isCollapsed">{{ item.text }}</span>
@@ -46,9 +48,9 @@ import { CommonModule } from '@angular/common';
             <ng-container *ngIf="item.hasSubmenu">
               <button
                 (click)="toggleSubmenu(item.id)"
-                class="w-full flex items-center gap-3 px-4 py-3 text-slate-100 transition-all border-l-4 border-transparent hover:bg-white/5 hover:text-slate-200 hover:border-blue-400 bg-transparent border-none cursor-pointer"
+                class="w-full flex items-center gap-3 px-4 py-3 text-slate-100 transition-all border-l-4 border-transparent hover:bg-white/5 hover:text-slate-200 hover:border-blue-400 bg-transparent border-none cursor-pointer rounded-r-full"
               >
-                <i class="bi" [ngClass]="item.icon + ' text-blue-400 text-lg'"></i>
+                <i class="bi" [ngClass]="item.icon + ' text-blue-400 text-lg'" (click)="$event.stopPropagation(); toggleQuickSummary(item.id)"></i>
                 <span *ngIf="!isCollapsed" class="flex-1 text-left">{{ item.text }}</span>
                 <i 
                   *ngIf="!isCollapsed" 
@@ -63,6 +65,17 @@ import { CommonModule } from '@angular/common';
                 </span>
               </button>
 
+              <!-- Resumo rápido -->
+              <div *ngIf="!isCollapsed && isQuickSummaryOpen(item.id)" class="mx-4 mt-1 mb-2 rounded-lg border border-white/10 bg-white/5 p-3 text-sm text-slate-200">
+                <div class="font-medium mb-2">Resumo</div>
+                <ul class="space-y-1">
+                  <li *ngFor="let sub of item.subItems" class="flex items-center gap-2">
+                    <i class="bi" [ngClass]="sub.icon + ' text-blue-300'"></i>
+                    <span>{{ sub.text }}</span>
+                  </li>
+                </ul>
+              </div>
+
               <!-- Submenus -->
               <ul 
                 *ngIf="!isCollapsed && isSubmenuExpanded(item.id)" 
@@ -72,6 +85,7 @@ import { CommonModule } from '@angular/common';
                   <a
                     [routerLink]="subItem.link"
                     routerLinkActive="active-link"
+                    (click)="onNavigate()"
                     class="flex items-center gap-3 px-4 py-2 text-slate-300 no-underline transition-all hover:bg-white/5 hover:text-slate-100 rounded-md"
                   >
                     <i class="bi" [ngClass]="subItem.icon + ' text-blue-300 text-sm'"></i>
@@ -97,6 +111,9 @@ import { CommonModule } from '@angular/common';
       color: #93c5fd !important;
       border-left-color: #60a5fa !important;
     }
+    .custom-scroll::-webkit-scrollbar { width: 8px; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 9999px; }
+    .custom-scroll::-webkit-scrollbar-track { background: transparent; }
   `]
 })
 export class SidebarComponent {
@@ -105,8 +122,10 @@ export class SidebarComponent {
   @Output() closeSidebar = new EventEmitter<void>();
   
   expandedMenus: Set<string> = new Set();
+
+  // Types
   
-  navItems = [
+  navItems: NavItem[] = [
     {
       id: 'dashboard',
       link: '/dashboard',
@@ -122,12 +141,14 @@ export class SidebarComponent {
       hasSubmenu: true,
       subItems: [
         {
+          id: 'coletas-eventos',
           link: '/coletas/eventos',
           icon: 'bi-calendar-event',
           text: 'Eventos',
           tooltip: 'Datasets de eventos',
         },
         {
+          id: 'coletas-posicionamento',
           link: '/coletas/posicionamento',
           icon: 'bi-chat-quote',
           text: 'Posicionamento',
@@ -143,12 +164,14 @@ export class SidebarComponent {
       hasSubmenu: true,
       subItems: [
         {
+          id: 'analises-eventos',
           link: '/analises/eventos',
           icon: 'bi-bar-chart',
           text: 'Eventos',
           tooltip: 'Análise de eventos',
         },
         {
+          id: 'analises-posicionamento',
           link: '/analises/posicionamento',
           icon: 'bi-chat-dots',
           text: 'Posicionamento',
@@ -162,6 +185,10 @@ export class SidebarComponent {
     try {
       const saved = localStorage.getItem('sidebar-collapsed');
       this.isCollapsed = saved === 'true';
+      const savedMenus = localStorage.getItem('sidebar-expanded-menus');
+      if (savedMenus) {
+        this.expandedMenus = new Set(JSON.parse(savedMenus));
+      }
     } catch (e) { }
   }
 
@@ -177,6 +204,60 @@ export class SidebarComponent {
     return this.expandedMenus.has(menuId);
   }
 
-  toggleSidebar() {}
+  onToggleCollapse() {
+    const next = !this.isCollapsed;
+    this.collapsedChange.emit(next);
+  }
 
+
+
+  onNavigate() {
+    this.closeSidebar.emit();
+  }
+
+  private persistMenus() {
+    try { localStorage.setItem('sidebar-expanded-menus', JSON.stringify(Array.from(this.expandedMenus))); } catch {}
+  }
+
+  // Quick summary state
+  private quickSummaryOpen: Set<string> = new Set();
+  toggleQuickSummary(menuId: string) {
+    if (this.quickSummaryOpen.has(menuId)) {
+      this.quickSummaryOpen.delete(menuId);
+    } else {
+      this.quickSummaryOpen.add(menuId);
+    }
+  }
+  isQuickSummaryOpen(menuId: string) {
+    return this.quickSummaryOpen.has(menuId);
+  }
+
+}
+
+// Types and type guards
+interface BaseItem {
+  id: string;
+  icon: string;
+  text: string;
+  tooltip: string;
+}
+
+interface LinkItem extends BaseItem {
+  link: string;
+  hasSubmenu?: false;
+}
+
+interface MenuItem extends BaseItem {
+  hasSubmenu: true;
+  subItems: LinkItem[];
+}
+
+type NavItem = LinkItem | MenuItem;
+
+function isMenu(item: NavItem): item is MenuItem {
+  return (item as MenuItem).hasSubmenu === true;
+}
+
+function isLink(item: NavItem): item is LinkItem {
+  return !isMenu(item);
 }
