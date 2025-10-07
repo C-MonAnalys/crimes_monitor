@@ -18,7 +18,7 @@ Chart.register(...registerables, zoomPlugin);
     <div class="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       <!-- Header Section -->
       <div class="bg-white shadow-sm border-b border-slate-200">
-        <div class="max-w-7xl mx-auto px-4 py-6">
+        <div class="max-w-7xl px-4 py-6">
           <div class="flex items-center gap-4">
             <button 
               (click)="goBack()"
@@ -30,7 +30,7 @@ Chart.register(...registerables, zoomPlugin);
             <div>
               <h1 class="text-3xl font-bold text-slate-900">
                 <i class="bi bi-shield-check text-blue-600 mr-2"></i>
-                Operação {{ operationId }}
+                Detalhes da Operação
               </h1>
               <p class="text-slate-600 mt-1">Análise detalhada da operação policial</p>
             </div>
@@ -148,10 +148,10 @@ Chart.register(...registerables, zoomPlugin);
 
         <!-- Charts Section -->
         <div class="mb-8">
-          <h2 class="text-2xl font-semibold text-slate-900 mb-6 flex items-center">
+         <!-- <h2 class="text-2xl font-semibold text-slate-900 mb-6 flex items-center">
             <i class="bi bi-bar-chart text-blue-600 mr-2"></i>
             Análise Temporal
-          </h2>
+          </h2>-->
           
           <div class="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
             <div class="p-6 border-b border-slate-100">
@@ -225,7 +225,7 @@ Chart.register(...registerables, zoomPlugin);
 
           <div class="p-6">
             <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        <div *ngFor="let video of filteredVideos" class="bg-slate-50 rounded-xl border border-slate-200 overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1 flex flex-col">
+        <div *ngFor="let video of paginatedVideos" class="bg-slate-50 rounded-xl border border-slate-200 overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1 flex flex-col">
           <div class="relative aspect-video overflow-hidden">
                   <img 
                     [src]="getThumbnail(video)"
@@ -289,6 +289,41 @@ Chart.register(...registerables, zoomPlugin);
               <h3 class="text-lg font-semibold text-slate-900 mb-2">Nenhum vídeo encontrado</h3>
               <p class="text-slate-600">Tente ajustar os critérios de busca ou filtros</p>
             </div>
+
+            <!-- Pagination -->
+            <div *ngIf="filteredVideos.length > 0" class="flex items-center justify-between mt-8 pt-6 border-t border-slate-200">
+              <div class="text-sm text-slate-600">
+                Mostrando {{ (currentPage - 1) * itemsPerPage + 1 }} - {{ getEndIndex() }} de {{ filteredVideos.length }} vídeos
+              </div>
+              
+              <div class="flex items-center gap-2">
+                <button 
+                  (click)="previousPage()" 
+                  [disabled]="currentPage === 1"
+                  class="px-3 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                >
+                  <i class="bi bi-chevron-left"></i>
+                </button>
+                
+                <div class="flex items-center gap-1">
+                  <button 
+                    *ngFor="let page of getPageNumbers()" 
+                    (click)="goToPage(page)"
+                    [class]="page === currentPage ? 'px-3 py-2 text-sm font-medium text-white bg-blue-600 border border-blue-600 rounded-lg' : 'px-3 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 cursor-pointer'"
+                  >
+                    {{ page }}
+                  </button>
+                </div>
+                
+                <button 
+                  (click)="nextPage()" 
+                  [disabled]="currentPage === totalPages"
+                  class="px-3 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                >
+                  <i class="bi bi-chevron-right"></i>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -321,6 +356,12 @@ export class OperationDetailsComponent implements OnInit {
 
   searchTerm = '';
   sortBy = 'date';
+
+  // Pagination properties
+  currentPage = 1;
+  itemsPerPage = 12;
+  totalPages = 1;
+  paginatedVideos: any[] = [];
 
   timelineChartData: any = {};
   timelineChartOptions: any = {};
@@ -408,6 +449,7 @@ export class OperationDetailsComponent implements OnInit {
       }
 
       this.filteredVideos = [...this.relatedVideos];
+      this.updatePagination();
       this.percentage = this.totalVideos > 0 ? (this.relatedVideos.length / this.totalVideos) * 100 : 0;
 
       // Calcular período
@@ -799,6 +841,7 @@ export class OperationDetailsComponent implements OnInit {
       );
     }
     this.sortVideos();
+    this.updatePagination();
   }
 
   sortVideos() {
@@ -813,6 +856,59 @@ export class OperationDetailsComponent implements OnInit {
           return dateB.getTime() - dateA.getTime();
       }
     });
+    this.updatePagination();
+  }
+
+  updatePagination() {
+    this.totalPages = Math.ceil(this.filteredVideos.length / this.itemsPerPage);
+    this.currentPage = Math.min(this.currentPage, this.totalPages || 1);
+    this.updatePaginatedVideos();
+  }
+
+  updatePaginatedVideos() {
+    const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+    const endIndex = startIndex + this.itemsPerPage;
+    this.paginatedVideos = this.filteredVideos.slice(startIndex, endIndex);
+  }
+
+  goToPage(page: number) {
+    this.currentPage = page;
+    this.updatePaginatedVideos();
+  }
+
+  previousPage() {
+    if (this.currentPage > 1) {
+      this.currentPage--;
+      this.updatePaginatedVideos();
+    }
+  }
+
+  nextPage() {
+    if (this.currentPage < this.totalPages) {
+      this.currentPage++;
+      this.updatePaginatedVideos();
+    }
+  }
+
+  getPageNumbers(): number[] {
+    const pages: number[] = [];
+    const maxVisiblePages = 5;
+    let startPage = Math.max(1, this.currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(this.totalPages, startPage + maxVisiblePages - 1);
+    
+    if (endPage - startPage + 1 < maxVisiblePages) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+    
+    return pages;
+  }
+
+  getEndIndex(): number {
+    return Math.min(this.currentPage * this.itemsPerPage, this.filteredVideos.length);
   }
 
   formatDate(date: string): string {

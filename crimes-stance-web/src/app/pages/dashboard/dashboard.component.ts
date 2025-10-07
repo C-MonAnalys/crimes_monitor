@@ -204,7 +204,7 @@ export class DashboardComponent implements OnInit {
     };
 
     this.topOpsChartData = {
-      labels: this.topOperations.map(o => `Op ${o.op}`),
+      labels: this.topOperations.map((o, index) => `#${index + 1}`),
       datasets: [{ label: 'Top 10 Operações', data: this.topOperations.map(o => o.count), backgroundColor: '#22c55e', borderRadius: 8, borderSkipped: false, barPercentage: 0.7, categoryPercentage: 0.6 }]
     };
     
@@ -223,7 +223,7 @@ export class DashboardComponent implements OnInit {
               const percent = ((count / this.totalVideos) * 100).toFixed(1);
               const opPattern = this.identifyOperationPattern(op);
               return [
-                `Operação: ${op}`,
+                `Rank: #${idx + 1}`,
                 `Vídeos: ${count} (${percent}%)`,
                 `Padrão identificado: ${opPattern}`
               ];
@@ -260,7 +260,7 @@ export class DashboardComponent implements OnInit {
       {
         label: 'Top 10 Operações',
         data: this.topOperations.map(d => d.count),
-        labels: this.topOperations.map(d => `Op ${d.op}`)
+        labels: this.topOperations.map((d, index) => `#${index + 1}`)
       }
     ];
     
