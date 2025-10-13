@@ -1,10 +1,13 @@
 import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { lastValueFrom } from 'rxjs';
+import { assetUrl } from './asset-url.util';
 
 @Injectable({ providedIn: 'root' })
 export class SentimentService {
   private base: string;
 
-  constructor() {
+  constructor(private http: HttpClient) {
     const baseTag = document.getElementsByTagName('base')[0];
     const baseHref = (baseTag && baseTag.getAttribute('href')) || '/';
     this.base = baseHref.endsWith('/') ? `${baseHref}assets/data/sentiment` : `${baseHref}/assets/data/sentiment`;
@@ -71,6 +74,37 @@ export class SentimentService {
       comments: Array.isArray(comments) ? comments : []
     };
   }
+
+  async getTrainingStats() {
+    // ATENÇÃO: train_labels.json e train_meta.json não existem no repo atual.
+    // Nesta fase 3.1 vamos tentar ler; se não existir, caímos no fallback (totais 0).
+    try {
+      const labels = await lastValueFrom(this.http.get<any>(assetUrl('assets/data/sentiment/train_labels.json')));
+      const bootstrap = await lastValueFrom(this.http.get<any[]>(assetUrl('assets/data/sentiment/bootstrap_results_211124.json')));
+      const meta = await lastValueFrom(this.http.get<any>(assetUrl('assets/data/sentiment/train_meta.json')));
+
+      const total = meta?.total ?? Object.values(labels || {}).reduce((s: any, n: any) => s + (n as number), 0);
+      const period = meta?.period ?? '-';
+
+      return {
+        total,
+        period,
+        labels: labels || { '-1': 0, '0': 0, '1': 0 },
+        bootstrap: bootstrap || []
+      };
+    } catch {
+      // Fallback até a 3.2 (quando vamos computar a partir de commentsFile)
+      const bootstrap = await lastValueFrom(this.http.get<any[]>(assetUrl('assets/data/sentiment/bootstrap_results_211124.json')));
+      return {
+        total: 0,
+        period: '-',
+        labels: { '-1': 0, '0': 0, '1': 0 },
+        bootstrap: bootstrap || []
+      };
+    }
+  }
+
+
 
   // convenience: counts of new_BERT values (-1,0,1)
   getSentimentCounts(comments: any[]): Record<string, number> {
