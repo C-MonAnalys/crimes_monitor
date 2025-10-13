@@ -7,7 +7,50 @@ import { OpinionAnalysisComponent } from './pages/analysis/positioning-analysis.
 import { OperationDetailsComponent } from './pages/details/operation-details.component';
 import { DatasetSelectionComponent } from './pages/analysis/dataset-selection/dataset-selection';
 
+const AvaliacoesEventos = () =>
+  import('./pages/avaliacoes/eventos/avaliacoes-eventos.component')
+    .then(m => m.AvaliacoesEventosComponent);
+
+const AvaliacoesPosicionamento = () =>
+  import('./pages/avaliacoes/posicionamento/avaliacoes-posicionamento.component')
+    .then(m => m.AvaliacoesPosicionamentoComponent);
+
+// Reuso de componentes existentes (analises)
+const AnaliseEventos = () =>
+  import('./pages/analysis/events-analysis.component') // já existe no seu projeto
+    .then(m => m.EventsAnalysisComponent);
+
+const AnalisePosicionamentoExistente = () =>
+  import('./pages/analysis/positioning-analysis.component') // seu componente atual
+    .then(m => m.OpinionAnalysisComponent);
+
+const EventosList = () =>
+  import('./pages/real/eventos/eventos-list.component')
+    .then(m => m.EventosListComponent);
+
+const EventosReal = () =>
+  import('./pages/real/eventos/eventos-real.component')
+    .then(m => m.EventosRealComponent);
+
+const PosicionamentoList = () =>
+  import('./pages/real/posicionamento/posicionamento-list.component')
+    .then(m => m.PosicionamentoListComponent);
+
+const PosicionamentoReal = () =>
+  import('./pages/real/posicionamento/posicionamento-real.component')
+    .then(m => m.PosicionamentoRealComponent);
+
+
+
 export const routes: Routes = [
+  {
+    path: 'avaliacoes',
+    children: [
+      { path: 'eventos', loadComponent: AvaliacoesEventos },
+      { path: 'posicionamento', loadComponent: AvaliacoesPosicionamento },
+      { path: '', redirectTo: 'eventos', pathMatch: 'full' },
+    ],
+  },
 	{ path: '', redirectTo: 'dashboard', pathMatch: 'full' },
 	{ path: 'dashboard', component: DashboardComponent },
 	{ path: 'coletas/eventos', component: EventsCollectionComponent },
@@ -20,5 +63,14 @@ export const routes: Routes = [
       { path: 'eventos', component: EventsAnalysisComponent },
     ]
   },
+
+  // Cenário real — Eventos
+  { path: 'eventos', loadComponent: EventosList },
+  { path: 'eventos/:id', loadComponent: EventosReal },
+
+  // Cenário real — Posicionamento
+  { path: 'posicionamento', loadComponent: PosicionamentoList },
+  { path: 'posicionamento/:id', loadComponent: PosicionamentoReal },
+
 	{ path: 'operacao/:id', component: OperationDetailsComponent }
 ];

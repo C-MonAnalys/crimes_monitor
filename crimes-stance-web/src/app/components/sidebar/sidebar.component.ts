@@ -52,8 +52,8 @@ import { CommonModule } from '@angular/common';
               >
                 <i class="bi" [ngClass]="item.icon + ' text-blue-400 text-lg'" (click)="$event.stopPropagation(); toggleQuickSummary(item.id)"></i>
                 <span *ngIf="!isCollapsed" class="flex-1 text-left">{{ item.text }}</span>
-                <i 
-                  *ngIf="!isCollapsed" 
+                <i
+                  *ngIf="!isCollapsed"
                   class="bi transition-transform duration-200"
                   [ngClass]="isSubmenuExpanded(item.id) ? 'bi-chevron-down' : 'bi-chevron-right'"
                 ></i>
@@ -77,8 +77,8 @@ import { CommonModule } from '@angular/common';
               </div>
 
               <!-- Submenus -->
-              <ul 
-                *ngIf="!isCollapsed && isSubmenuExpanded(item.id)" 
+              <ul
+                *ngIf="!isCollapsed && isSubmenuExpanded(item.id)"
                 class="ml-4 mt-1 space-y-1 border-l border-slate-700 pl-4"
               >
                 <li *ngFor="let subItem of item.subItems">
@@ -120,11 +120,11 @@ export class SidebarComponent {
   @Input() isCollapsed = false;
   @Output() collapsedChange = new EventEmitter<boolean>();
   @Output() closeSidebar = new EventEmitter<void>();
-  
+
   expandedMenus: Set<string> = new Set();
 
   // Types
-  
+
   navItems: NavItem[] = [
     {
       id: 'dashboard',
@@ -178,6 +178,52 @@ export class SidebarComponent {
           tooltip: 'Análise de opinião',
         }
       ]
+    },
+    {
+      id: 'avaliacoes',
+      icon: 'bi-clipboard-data',
+      text: 'Avaliações',
+      tooltip: 'Desempenho de modelos',
+      hasSubmenu: true,
+      subItems: [
+        {
+          id: 'avaliacoes-eventos',
+          link: '/avaliacoes/eventos',
+          icon: 'bi-collection',
+          text: 'Eventos',
+          tooltip: 'Avaliação de heurísticas',
+        },
+        {
+          id: 'avaliacoes-posicionamento',
+          link: '/avaliacoes/posicionamento',
+          icon: 'bi-chat-left-quote',
+          text: 'Posicionamento',
+          tooltip: 'Métricas do modelo',
+        }
+      ]
+    },
+    {
+      id: 'cenario',
+      icon: 'bi-broadcast',
+      text: 'Cenário real',
+      tooltip: 'Dados em contexto real',
+      hasSubmenu: true,
+      subItems: [
+        {
+          id: 'cenario-eventos',
+          link: '/eventos',
+          icon: 'bi-collection-play',
+          text: 'Eventos',
+          tooltip: 'Heurística em datasets reais',
+        },
+        {
+          id: 'cenario-posicionamento',
+          link: '/posicionamento',
+          icon: 'bi-chat-square-text',
+          text: 'Posicionamento',
+          tooltip: 'Modelo em datasets reais',
+        }
+      ]
     }
   ];
 
@@ -198,6 +244,7 @@ export class SidebarComponent {
     } else {
       this.expandedMenus.add(menuId);
     }
+    this.persistMenus();
   }
 
   isSubmenuExpanded(menuId: string): boolean {

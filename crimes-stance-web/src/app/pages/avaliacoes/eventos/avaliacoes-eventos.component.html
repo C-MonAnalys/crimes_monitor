@@ -1,0 +1,74 @@
+<div class="space-y-6">
+  <header class="bg-white rounded-xl border border-slate-200 p-6">
+    <h1 class="text-2xl font-bold text-slate-900">Avaliação de Desempenho — Eventos</h1>
+    <p class="text-slate-600 mt-1">Consolida estatísticas dos datasets e comparação de heurísticas/modelos.</p>
+  </header>
+
+  <div class="bg-white rounded-xl border border-slate-200 p-6" *ngIf="isLoading">
+    Carregando…
+  </div>
+
+  <div class="bg-white rounded-xl border border-slate-200 p-6 text-red-600" *ngIf="!isLoading && error">
+    {{ error }}
+  </div>
+
+  <ng-container *ngIf="!isLoading && !error">
+    <!-- Cards -->
+    <section class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div class="bg-white border border-slate-200 rounded-xl p-4">
+        <div class="text-slate-500 text-sm">Total de Vídeos</div>
+        <div class="text-2xl font-bold">{{ stats().totalVideos | number }}</div>
+      </div>
+      <div class="bg-white border border-slate-200 rounded-xl p-4">
+        <div class="text-slate-500 text-sm">Operações Únicas</div>
+        <div class="text-2xl font-bold">{{ stats().uniqOps | number }}</div>
+      </div>
+      <div class="bg-white border border-slate-200 rounded-xl p-4">
+        <div class="text-slate-500 text-sm">Período</div>
+        <div class="text-2xl font-bold">{{ stats().period }}</div>
+      </div>
+      <div class="bg-white border border-slate-200 rounded-xl p-4">
+        <div class="text-slate-500 text-sm">Média por Operação</div>
+        <div class="text-2xl font-bold">{{ stats().avgPerOp | number:'1.1-1' }}</div>
+      </div>
+    </section>
+
+    <!-- Gráficos -->
+    <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div class="bg-white rounded-xl border border-slate-200 p-6 h-96">
+        <h2 class="font-semibold text-slate-900 mb-3">Desempenho por Heurística</h2>
+        <ng-container *ngIf="hasPerfData; else noPerf">
+          <p-chart type="bar" [data]="perfChartData" [options]="perfChartOpts" height="100%"></p-chart>
+        </ng-container>
+        <ng-template #noPerf>
+          <div class="text-slate-500">Dados não encontrados para desempenho por heurística.</div>
+        </ng-template>
+      </div>
+
+      <div class="bg-white rounded-xl border border-slate-200 p-6 h-96">
+        <h2 class="font-semibold text-slate-900 mb-3">Vídeos por Período</h2>
+        <ng-container *ngIf="hasSeriesData; else noSeries">
+          <p-chart type="line" [data]="videosSeriesData" [options]="videosSeriesOpts" height="100%"></p-chart>
+        </ng-container>
+        <ng-template #noSeries>
+          <div class="text-slate-500">Série temporal indisponível.</div>
+        </ng-template>
+      </div>
+    </section>
+
+    <section class="bg-white rounded-xl border border-slate-200 p-6 h-96">
+      <h2 class="font-semibold text-slate-900 mb-3">Comparação de Métricas</h2>
+      <ng-container *ngIf="hasCompareData; else noCompare">
+        <p-chart type="line" [data]="metricsCompareData" [options]="metricsCompareOpts" height="100%"></p-chart>
+      </ng-container>
+      <ng-template #noCompare>
+        <div class="text-slate-500">Sem métricas para comparar.</div>
+      </ng-template>
+    </section>
+
+    <section class="bg-white rounded-xl border border-slate-200 p-6">
+      <h2 class="font-semibold text-slate-900 mb-3">Resultados da Pesquisa</h2>
+      <div class="text-slate-500">[lista/paginação reaproveitada de /coletas/eventos]</div>
+    </section>
+  </ng-container>
+</div>

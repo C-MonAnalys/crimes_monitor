@@ -1,0 +1,74 @@
+<div class="space-y-6">
+  <header class="bg-white rounded-xl border border-slate-200 p-6">
+    <h1 class="text-2xl font-bold text-slate-900">Avaliação de Desempenho — Posicionamento</h1>
+    <p class="text-slate-600 mt-1">Estatísticas do dataset de treino e métricas do modelo BERT.</p>
+  </header>
+
+  <div class="bg-white rounded-xl border border-slate-200 p-6" *ngIf="isLoading">
+    Carregando…
+  </div>
+
+  <div class="bg-white rounded-xl border border-slate-200 p-6 text-red-600" *ngIf="!isLoading && error">
+    {{ error }}
+  </div>
+
+  <ng-container *ngIf="!isLoading && !error">
+    <section class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="bg-white border border-slate-200 rounded-xl p-4">
+        <div class="text-slate-500 text-sm">Total de Comentários</div>
+        <div class="text-2xl font-bold">{{ dataset().total | number }}</div>
+        <div class="text-slate-500 text-xs mt-1">Período: {{ dataset().period }}</div>
+      </div>
+      <div class="bg-white border border-slate-200 rounded-xl p-4">
+        <div class="text-slate-500 text-sm">Distribuição de Rótulos</div>
+        <ng-container *ngIf="hasLabelData; else noLabels">
+          <div class="text-slate-700 mt-1 text-sm">
+            <span class="inline-block mr-3"><span class="w-3 h-3 inline-block rounded-sm mr-1" style="background:#ef4444"></span>Desaprovação: {{ dataset().labels.neg | number }}</span>
+            <span class="inline-block mr-3"><span class="w-3 h-3 inline-block rounded-sm mr-1" style="background:#6b7280"></span>Neutro: {{ dataset().labels.neu | number }}</span>
+            <span class="inline-block"><span class="w-3 h-3 inline-block rounded-sm mr-1" style="background:#10b981"></span>Aprovação: {{ dataset().labels.pos | number }}</span>
+          </div>
+        </ng-container>
+        <ng-template #noLabels>
+          <div class="text-slate-500 mt-1">Dados de treino não encontrados neste ambiente.</div>
+        </ng-template>
+      </div>
+      <div class="bg-white border border-slate-200 rounded-xl p-4">
+        <div class="text-slate-500 text-sm">Precisão do Modelo (Resumo)</div>
+        <div class="flex gap-6 mt-2">
+          <div><div class="text-xs text-slate-500">Precisão</div><div class="text-xl font-semibold">{{ modelAccuracy().precision }}%</div></div>
+          <div><div class="text-xs text-slate-500">Recall</div><div class="text-xl font-semibold">{{ modelAccuracy().recall }}%</div></div>
+          <div><div class="text-xs text-slate-500">F1</div><div class="text-xl font-semibold">{{ modelAccuracy().f1Score }}%</div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div class="bg-white rounded-xl border border-slate-200 p-6 h-96">
+        <h2 class="font-semibold text-slate-900 mb-3">Distribuição de Rótulos (Treino)</h2>
+        <ng-container *ngIf="hasLabelData; else noLabelsChart">
+          <p-chart type="doughnut" [data]="distData" [options]="distOpts" height="100%"></p-chart>
+        </ng-container>
+        <ng-template #noLabelsChart>
+          <div class="text-slate-500">Sem dados de rótulos para o gráfico.</div>
+        </ng-template>
+      </div>
+
+      <app-model-accuracy-card
+        class="h-full"
+        [precision]="modelAccuracy().precision"
+        [recall]="modelAccuracy().recall"
+        [f1Score]="modelAccuracy().f1Score">
+      </app-model-accuracy-card>
+    </section>
+
+    <ng-container *ngIf="hasBootstrapData; else noBootstrap">
+      <app-bootstrap-results-card [groups]="groupedBootstrap()"></app-bootstrap-results-card>
+      <app-detailed-metrics-card [allMetrics]="bootstrap()"></app-detailed-metrics-card>
+    </ng-container>
+    <ng-template #noBootstrap>
+      <div class="bg-white rounded-xl border border-slate-200 p-6 text-slate-500">
+        Sem resultados de bootstrap disponíveis.
+      </div>
+    </ng-template>
+  </ng-container>
+</div>
