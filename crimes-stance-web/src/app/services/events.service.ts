@@ -130,17 +130,18 @@ export class EventsService {
       const periodLabel = years.length ? `${Math.min(...years)}–${Math.max(...years)}` : '—';
       const avgVideosPerOperation = uniqueOperations ? +(totalVideos / uniqueOperations).toFixed(1) : 0;
 
+      // Mapeia corretamente campos do arquivo metrics_comparison.json (acu/pre/rev/f1/tecnica)
       const performance = Array.isArray(metrics) && metrics.length
         ? metrics.map((m: any) => ({
-            label: m.label ?? m.nome ?? m.tech ?? 'Técnica',
+            label: m.tecnica ?? m.label ?? m.nome ?? m.tech ?? 'Técnica',
             metrics: {
-              accuracy:  m.accuracy  ?? m.acuracia ?? 0,
-              precision: m.precision ?? 0,
-              recall:    m.recall    ?? m.revocacao ?? 0,
-              f1:        m.f1        ?? 0,
+              accuracy:  (m.accuracy ?? m.acuracia ?? m.acu ?? 0),
+              precision: (m.precision ?? m.pre ?? 0),
+              recall:    (m.recall ?? m.rev ?? m.revocacao ?? 0),
+              f1:        (m.f1 ?? 0),
             }
           }))
-        : []; // sem métricas? mostramos recado na UI
+        : [];
 
       const videosByPeriod = {
         labels: (videosByYear ?? []).map(x => x.period),
