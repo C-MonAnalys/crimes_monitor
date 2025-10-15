@@ -1,0 +1,150 @@
+/* =================== Grid helpers =================== */
+.grid { display: grid; gap: 16px; }
+.grid-2, .grid-4 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+
+@media (min-width: 768px) {
+  .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+/* Tiles grid (atalhos) */
+.tiles-grid {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 6px;
+}
+@media (min-width: 860px)  { .tiles-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1180px) { .tiles-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+
+/* =================== Hero (fundo original + texto claro) =================== */
+.hero {
+  /* fundo original */
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 60%, #111827 100%);
+  border-radius: 16px;
+  padding: 28px;
+
+  /* texto claro e contraste */
+  color: #e5e7eb;
+  border: 1px solid rgba(255,255,255,0.06);
+  box-shadow: 0 10px 24px rgba(2,6,23,0.35);
+
+  /* garantir que o conteúdo use toda a largura do hero */
+  display: block;
+}
+
+.hero h1 {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: .2px;
+  margin: 0 0 8px;
+  color: #f8fafc; /* ainda mais claro para o título */
+}
+
+/* sem max-width: o texto ocupa toda a largura disponível */
+.hero p {
+  margin: 0 0 16px;
+  color: #e2e8f0;
+}
+
+.hero .hero-points { margin: 12px 0 0; padding: 0; list-style: none; }
+.hero .hero-points li {
+  display: flex; align-items: center; gap: 10px;
+  margin: 8px 0;
+  color: #d1d5db;            /* claro para ler sobre o fundo */
+  line-height: 1.25;
+}
+.hero .hero-points i { color: #93c5fd; } /* ícones com bom contraste */
+
+/* Ações do hero / botões */
+.actions { display: flex; gap: 12px; margin-top: 16px; flex-wrap: wrap; }
+
+.btn {
+  font-size: 14px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: background-color .15s ease, border-color .15s ease, box-shadow .15s ease, transform .05s ease;
+  outline: none;
+  border: 1px solid transparent;
+}
+
+.btn:focus-visible { box-shadow: 0 0 0 3px rgba(99,102,241,0.5); }
+
+.btn.primary {
+  background: #3b82f6;       /* mesma cor de antes */
+  color: #ffffff;            /* texto claro para contraste */
+  border-color: #2563eb;
+}
+.btn.primary:hover { background: #2563eb; transform: translateY(-1px); }
+
+/* mantemos a estética do ghost, só mudamos o TEXTO para claro */
+.btn.ghost {
+  background: transparent;
+  border-color: rgba(255,255,255,0.28);
+  color: #e5e7eb;            /* claro (antes era escuro e perdia contraste) */
+}
+.btn.ghost:hover { background: rgba(255,255,255,0.06); transform: translateY(-1px); }
+
+.btn.link { padding: 0; border: none; color: #60a5fa; background: transparent; }
+
+/* =================== Cards & conteúdo =================== */
+.card {
+  background: #ffffff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 16px;
+}
+.card.error { color: #b91c1c; border-color: #fecaca; background: #fef2f2; }
+.card h3 { margin: 0 0 6px; font-size: 16px; font-weight: 700; color: #0f172a; }
+.card .muted { color: #64748b; margin: 0; }
+
+/* Stats */
+.stat {
+  background: #ffffff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 16px;
+}
+.stat-label { color: #64748b; font-size: 12px; }
+.stat-value { font-size: 22px; font-weight: 800; color: #0f172a; margin-top: 2px; }
+.stat-value.small { font-size: 18px; }
+.stat-hint { color: #94a3b8; font-size: 12px; margin-top: 4px; }
+
+/* =================== Tiles (atalhos) =================== */
+.tile {
+  display: grid;
+  grid-template-columns: 40px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 14px 16px;
+  text-decoration: none;
+  color: inherit;
+  transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+}
+.tile:hover {
+  transform: translateY(-1px);
+  border-color: #c7d2fe;
+  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.10);
+}
+.tile-icon {
+  display: grid;
+  place-items: center;
+  width: 40px; height: 40px;
+  border-radius: 12px;
+  background: #eef2ff;
+  color: #6366f1;
+  font-size: 18px;
+}
+.tile-body h3 {
+  margin: 0 0 2px 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #0f172a;
+}
+.tile-body p {
+  margin: 0;
+  font-size: 12px;
+  color: #475569;
+}
+.tile > .bi { font-size: 16px; color: #94a3b8; }

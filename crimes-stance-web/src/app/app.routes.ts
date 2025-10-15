@@ -40,9 +40,13 @@ const PosicionamentoReal = () =>
   import('./pages/real/posicionamento/posicionamento-real.component')
     .then(m => m.PosicionamentoRealComponent);
 
+const Home = () =>
+  import('./pages/home/home.component').then(m => m.HomeComponent);
+
 
 
 export const routes: Routes = [
+  { path: 'home', loadComponent: Home },
   {
     path: 'avaliacoes',
     children: [
@@ -51,7 +55,7 @@ export const routes: Routes = [
       { path: '', redirectTo: 'eventos', pathMatch: 'full' },
     ],
   },
-	{ path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+	{ path: '', redirectTo: 'home', pathMatch: 'full' },
 	{ path: 'dashboard', component: DashboardComponent },
 	{ path: 'coletas/eventos', component: EventsCollectionComponent },
 	{ path: 'coletas/posicionamento', component: OpinionCollectionComponent },

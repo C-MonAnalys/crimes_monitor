@@ -9,23 +9,19 @@ import { CommonModule } from '@angular/common';
   template: `
     <aside
       class="flex flex-col h-full bg-gradient-to-b from-slate-900 via-slate-900 to-slate-800 text-slate-100 transition-all duration-300 flex-shrink-0 shadow-xl"
-      [ngClass]="{
-        'w-64': !isCollapsed,
-        'w-16': isCollapsed
-      }"
+      [ngClass]="{ 'w-64': !isCollapsed, 'w-16': isCollapsed }"
     >
       <div class="flex items-center justify-between p-4 border-b border-white/10">
-        <a [routerLink]="'/dashboard'" (click)="onNavigate()" class="flex items-center gap-2 font-semibold text-lg no-underline text-inherit">
+        <a [routerLink]="'/home'" (click)="onNavigate()" class="flex items-center gap-2 font-semibold text-lg no-underline text-inherit">
           <img src="assets/img/logo-paad.png" alt="Crimes Stance" [ngClass]="isCollapsed ? 'w-6 h-6' : 'w-8 h-8'" class="bg-white/5 flex-shrink-0 rounded" />
           <span class="ml-1" *ngIf="!isCollapsed">Crimes Stance</span>
         </a>
       </div>
 
-
       <nav class="flex-1 py-4 overflow-y-auto overflow-x-hidden custom-scroll">
         <ul class="space-y-1">
           <li class="relative group" *ngFor="let item of navItems">
-            <!-- Item sem submenu -->
+            <!-- Item simples -->
             <ng-container *ngIf="!item.hasSubmenu">
               <a
                 [routerLink]="item.link"
@@ -52,11 +48,7 @@ import { CommonModule } from '@angular/common';
               >
                 <i class="bi" [ngClass]="item.icon + ' text-blue-400 text-lg'" (click)="$event.stopPropagation(); toggleQuickSummary(item.id)"></i>
                 <span *ngIf="!isCollapsed" class="flex-1 text-left">{{ item.text }}</span>
-                <i
-                  *ngIf="!isCollapsed"
-                  class="bi transition-transform duration-200"
-                  [ngClass]="isSubmenuExpanded(item.id) ? 'bi-chevron-down' : 'bi-chevron-right'"
-                ></i>
+                <i *ngIf="!isCollapsed" class="bi transition-transform duration-200" [ngClass]="isSubmenuExpanded(item.id) ? 'bi-chevron-down' : 'bi-chevron-right'"></i>
                 <span
                   *ngIf="isCollapsed"
                   class="absolute left-full top-1/2 -translate-y-1/2 bg-slate-800 text-slate-100 px-3 py-2 rounded-lg text-sm whitespace-nowrap opacity-0 group-hover:opacity-100 group-hover:visible invisible transition-all ml-2 shadow-lg z-50"
@@ -65,22 +57,8 @@ import { CommonModule } from '@angular/common';
                 </span>
               </button>
 
-              <!-- Resumo rápido -->
-              <div *ngIf="!isCollapsed && isQuickSummaryOpen(item.id)" class="mx-4 mt-1 mb-2 rounded-lg border border-white/10 bg-white/5 p-3 text-sm text-slate-200">
-                <div class="font-medium mb-2">Resumo</div>
-                <ul class="space-y-1">
-                  <li *ngFor="let sub of item.subItems" class="flex items-center gap-2">
-                    <i class="bi" [ngClass]="sub.icon + ' text-blue-300'"></i>
-                    <span>{{ sub.text }}</span>
-                  </li>
-                </ul>
-              </div>
-
               <!-- Submenus -->
-              <ul
-                *ngIf="!isCollapsed && isSubmenuExpanded(item.id)"
-                class="ml-4 mt-1 space-y-1 border-l border-slate-700 pl-4"
-              >
+              <ul *ngIf="!isCollapsed && isSubmenuExpanded(item.id)" class="ml-4 mt-1 space-y-1 border-l border-slate-700 pl-4">
                 <li *ngFor="let subItem of item.subItems">
                   <a
                     [routerLink]="subItem.link"
@@ -123,61 +101,14 @@ export class SidebarComponent {
 
   expandedMenus: Set<string> = new Set();
 
-  // Types
-
+  // Navegação principal (destaque)
   navItems: NavItem[] = [
     {
-      id: 'dashboard',
-      link: '/dashboard',
-      icon: 'bi-house',
-      text: 'Visão Geral',
-      tooltip: 'Dashboard principal',
-    },
-    {
-      id: 'coletas',
-      icon: 'bi-database',
-      text: 'Coletas',
-      tooltip: 'Dados coletados',
-      hasSubmenu: true,
-      subItems: [
-        {
-          id: 'coletas-eventos',
-          link: '/coletas/eventos',
-          icon: 'bi-calendar-event',
-          text: 'Eventos',
-          tooltip: 'Datasets de eventos',
-        },
-        {
-          id: 'coletas-posicionamento',
-          link: '/coletas/posicionamento',
-          icon: 'bi-chat-quote',
-          text: 'Posicionamento',
-          tooltip: 'Datasets de opinião',
-        }
-      ]
-    },
-    {
-      id: 'analises',
-      icon: 'bi-graph-up',
-      text: 'Análises',
-      tooltip: 'Análises estatísticas',
-      hasSubmenu: true,
-      subItems: [
-        {
-          id: 'analises-eventos',
-          link: '/analises/eventos',
-          icon: 'bi-bar-chart',
-          text: 'Eventos',
-          tooltip: 'Análise de eventos',
-        },
-        {
-          id: 'analises-posicionamento',
-          link: '/analises/posicionamento',
-          icon: 'bi-chat-dots',
-          text: 'Posicionamento',
-          tooltip: 'Análise de opinião',
-        }
-      ]
+      id: 'home',
+      link: '/home',
+      icon: 'bi-stars',
+      text: 'Home',
+      tooltip: 'Página inicial',
     },
     {
       id: 'avaliacoes',
@@ -186,20 +117,8 @@ export class SidebarComponent {
       tooltip: 'Desempenho de modelos',
       hasSubmenu: true,
       subItems: [
-        {
-          id: 'avaliacoes-eventos',
-          link: '/avaliacoes/eventos',
-          icon: 'bi-collection',
-          text: 'Eventos',
-          tooltip: 'Avaliação de heurísticas',
-        },
-        {
-          id: 'avaliacoes-posicionamento',
-          link: '/avaliacoes/posicionamento',
-          icon: 'bi-chat-left-quote',
-          text: 'Posicionamento',
-          tooltip: 'Métricas do modelo',
-        }
+        { id: 'avaliacoes-eventos',        link: '/avaliacoes/eventos',        icon: 'bi-collection',       text: 'Eventos',         tooltip: 'Avaliação de heurísticas' },
+        { id: 'avaliacoes-posicionamento', link: '/avaliacoes/posicionamento', icon: 'bi-chat-left-quote',  text: 'Posicionamento',  tooltip: 'Métricas do modelo' }
       ]
     },
     {
@@ -209,20 +128,27 @@ export class SidebarComponent {
       tooltip: 'Dados em contexto real',
       hasSubmenu: true,
       subItems: [
-        {
-          id: 'cenario-eventos',
-          link: '/eventos',
-          icon: 'bi-collection-play',
-          text: 'Eventos',
-          tooltip: 'Heurística em datasets reais',
-        },
-        {
-          id: 'cenario-posicionamento',
-          link: '/posicionamento',
-          icon: 'bi-chat-square-text',
-          text: 'Posicionamento',
-          tooltip: 'Modelo em datasets reais',
-        }
+        { id: 'cenario-eventos',        link: '/eventos',          icon: 'bi-collection-play',  text: 'Eventos',        tooltip: 'Heurística em datasets reais' },
+        { id: 'cenario-posicionamento', link: '/posicionamento',   icon: 'bi-chat-square-text', text: 'Posicionamento', tooltip: 'Modelo em datasets reais' }
+      ]
+    },
+
+    // ---- Pasta de migração / legado ----
+    {
+      id: 'legacy',
+      icon: 'bi-folder2',
+      text: 'Outros (migração)',
+      tooltip: 'Itens antigos para migração',
+      hasSubmenu: true,
+      subItems: [
+        // Antigo "Dashboard"
+        { id: 'legacy-dashboard', link: '/dashboard', icon: 'bi-house', text: 'Visão Geral (antiga)', tooltip: 'Dashboard anterior' },
+        // Antigo "Coletas"
+        { id: 'legacy-coletas-eventos',        link: '/coletas/eventos',        icon: 'bi-calendar-event', text: 'Coletas — Eventos',        tooltip: 'Datasets de eventos' },
+        { id: 'legacy-coletas-posicionamento', link: '/coletas/posicionamento', icon: 'bi-chat-quote',     text: 'Coletas — Posicionamento', tooltip: 'Datasets de opinião' },
+        // Antigo "Análises"
+        { id: 'legacy-analises-eventos',        link: '/analises/eventos',        icon: 'bi-bar-chart',   text: 'Análises — Eventos',        tooltip: 'Análise de eventos' },
+        { id: 'legacy-analises-posicionamento', link: '/analises/posicionamento', icon: 'bi-chat-dots',    text: 'Análises — Posicionamento', tooltip: 'Análise de opinião' }
       ]
     }
   ];
@@ -232,18 +158,13 @@ export class SidebarComponent {
       const saved = localStorage.getItem('sidebar-collapsed');
       this.isCollapsed = saved === 'true';
       const savedMenus = localStorage.getItem('sidebar-expanded-menus');
-      if (savedMenus) {
-        this.expandedMenus = new Set(JSON.parse(savedMenus));
-      }
-    } catch (e) { }
+      if (savedMenus) this.expandedMenus = new Set(JSON.parse(savedMenus));
+    } catch {}
   }
 
   toggleSubmenu(menuId: string) {
-    if (this.expandedMenus.has(menuId)) {
-      this.expandedMenus.delete(menuId);
-    } else {
-      this.expandedMenus.add(menuId);
-    }
+    if (this.expandedMenus.has(menuId)) this.expandedMenus.delete(menuId);
+    else this.expandedMenus.add(menuId);
     this.persistMenus();
   }
 
@@ -256,8 +177,6 @@ export class SidebarComponent {
     this.collapsedChange.emit(next);
   }
 
-
-
   onNavigate() {
     this.closeSidebar.emit();
   }
@@ -266,45 +185,19 @@ export class SidebarComponent {
     try { localStorage.setItem('sidebar-expanded-menus', JSON.stringify(Array.from(this.expandedMenus))); } catch {}
   }
 
-  // Quick summary state
+  // Quick summary state (mantido para futura expansão)
   private quickSummaryOpen: Set<string> = new Set();
   toggleQuickSummary(menuId: string) {
-    if (this.quickSummaryOpen.has(menuId)) {
-      this.quickSummaryOpen.delete(menuId);
-    } else {
-      this.quickSummaryOpen.add(menuId);
-    }
+    if (this.quickSummaryOpen.has(menuId)) this.quickSummaryOpen.delete(menuId);
+    else this.quickSummaryOpen.add(menuId);
   }
   isQuickSummaryOpen(menuId: string) {
     return this.quickSummaryOpen.has(menuId);
   }
-
 }
 
-// Types and type guards
-interface BaseItem {
-  id: string;
-  icon: string;
-  text: string;
-  tooltip: string;
-}
-
-interface LinkItem extends BaseItem {
-  link: string;
-  hasSubmenu?: false;
-}
-
-interface MenuItem extends BaseItem {
-  hasSubmenu: true;
-  subItems: LinkItem[];
-}
-
+// Types
+interface BaseItem { id: string; icon: string; text: string; tooltip: string; }
+interface LinkItem extends BaseItem { link: string; hasSubmenu?: false; }
+interface MenuItem extends BaseItem { hasSubmenu: true; subItems: LinkItem[]; }
 type NavItem = LinkItem | MenuItem;
-
-function isMenu(item: NavItem): item is MenuItem {
-  return (item as MenuItem).hasSubmenu === true;
-}
-
-function isLink(item: NavItem): item is LinkItem {
-  return !isMenu(item);
-}
