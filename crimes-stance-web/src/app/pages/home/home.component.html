@@ -1,0 +1,194 @@
+<div class="space-y-6">
+  <!-- HERO -->
+  <section class="hero">
+    <div>
+      <h1>Crimes Stance</h1>
+      <p>
+        Plataforma para <b>monitorar operações policiais</b> em vídeos e
+        <b>analisar o posicionamento da audiência</b>. Aqui você encontra:
+      </p>
+      <ul class="hero-points">
+        <li><i class="bi bi-clipboard-data"></i> Avaliações de desempenho de heurísticas e do modelo de opinião</li>
+        <li><i class="bi bi-broadcast"></i> Aplicações em <b>cenários reais</b> com datasets prontos para exploração</li>
+        <li><i class="bi bi-database"></i> Séries, métricas e amostras para entender o contexto por operação</li>
+      </ul>
+
+      <div class="actions" *ngIf="latestEvent() || latestSent()">
+        <a
+          *ngIf="latestEvent()"
+          class="btn primary"
+          [routerLink]="['/eventos', latestEvent()!.id]"
+          >Abrir último dataset de Eventos</a
+        >
+        <a
+          *ngIf="latestSent()"
+          class="btn ghost"
+          [routerLink]="['/posicionamento', latestSent()!.id]"
+          >Abrir último dataset de Posicionamento</a
+        >
+      </div>
+    </div>
+  </section>
+
+  <!-- LOADING / ERRO -->
+  <div class="card" *ngIf="isLoading()">Carregando…</div>
+  <div class="card error" *ngIf="!isLoading() && error()">{{ error() }}</div>
+
+  <ng-container *ngIf="!isLoading() && !error()">
+    <!-- STATUS RÁPIDO -->
+    <section class="grid grid-4">
+      <div class="stat">
+        <div class="stat-label">Vídeos coletados</div>
+        <div class="stat-value">{{ totalVideos() | number }}</div>
+        <div class="stat-hint">Período: {{ videosPeriodLabel() }}</div>
+      </div>
+
+      <div class="stat">
+        <div class="stat-label">Operações únicas</div>
+        <div class="stat-value">{{ uniqOperations() | number }}</div>
+        <div class="stat-hint">Média vídeos/op: {{ avgPerOp() | number:'1.0-1' }}</div>
+      </div>
+
+      <div class="stat">
+        <div class="stat-label">Comentários rotulados</div>
+        <div class="stat-value">{{ trainTotal() | number }}</div>
+        <div class="stat-hint">Base de treino do modelo</div>
+      </div>
+
+      <div class="stat">
+        <div class="stat-label">Distribuição de rótulos</div>
+        <div class="mt-1 text-sm text-slate-700 space-y-1">
+          <div>
+            <span class="inline-block w-2 h-2 rounded-sm mr-2" style="background:#ef4444"></span>
+            Desaprova: <b>{{ pct(treinoNeg()) }}%</b>
+          </div>
+          <div>
+            <span class="inline-block w-2 h-2 rounded-sm mr-2" style="background:#6b7280"></span>
+            Neutro: <b>{{ pct(treinoNeu()) }}%</b>
+          </div>
+          <div>
+            <span class="inline-block w-2 h-2 rounded-sm mr-2" style="background:#10b981"></span>
+            Aprova: <b>{{ pct(treinoPos()) }}%</b>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- INSIGHT: Sparkline de vídeos por mês -->
+    <!-- <section class="grid grid-2">
+      <div class="card">
+        <div class="flex items-center justify-between">
+          <h3>Vídeos por mês</h3>
+          <span class="muted text-xs">tendência</span>
+        </div>
+        <div style="height:80px;">
+          <p-chart type="line" [data]="videosSparkData" [options]="videosSparkOpts" height="80"></p-chart>
+        </div>
+      </div>
+    </section> -->
+
+    <!-- ATALHOS PRINCIPAIS -->
+    <section class="tiles-grid">
+      <a routerLink="/avaliacoes/eventos" class="tile">
+        <div class="tile-icon"><i class="bi bi-bar-chart"></i></div>
+        <div class="tile-body">
+          <h3>Avaliações — Eventos</h3>
+          <p>Métricas e séries dos datasets (heurísticas).</p>
+        </div>
+        <i class="bi bi-arrow-right"></i>
+      </a>
+
+      <a routerLink="/avaliacoes/posicionamento" class="tile">
+        <div class="tile-icon"><i class="bi bi-chat-left-quote"></i></div>
+        <div class="tile-body">
+          <h3>Avaliações — Posicionamento</h3>
+          <p>Bootstrap e métricas do modelo BERT.</p>
+        </div>
+        <i class="bi bi-arrow-right"></i>
+      </a>
+
+      <a routerLink="/eventos" class="tile">
+        <div class="tile-icon"><i class="bi bi-collection-play"></i></div>
+        <div class="tile-body">
+          <h3>Cenário Real — Eventos</h3>
+          <p>Heurística aplicada em contexto real.</p>
+        </div>
+        <i class="bi bi-arrow-right"></i>
+      </a>
+
+      <a routerLink="/posicionamento" class="tile">
+        <div class="tile-icon"><i class="bi bi-chat-square-text"></i></div>
+        <div class="tile-body">
+          <h3>Cenário Real — Posicionamento</h3>
+          <p>Distribuição por classe e amostras.</p>
+        </div>
+        <i class="bi bi-arrow-right"></i>
+      </a>
+    </section>
+
+    <!-- ÚLTIMOS ADICIONADOS -->
+    <section class="grid grid-2">
+      <!-- Último dataset de eventos (cenário real) -->
+      <div class="card" *ngIf="latestEvent(); else noLastEvent">
+        <div class="flex items-start justify-between">
+          <div>
+            <h3 class="mb-1">Último — Cenário Real (Eventos)</h3>
+            <div class="text-slate-600 text-sm">{{ latestEvent()?.label }}</div>
+            <p class="muted mt-2" *ngIf="latestEvent()?.description">{{ latestEvent()?.description }}</p>
+          </div>
+          <i class="bi bi-collection-play text-xl text-slate-400"></i>
+        </div>
+        <div class="mt-4">
+          <a class="btn link" [routerLink]="['/eventos', latestEvent()?.id]">Abrir dataset →</a>
+        </div>
+      </div>
+      <ng-template #noLastEvent>
+        <div class="card">
+          <h3 class="mb-1">Último — Cenário Real (Eventos)</h3>
+          <p class="muted">Nenhum dataset encontrado.</p>
+        </div>
+      </ng-template>
+
+      <!-- Último dataset de posicionamento (cenário real) -->
+      <div class="card" *ngIf="latestSent(); else noLastSent">
+        <div class="flex items-start justify-between">
+          <div>
+            <h3 class="mb-1">Último — Cenário Real (Posicionamento)</h3>
+            <div class="text-slate-600 text-sm">{{ latestSent()?.label }}</div>
+          </div>
+          <i class="bi bi-chat-square-text text-xl text-slate-400"></i>
+        </div>
+        <div class="mt-4">
+          <a class="btn link" [routerLink]="['/posicionamento', latestSent()?.id]">Abrir dataset →</a>
+        </div>
+      </div>
+      <ng-template #noLastSent>
+        <div class="card">
+          <h3 class="mb-1">Último — Cenário Real (Posicionamento)</h3>
+          <p class="muted">Nenhum dataset encontrado.</p>
+        </div>
+      </ng-template>
+    </section>
+
+    <!-- HIGHLIGHTS -->
+    <section class="grid-2">
+      <div class="card">
+        <h3>Como ler as métricas</h3>
+        <p class="muted">
+          As métricas incluem intervalos de confiança (IC 95%). Na página
+          Avaliações você pode comparar modelos e ver a incerteza por classe.
+        </p>
+        <a routerLink="/avaliacoes/posicionamento" class="btn link">Abrir Avaliações de Posicionamento →</a>
+      </div>
+
+      <div class="card">
+        <h3>Sobre os datasets de eventos</h3>
+        <p class="muted">
+          Os eventos são detectados por heurísticas e agregados por operação.
+          Explore a evolução por mês/ano e detalhes por operação.
+        </p>
+        <a routerLink="/avaliacoes/eventos" class="btn link">Abrir Avaliações de Eventos →</a>
+      </div>
+    </section>
+  </ng-container>
+</div>
