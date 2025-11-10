@@ -40,3 +40,8 @@ testem.log
 # System files
 .DS_Store
 Thumbs.db
+
+
+
+# Comentários inferidos de eventos - muito grandes, não versionar
+src/assets/data/sentiment/cenario-real/comentarios_*_inferido_events.json

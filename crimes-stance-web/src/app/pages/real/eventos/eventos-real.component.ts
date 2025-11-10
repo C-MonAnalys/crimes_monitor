@@ -5,11 +5,12 @@ import { ActivatedRoute } from '@angular/router';
 import { ChartModule } from 'primeng/chart';
 import { EventsRealService } from '../../../services/events-real.service';
 import { withTimeout } from '../../../services/promise-timeout.util';
+import { EventosTimelineChartComponent } from './eventos-timeline-chart.component';
 
 @Component({
   selector: 'app-eventos-real',
   standalone: true,
-  imports: [CommonModule, FormsModule, ChartModule],
+  imports: [CommonModule, FormsModule, ChartModule, EventosTimelineChartComponent],
   templateUrl: './eventos-real.component.html'
 })
 export class EventosRealComponent implements OnInit {

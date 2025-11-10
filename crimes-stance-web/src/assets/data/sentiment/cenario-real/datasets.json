@@ -1,12 +1,32 @@
 {
-  "nordeste_2021": {
-    "title": "Análise de Posicionamento - Nordeste (2021)",
-    "commentsFile": "data/comentarios_2021_nordeste_newBERT.json",
+  "brasil_2019": {
+    "title": "Análise de Posicionamento - Brasil (2019)",
+    "commentsFile": "data/comentarios_2019_inferido_events.json",
+    "bootstrapFile": "data/bootstrap_results_211124.json"
+  },
+  "brasil_2020": {
+    "title": "Análise de Posicionamento - Brasil (2020)",
+    "commentsFile": "data/comentarios_2020_inferido_events.json",
     "bootstrapFile": "data/bootstrap_results_211124.json"
   },
   "brasil_2021": {
-    "title": "Análise de Posicionamento - Geral (2021)",
-    "commentsFile": "data/comentarios_2021_brasil_newBERT.json",
+    "title": "Análise de Posicionamento - Brasil (2021)",
+    "commentsFile": "data/comentarios_2021_inferido_events.json",
+    "bootstrapFile": "data/bootstrap_results_211124.json"
+  },
+  "brasil_2022": {
+    "title": "Análise de Posicionamento - Brasil (2022)",
+    "commentsFile": "data/comentarios_2022_inferido_events.json",
+    "bootstrapFile": "data/bootstrap_results_211124.json"
+  },
+  "brasil_2023": {
+    "title": "Análise de Posicionamento - Brasil (2023)",
+    "commentsFile": "data/comentarios_2023_inferido_events.json",
+    "bootstrapFile": "data/bootstrap_results_211124.json"
+  },
+  "brasil_2024": {
+    "title": "Análise de Posicionamento - Brasil (2024)",
+    "commentsFile": "data/comentarios_2024_inferido_events.json",
     "bootstrapFile": "data/bootstrap_results_211124.json"
   }
 }
