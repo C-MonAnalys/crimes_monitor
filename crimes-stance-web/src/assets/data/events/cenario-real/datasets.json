@@ -1,7 +1,37 @@
 {
-  "19_24_temporal": {
-    "label": "Brasil 2019 a 2024 — Heurística Temporal",
-    "description": "Eventos detectados automaticamente pela heurística temporal",
-    "file": "events/cenario-real/grouped_by_operations_cluster_19_24_new.json"
+  "brasil_19": {
+    "label": "Brasil 2019 — Heurística Temporal",
+    "description": "Eventos detectados automaticamente pela heurística temporal no ano de 2019",
+    "file": "events/cenario-real/videos_2019_site_crimes_ofc_with_events.json"
+  },
+  "brasil_20": {
+    "label": "Brasil 2020 — Heurística Temporal",
+    "description": "Eventos detectados automaticamente pela heurística temporal no ano de 2020",
+    "file": "events/cenario-real/videos_2020_site_crimes_ofc_with_events.json"
+  },
+  "brasil_21": {
+    "label": "Brasil 2021 — Heurística Temporal",
+    "description": "Eventos detectados automaticamente pela heurística temporal no ano de 2021",
+    "file": "events/cenario-real/videos_2021_site_crimes_ofc_with_events.json"
+  },
+  "brasil_22": {
+    "label": "Brasil 2022 — Heurística Temporal",
+    "description": "Eventos detectados automaticamente pela heurística temporal no ano de 2022",
+    "file": "events/cenario-real/videos_2022_site_crimes_ofc_with_events.json"
+  },
+  "brasil_23": {
+    "label": "Brasil 2023 — Heurística Temporal",
+    "description": "Eventos detectados automaticamente pela heurística temporal no ano de 2023",
+    "file": "events/cenario-real/videos_2023_site_crimes_ofc_with_events.json"
+  },
+  "brasil_24": {
+    "label": "Brasil 2024 — Heurística Temporal",
+    "description": "Eventos detectados automaticamente pela heurística temporal no ano de 2024",
+    "file": "events/cenario-real/videos_2024_site_crimes_ofc_with_events.json"
+  },
+  "brasil_25": {
+    "label": "Brasil 2025 — Heurística Temporal",
+    "description": "Eventos detectados automaticamente pela heurística temporal no ano de 2025",
+    "file": "events/cenario-real/videos_2025_site_crimes_ofc_with_events.json"
   }
 }
