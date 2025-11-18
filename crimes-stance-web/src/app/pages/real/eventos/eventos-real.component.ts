@@ -61,6 +61,11 @@ export class EventosRealComponent implements OnInit {
     this.meta = payload.meta;
     this.videos = payload.videos;
     this.filteredVideos = this.videos;
+    this.filteredVideos.sort((a, b) => {
+      const da = a.data_postagem || a.date || a.day || '';
+      const db = b.data_postagem || b.date || b.day || '';
+      return da.localeCompare(db);
+    });
 
     // calcular operações mais comuns (para filtro)
     const opCounts: Record<string, number> = {};
