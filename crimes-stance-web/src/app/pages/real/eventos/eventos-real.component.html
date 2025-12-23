@@ -1,10 +1,10 @@
 <div class="space-y-6">
   <header class="bg-white rounded-xl border border-slate-200 p-6">
     <h1 class="text-2xl font-bold text-slate-900">
-      Eventos — Cenário real
+      Eventos
       <span class="text-slate-600 text-base ml-2" *ngIf="meta?.label">({{ meta.label }})</span>
     </h1>
-    <p class="text-slate-600 mt-1">Dados de eventos detectados pela heurística no dataset selecionado.</p>
+    <p class="text-slate-600 mt-1">Eventos detectados pela heurística no dataset selecionado.</p>
   </header>
 
   <div class="bg-white rounded-xl border border-slate-200 p-6" *ngIf="isLoading">Carregando…</div>
@@ -12,25 +12,7 @@
   <div *ngIf="timedOut && !error" class="bg-amber-50 border border-amber-200 text-amber-700 rounded-md p-3">Conexão lenta. Exibindo o que já foi carregado…</div>
 
   <ng-container *ngIf="!isLoading && !error">
-    <!-- Cards -->
-    <section class="grid grid-cols-1 md:grid-cols-4 gap-4">
-      <div class="bg-white border border-slate-200 rounded-xl p-4">
-        <div class="text-slate-500 text-sm">Total de Vídeos</div>
-        <div class="text-2xl font-bold">{{ meta?.totalVideos | number }}</div>
-      </div>
-      <div class="bg-white border border-slate-200 rounded-xl p-4">
-        <div class="text-slate-500 text-sm">Operações Únicas</div>
-        <div class="text-2xl font-bold">{{ meta?.totalOperations | number }}</div>
-      </div>
-      <div class="bg-white border border-slate-200 rounded-xl p-4">
-        <div class="text-slate-500 text-sm">Período</div>
-        <div class="text-2xl font-bold">{{ meta?.period || '—' }}</div>
-      </div>
-      <div class="bg-white border border-slate-200 rounded-xl p-4">
-        <div class="text-slate-500 text-sm">Dataset</div>
-        <div class="text-slate-800 font-medium text-sm break-all">{{ meta?.id }}</div>
-      </div>
-    </section>
+    
 
     <!-- GRÁFICO: Eventos por período -->
     <section class="bg-white rounded-xl border border-slate-200 p-6">
@@ -40,51 +22,29 @@
       </app-eventos-timeline-chart>
     </section>
 
-    <!-- Filtros e Gráficos -->
-    <section>
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div class="bg-white rounded-xl border border-slate-200 p-6">
-          <h2 class="font-semibold text-slate-900 mb-3">Vídeos por ano</h2>
-          <ng-container *ngIf="yearChart?.labels?.length; else noYear">
-            <p-chart type="line" [data]="yearChart" [options]="yearOpts" height="90%"></p-chart>
-          </ng-container>
-          <ng-template #noYear><div class="text-slate-500">Sem série por ano.</div></ng-template>
+    <!-- Cards -->
+    <section class="flex justify-center">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 w-full ">
+        <div class="bg-white border border-slate-200 rounded-xl p-4">
+          <div class="text-slate-500 text-sm">Total de Vídeos</div>
+          <div class="text-2xl font-bold">{{ meta?.totalVideos | number }}</div>
         </div>
-
-        <div class="bg-white rounded-xl border border-slate-200 p-6 h-96">
-          <div class="flex items-center justify-between mb-3 gap-2">
-            <h2 class="font-semibold text-slate-900">Vídeos por dia</h2>
-            <div class="flex items-center gap-2">
-              <input type="date" inputmode="numeric" pattern="\\d{4}-\\d{2}-\\d{2}" placeholder="YYYY-MM-DD" [(ngModel)]="chartStartDate" (change)="applyChartRange()" class="px-2 py-1 border border-slate-300 rounded">
-              <input type="date" inputmode="numeric" pattern="\\d{4}-\\d{2}-\\d{2}" placeholder="YYYY-MM-DD" [(ngModel)]="chartEndDate" (change)="applyChartRange()" class="px-2 py-1 border border-slate-300 rounded">
-            </div>
-          </div>
-          <ng-container *ngIf="dayChart?.labels?.length; else noDay">
-            <p-chart type="line" [data]="dayChart" [options]="dayOpts" height="90%"></p-chart>
-          </ng-container>
-          <ng-template #noDay><div class="text-slate-500">Sem série por dia.</div></ng-template>
+        <div class="bg-white border border-slate-200 rounded-xl p-4">
+          <div class="text-slate-500 text-sm">Eventos</div>
+          <div class="text-2xl font-bold">{{ meta?.totalOperations | number }}</div>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-xl p-4">
+          <div class="text-slate-500 text-sm">Período</div>
+          <div class="text-2xl font-bold">{{ meta?.period || '—' }}</div>
         </div>
       </div>
     </section>
 
+
     <!-- Lista (amostra) -->
     <section class="bg-white rounded-xl border border-slate-200 p-6">
-      <h2 class="font-semibold text-slate-900 mb-3">Amostra de Vídeos</h2>
+      <h2 class="font-semibold text-slate-900 mb-3">Vídeos</h2>
       <ng-container *ngIf="filteredVideos?.length; else noVideos">
-        <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-6">
-          <div class="lg:col-span-2">
-            <label class="block text-sm font-medium text-slate-700 mb-2">Buscar por título ou descrição</label>
-            <input type="text" placeholder="Digite sua busca..." [(ngModel)]="searchTerm" (input)="applyFilters()" class="block w-full px-3 py-2 border border-slate-300 rounded-lg">
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-slate-700 mb-2">Período (início)</label>
-            <input type="date" inputmode="numeric" pattern="\\d{4}-\\d{2}-\\d{2}" placeholder="YYYY-MM-DD" [(ngModel)]="startDate" (input)="applyFilters()" class="block w-full px-3 py-2 border border-slate-300 rounded-lg">
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-slate-700 mb-2">Período (fim)</label>
-            <input type="date" inputmode="numeric" pattern="\\d{4}-\\d{2}-\\d{2}" placeholder="YYYY-MM-DD" [(ngModel)]="endDate" (input)="applyFilters()" class="block w-full px-3 py-2 border border-slate-300 rounded-lg">
-          </div>
-        </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <article *ngFor="let v of filteredVideos | slice:0:20" class="border border-slate-200 rounded-lg p-4">
             <div class="text-sm text-slate-500 mb-1">{{ v.data_postagem || (v.parsedDate ? (v.parsedDate | date:'yyyy-MM-dd HH:mm') : '—') }}</div>
