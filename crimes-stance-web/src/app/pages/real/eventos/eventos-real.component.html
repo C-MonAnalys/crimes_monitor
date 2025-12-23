@@ -45,7 +45,7 @@
     <section class="bg-white rounded-xl border border-slate-200 p-6">
       <h2 class="font-semibold text-slate-900 mb-3">Vídeos</h2>
       <ng-container *ngIf="filteredVideos?.length; else noVideos">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 gap-4">
           <article *ngFor="let v of filteredVideos | slice:0:20" class="border border-slate-200 rounded-lg p-4">
             <div class="text-sm text-slate-500 mb-1">{{ v.data_postagem || (v.parsedDate ? (v.parsedDate | date:'yyyy-MM-dd HH:mm') : '—') }}</div>
             <div class="font-medium text-slate-800">{{ v.titulo || 'Sem título' }}</div>
