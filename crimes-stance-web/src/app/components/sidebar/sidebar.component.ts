@@ -111,17 +111,6 @@ export class SidebarComponent {
       tooltip: 'Página inicial',
     },
     {
-      id: 'avaliacoes',
-      icon: 'bi-clipboard-data',
-      text: 'Avaliações',
-      tooltip: 'Desempenho de modelos',
-      hasSubmenu: true,
-      subItems: [
-        { id: 'avaliacoes-eventos',        link: '/avaliacoes/eventos',        icon: 'bi-collection',       text: 'Eventos',         tooltip: 'Avaliação de heurísticas' },
-        { id: 'avaliacoes-posicionamento', link: '/avaliacoes/posicionamento', icon: 'bi-chat-left-quote',  text: 'Posicionamento',  tooltip: 'Métricas do modelo' }
-      ]
-    },
-    {
       id: 'cenario',
       icon: 'bi-broadcast',
       text: 'Cenário real',
@@ -132,25 +121,17 @@ export class SidebarComponent {
         { id: 'cenario-posicionamento', link: '/posicionamento',   icon: 'bi-chat-square-text', text: 'Posicionamento', tooltip: 'Modelo em datasets reais' }
       ]
     },
-
-    // ---- Pasta de migração / legado ----
     {
-      id: 'legacy',
-      icon: 'bi-folder2',
-      text: 'Outros (migração)',
-      tooltip: 'Itens antigos para migração',
+      id: 'avaliacoes',
+      icon: 'bi-clipboard-data',
+      text: 'Avaliações',
+      tooltip: 'Desempenho de modelos',
       hasSubmenu: true,
       subItems: [
-        // Antigo "Dashboard"
-        { id: 'legacy-dashboard', link: '/dashboard', icon: 'bi-house', text: 'Visão Geral (antiga)', tooltip: 'Dashboard anterior' },
-        // Antigo "Coletas"
-        { id: 'legacy-coletas-eventos',        link: '/coletas/eventos',        icon: 'bi-calendar-event', text: 'Coletas — Eventos',        tooltip: 'Datasets de eventos' },
-        { id: 'legacy-coletas-posicionamento', link: '/coletas/posicionamento', icon: 'bi-chat-quote',     text: 'Coletas — Posicionamento', tooltip: 'Datasets de opinião' },
-        // Antigo "Análises"
-        { id: 'legacy-analises-eventos',        link: '/analises/eventos',        icon: 'bi-bar-chart',   text: 'Análises — Eventos',        tooltip: 'Análise de eventos' },
-        { id: 'legacy-analises-posicionamento', link: '/analises/posicionamento', icon: 'bi-chat-dots',    text: 'Análises — Posicionamento', tooltip: 'Análise de opinião' }
+        { id: 'avaliacoes-eventos',        link: '/avaliacoes/eventos',        icon: 'bi-collection',       text: 'Eventos',         tooltip: 'Avaliação de heurísticas' },
+        { id: 'avaliacoes-posicionamento', link: '/avaliacoes/posicionamento', icon: 'bi-chat-left-quote',  text: 'Posicionamento',  tooltip: 'Métricas do modelo' }
       ]
-    }
+    },
   ];
 
   constructor() {
