@@ -1,0 +1,28 @@
+<div class="space-y-6">
+  <header class="bg-white rounded-xl border border-slate-200 p-6">
+    <h1 class="text-2xl font-bold text-slate-900">Eventos — Datasets (Cenário real)</h1>
+    <p class="text-slate-600 mt-1">Escolha um dataset para visualizar os eventos detectados pela heurística.</p>
+  </header>
+
+  <div class="bg-white rounded-xl border border-slate-200 p-6" *ngIf="isLoading">Carregando…</div>
+  <div class="bg-white rounded-xl border border-slate-200 p-6 text-red-600" *ngIf="!isLoading && error">{{ error }}</div>
+  <div *ngIf="timedOut && !error" class="bg-amber-50 border border-amber-200 text-amber-700 rounded-md p-3">
+    Conexão lenta. Exibindo o que já foi carregado…
+  </div>
+
+  <ng-container *ngIf="!isLoading && !error">
+    <div *ngIf="!datasets.length" class="bg-white rounded-xl border border-slate-200 p-6 text-slate-500">
+      Nenhum dataset encontrado em <code>assets/data/events/cenario-real/datasets.json</code>.
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <a *ngFor="let ds of datasets"
+         class="block no-underline bg-white rounded-xl border border-slate-200 p-5 hover:shadow transition"
+         [routerLink]="['/eventos', ds.id]">
+        <div class="text-lg font-semibold text-slate-900 mb-1">{{ ds.label }}</div>
+        <div class="text-slate-600 text-sm">{{ ds.description || '—' }}</div>
+        <div class="mt-3 text-blue-600 text-sm">Abrir</div>
+      </a>
+    </div>
+  </ng-container>
+</div>

@@ -20,18 +20,63 @@ export class DashboardComponent implements OnInit {
 
   // PrimeNG Chart data objects
   public sentimentChartData: any = null;
-  public sentimentChartOptions: any = { responsive: true, maintainAspectRatio: false };
+  public sentimentChartOptions: any = {
+    responsive: true,
+    maintainAspectRatio: false,
+    cutout: '65%',
+    plugins: {
+      legend: {
+        position: 'bottom',
+        labels: { color: '#475569', usePointStyle: true, boxWidth: 8, padding: 12 }
+      },
+      tooltip: { backgroundColor: 'rgba(15, 23, 42, 0.9)', titleColor: '#e2e8f0', bodyColor: '#e2e8f0', borderColor: '#334155', borderWidth: 1 }
+    }
+  };
 
   public bootstrapChartData: any = null;
-  public bootstrapChartOptions: any = { responsive: true, scales: { x: { beginAtZero: true } }, maintainAspectRatio: false };
+  public bootstrapChartOptions: any = {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      x: { beginAtZero: true, grid: { color: 'rgba(148, 163, 184, 0.2)' }, ticks: { color: '#475569' }, max: 100 },
+      y: { grid: { color: 'rgba(148, 163, 184, 0.12)' }, ticks: { color: '#64748b' } }
+    },
+    plugins: {
+      legend: { display: false },
+      tooltip: { backgroundColor: 'rgba(15, 23, 42, 0.9)', titleColor: '#e2e8f0', bodyColor: '#e2e8f0', borderColor: '#334155', borderWidth: 1 }
+    }
+  };
   public bootstrapCharts: any[] = [];
 
   // additional charts
   public videosByYearChartData: any = null;
-  public videosByYearChartOptions: any = { responsive: true, maintainAspectRatio: false };
+  public videosByYearChartOptions: any = {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      x: { grid: { color: 'rgba(148, 163, 184, 0.12)' }, ticks: { color: '#64748b' } },
+      y: { beginAtZero: true, grid: { color: 'rgba(148, 163, 184, 0.2)' }, ticks: { color: '#475569' } }
+    },
+    plugins: {
+      legend: { display: false },
+      tooltip: { backgroundColor: 'rgba(15, 23, 42, 0.9)', titleColor: '#e2e8f0', bodyColor: '#e2e8f0', borderColor: '#334155', borderWidth: 1 }
+    }
+  };
 
   public videosByMonthChartData: any = null;
-  public videosByMonthChartOptions: any = { responsive: true, maintainAspectRatio: false };
+  public videosByMonthChartOptions: any = {
+    responsive: true,
+    maintainAspectRatio: false,
+    tension: 0.35,
+    scales: {
+      x: { grid: { display: false }, ticks: { color: '#64748b' } },
+      y: { beginAtZero: true, grid: { color: 'rgba(148, 163, 184, 0.12)' }, ticks: { color: '#475569' } }
+    },
+    plugins: {
+      legend: { display: false },
+      tooltip: { backgroundColor: 'rgba(15, 23, 42, 0.9)', titleColor: '#e2e8f0', bodyColor: '#e2e8f0', borderColor: '#334155', borderWidth: 1 }
+    }
+  };
 
   public topOpsChartData: any = null;
   public topOpsChartOptions: any = { responsive: true, indexAxis: 'y', maintainAspectRatio: false };
@@ -78,7 +123,10 @@ export class DashboardComponent implements OnInit {
       datasets: [
         {
           data: [this.sentimentCounts['-1'] || 0, this.sentimentCounts['0'] || 0, this.sentimentCounts['1'] || 0],
-          backgroundColor: ['#e74c3c', '#f1c40f', '#2ecc71']
+          backgroundColor: ['#ef4444', '#f59e0b', '#22c55e'],
+          borderColor: '#0f172a',
+          borderWidth: 0,
+          hoverOffset: 8
         }
       ]
     };
@@ -88,7 +136,7 @@ export class DashboardComponent implements OnInit {
     this.bootstrapChartData = {
       labels: bp.map(b => b.label),
       datasets: [
-        { label: 'Mean', data: bp.map(b => Number((b.value ?? 0) * 100)), backgroundColor: '#3498db' }
+        { label: 'Média', data: bp.map(b => Number((b.value ?? 0) * 100)), backgroundColor: '#60a5fa', borderRadius: 6, borderSkipped: false, maxBarThickness: 28 }
       ]
     };
 
@@ -113,8 +161,8 @@ export class DashboardComponent implements OnInit {
         const data = items.map(i => Number((i.mean ?? 0) * 100));
         this.bootstrapCharts.push({
           key: metric,
-          data: { labels, datasets: [{ label: metric, data, backgroundColor: ['#60a5fa', '#34d399', '#f59e0b'] }] },
-          options: { responsive: true, maintainAspectRatio: false, scales: { x: { beginAtZero: true, max: 100 } } }
+          data: { labels, datasets: [{ label: metric, data, backgroundColor: ['#60a5fa', '#34d399', '#f59e0b', '#a78bfa', '#f472b6'], borderRadius: 6, borderSkipped: false, maxBarThickness: 26 }] },
+          options: this.bootstrapChartOptions
         });
       }
     } catch (e) {
@@ -147,22 +195,22 @@ export class DashboardComponent implements OnInit {
     // build PrimeNG chart objects for additional charts
     this.videosByYearChartData = {
       labels: this.videosByYear.map(d => d.period),
-      datasets: [{ label: 'Vídeos por Ano', data: this.videosByYear.map(d => d.count), backgroundColor: '#6c5ce7' }]
+      datasets: [{ label: 'Vídeos por Ano', data: this.videosByYear.map(d => d.count), backgroundColor: '#6366f1', borderRadius: 8, borderSkipped: false, maxBarThickness: 36 }]
     };
 
     this.videosByMonthChartData = {
       labels: this.videosByMonth.map(d => d.period),
-      datasets: [{ label: 'Vídeos por Mês', data: this.videosByMonth.map(d => d.count), fill: false, borderColor: '#0984e3' }]
+      datasets: [{ label: 'Vídeos por Mês', data: this.videosByMonth.map(d => d.count), fill: false, borderColor: '#0ea5e9', pointBackgroundColor: '#0284c7', pointBorderColor: '#fff', pointRadius: 3, tension: 0.35 }]
     };
 
     this.topOpsChartData = {
-      labels: this.topOperations.map(o => `Op ${o.op}`),
-      datasets: [{ label: 'Top 10 Operações', data: this.topOperations.map(o => o.count), backgroundColor: '#00b894' }]
+      labels: this.topOperations.map((o, index) => `#${index + 1}`),
+      datasets: [{ label: 'Top 10 Operações', data: this.topOperations.map(o => o.count), backgroundColor: '#22c55e', borderRadius: 8, borderSkipped: false, barPercentage: 0.7, categoryPercentage: 0.6 }]
     };
     
     this.topOpsChartOptions = {
       responsive: true,
-      indexAxis: 'y',
+      indexAxis: 'x',
       maintainAspectRatio: false,
       plugins: {
         legend: { display: false },
@@ -171,17 +219,21 @@ export class DashboardComponent implements OnInit {
             label: (ctx: any) => {
               const idx = ctx.dataIndex;
               const op = this.topOperations[idx]?.op;
-              const count = ctx.parsed.x;
+              const count = ctx.parsed.y;
               const percent = ((count / this.totalVideos) * 100).toFixed(1);
               const opPattern = this.identifyOperationPattern(op);
               return [
-                `Operação: ${op}`,
+                `Rank: #${idx + 1}`,
                 `Vídeos: ${count} (${percent}%)`,
                 `Padrão identificado: ${opPattern}`
               ];
             }
           }
         }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: '#64748b' } },
+        y: { beginAtZero: true, grid: { color: 'rgba(148, 163, 184, 0.2)' }, ticks: { color: '#475569' } }
       },
       onHover: (event: any, elements: any[]) => {
         if (event.native && event.native.target) {
@@ -208,7 +260,7 @@ export class DashboardComponent implements OnInit {
       {
         label: 'Top 10 Operações',
         data: this.topOperations.map(d => d.count),
-        labels: this.topOperations.map(d => `Op ${d.op}`)
+        labels: this.topOperations.map((d, index) => `#${index + 1}`)
       }
     ];
     

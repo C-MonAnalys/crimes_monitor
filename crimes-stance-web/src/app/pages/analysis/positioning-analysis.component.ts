@@ -17,6 +17,7 @@ import { DetailedMetricsCardComponent } from '../../components/opinion-analysis/
 import { CommentsSampleCardComponent } from '../../components/opinion-analysis/comments-sample-card/comments-sample-card';
 import { ModelAccuracyCardComponent } from '../../components/opinion-analysis/model-accuracy-card/model-accuracy-card';
 import { WeeklyStackedChartComponent } from '../../components/opinion-analysis/weekly-stacked-chart/weekly-stacked-chart';
+import { FooterComponent } from "../../components/footer/footer.component";
 
 @Component({
   selector: 'app-opinion-analysis',
@@ -37,6 +38,7 @@ import { WeeklyStackedChartComponent } from '../../components/opinion-analysis/w
     CommentsSampleCardComponent,
     ModelAccuracyCardComponent,
     WeeklyStackedChartComponent,
+    FooterComponent,
   ],
   template: `
     <div class="space-y-6">
@@ -144,6 +146,7 @@ import { WeeklyStackedChartComponent } from '../../components/opinion-analysis/w
         [f1Score]="modelAccuracy.f1Score">
       </app-model-accuracy-card>
     </div>
+    <app-footer></app-footer>
   `,
   styles: []
 })

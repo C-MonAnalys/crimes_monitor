@@ -1,0 +1,195 @@
+<div class="space-y-6">
+  <header class="bg-white rounded-xl border border-slate-200 p-6">
+    <h1 class="text-2xl font-bold text-slate-900">Avaliações — Eventos</h1>
+    <p class="text-slate-600 mt-1">Painel unificado com estatísticas, desempenho das heurísticas e a lista de vídeos por operação.</p>
+  </header>
+
+  <div class="bg-white rounded-xl border border-slate-200 p-6" *ngIf="isLoading">
+    Carregando…
+  </div>
+
+  <div class="bg-white rounded-xl border border-slate-200 p-6 text-red-600" *ngIf="!isLoading && error">
+    {{ error }}
+  </div>
+
+  <ng-container *ngIf="!isLoading && !error">
+
+    <!-- Visão Geral -->
+    <section class="bg-white rounded-xl border border-slate-200 p-6">
+      <div class="flex items-start justify-between">
+        <div>
+          <h2 class="text-xl font-semibold text-slate-900">Visão Geral do Dataset</h2>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
+      <div class="bg-white border border-slate-200 rounded-xl p-4">
+        <div class="text-slate-500 text-sm">Total de Vídeos</div>
+        <div class="text-2xl font-bold">{{ stats().totalVideos | number }}</div>
+      </div>
+      <div class="bg-white border border-slate-200 rounded-xl p-4">
+        <div class="text-slate-500 text-sm">Operações Únicas</div>
+        <div class="text-2xl font-bold">{{ stats().uniqOps | number }}</div>
+      </div>
+      <div class="bg-white border border-slate-200 rounded-xl p-4">
+        <div class="text-slate-500 text-sm">Período</div>
+        <div class="text-2xl font-bold">{{ stats().period }}</div>
+      </div>
+      <div class="bg-white border border-slate-200 rounded-xl p-4">
+        <div class="text-slate-500 text-sm">Média por Operação</div>
+        <div class="text-2xl font-bold">{{ stats().avgPerOp | number:'1.1-1' }}</div>
+      </div>
+      </div>
+    </section>
+
+     <!-- Resultados, Top10 e Radar -->
+     <section>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-white rounded-xl border border-slate-200 p-6">
+          <div class="flex items-center justify-between mb-3 gap-3">
+            <div>
+              <h2 class="font-semibold text-slate-900 mb-3">Desempenho por Heurística</h2>
+              <p class="text-slate-500 text-sm">Compare como diferentes técnicas (HS, HT, GPT) performam em um cenário. Selecione o cenário e a métrica.</p>
+            </div>
+          </div>
+          <div class="flex items-center justify-center gap-2 mb-3">
+            <select [(ngModel)]="selectedScenario" (change)="onMetricOrScenarioChange()" class="px-3 py-2 border border-slate-300 rounded-lg">
+              <option *ngFor="let sc of scenarios" [value]="sc">{{ sc }}</option>
+            </select>
+            <select [(ngModel)]="metricType" (change)="onMetricOrScenarioChange()" class="px-3 py-2 border border-slate-300 rounded-lg">
+              <option value="acu">Acurácia</option>
+              <option value="pre">Precisão</option>
+              <option value="rev">Revocação</option>
+              <option value="f1">F1-Score</option>
+            </select>
+          </div>
+           <ng-container *ngIf="hasPerfData; else noPerf">
+             <div style="height: 320px;">
+               <p-chart type="line" [data]="perfChartData" [options]="perfChartOpts" height="100%"></p-chart>
+             </div>
+           </ng-container>
+          <ng-template #noPerf>
+            <div class="text-slate-500">Dados não encontrados para desempenho por heurística.</div>
+          </ng-template>
+        </div>
+        <div class="bg-white rounded-xl border border-slate-200 p-4">
+          <div class="flex items-center justify-between mb-3">
+            <div>
+              <h3 class="font-semibold text-slate-900">Comparação de Métricas (Radar)</h3>
+              <p class="text-slate-500 text-sm">Média das métricas por técnica no dataset.</p>
+            </div>
+          </div>
+          <div class="h-100 flex items-center justify-center">
+            <p-chart 
+              type="radar" 
+              [data]="radarChartData" 
+              [options]="radarChartOptions"
+              height="100%">
+            </p-chart>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Resultados, Top10 e Radar -->
+    <section>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-white rounded-xl border border-slate-200 p-4" style="height: 380px; overflow: hidden;">
+          <div class="flex items-center justify-between mb-3">
+            <div>
+              <h3 class="font-semibold text-slate-900">Top Operações por Quantidade de Vídeos</h3>
+              <p class="text-slate-500 text-sm">Clique em uma barra para abrir os detalhes da operação.</p>
+            </div>
+          </div>
+          <div style="height: 280px;" >
+            <p-chart type="bar" [data]="topOpsChartData" [options]="topOpsChartOpts" height="100%"></p-chart>
+          </div>
+        </div>
+        <div class="bg-white rounded-xl border border-slate-200 p-4" style="height: 380px; overflow: hidden;">
+          <div class="flex items-center justify-between mb-3">
+            <div>
+              <h3 class="font-semibold text-slate-900">Vídeos por Período de Tempo</h3>
+              <p class="text-slate-500 text-sm">Visualize a distribuição dos vídeos ao longo do tempo.</p>
+            </div>
+          </div>
+          <div style="height: 280px;">
+            <p-chart 
+              type="line" 
+              [data]="temporalChartData" 
+              [options]="temporalChartOptions"
+              height="100%">
+            </p-chart>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Lista de Vídeos / Busca -->
+    <section class="bg-white rounded-xl border border-slate-200 p-6">
+      <div class="flex items-start justify-between">
+        <div class="mb-5">
+          <h2 class="font-semibold text-slate-900 mb-1">Vídeos</h2>
+          <p class="text-slate-500 text-sm">Use a busca e o filtro para encontrar vídeos de interesse por título/descrição ou por operação.</p>
+        </div>
+      </div>
+      <!-- Filtros e busca -->
+      <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-4">
+        <div class="lg:col-span-2">
+          <label class="block text-sm font-medium text-slate-700 mb-2">Buscar por título ou descrição</label>
+          <input type="text" placeholder="Digite sua busca..." [(ngModel)]="searchTerm" (input)="applyFilters()" class="block w-full px-3 py-2 border border-slate-300 rounded-lg">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-2">Início</label>
+          <input type="date" inputmode="numeric" pattern="\\d{4}-\\d{2}-\\d{2}" placeholder="YYYY-MM-DD" [(ngModel)]="startDate" (input)="applyFilters()" (keyup.enter)="applyFilters()" class="block w-full px-3 py-2 border border-slate-300 rounded-lg">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-2">Fim</label>
+          <input type="date" inputmode="numeric" pattern="\\d{4}-\\d{2}-\\d{2}" placeholder="YYYY-MM-DD" [(ngModel)]="endDate" (input)="applyFilters()" (keyup.enter)="applyFilters()" class="block w-full px-3 py-2 border border-slate-300 rounded-lg">
+        </div>
+      </div>
+
+      <!-- Grid de resultados -->
+      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        <div *ngFor="let v of pageItems" class="bg-white rounded-xl border border-slate-200 overflow-hidden flex flex-col h-full">
+          <!-- Thumb ocupa toda a largura do card -->
+          <img [src]="'https://img.youtube.com/vi/' + v.id_video + '/hqdefault.jpg'" alt="thumbnail" class="w-full h-44 md:h-48 object-cover" loading="lazy">
+          <!-- Conteúdo do card -->
+          <div class="p-4 flex flex-col flex-1">
+            <div class="flex items-start justify-between mb-2">
+              <h4 class="text-base font-semibold text-slate-900 line-clamp-2 flex-1 mr-3">{{ v.titulo }}</h4>
+              <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-1 rounded-full whitespace-nowrap">Op {{ v.operation || v.operation_id }}</span>
+            </div>
+            <div class="flex items-center gap-4 mb-2 text-sm text-slate-600">
+              <div class="flex items-center gap-1"><i class="bi bi-calendar3 text-slate-400"></i><span>{{ formatDate(v.data_postagem) }}</span></div>
+              <div class="flex items-center gap-1"><i class="bi bi-hash text-slate-400"></i><span>{{ v.id_video?.slice(0,8) }}...</span></div>
+            </div>
+            <!-- Descrição com altura controlada -->
+            <div class="text-slate-600 text-sm line-clamp-3 mb-4">
+              {{ truncateText(v.descricao, 160) }}
+            </div>
+            <!-- Empurra o botão para o rodapé do card -->
+            <div class="mt-auto"></div>
+            <div class="pt-1">
+              <a [href]="'https://youtube.com/watch?v=' + v.id_video" target="_blank" class="w-full inline-block bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-3 rounded-lg text-center">Assistir no YouTube</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Estado vazio -->
+      <div *ngIf="filteredTotal === 0" class="text-center py-8 text-slate-600">Nenhum resultado encontrado</div>
+
+      <!-- Paginação -->
+      <div *ngIf="totalPages > 1" class="flex items-center justify-center mt-6">
+        <nav class="flex items-center gap-2">
+          <button (click)="goToPage(1)" [disabled]="page === 1" class="px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg">«</button>
+          <button (click)="prev()" [disabled]="page === 1" class="px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg">‹</button>
+          <div class="flex items-center gap-1">
+            <span *ngFor="let p of visiblePages" class="px-3 py-2 text-sm font-medium rounded-lg cursor-pointer" [class]="p === page ? 'bg-blue-600 text-white' : 'text-slate-700 bg-white border border-slate-300'" (click)="goToPage(p)">{{ p }}</span>
+          </div>
+          <button (click)="next()" [disabled]="page === totalPages" class="px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg">›</button>
+          <button (click)="goToPage(totalPages)" [disabled]="page === totalPages" class="px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg">»</button>
+        </nav>
+      </div>
+    </section>
+  </ng-container>
+</div>

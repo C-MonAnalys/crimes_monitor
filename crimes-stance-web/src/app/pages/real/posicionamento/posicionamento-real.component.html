@@ -1,0 +1,52 @@
+<div class="space-y-6">
+  <header class="bg-white rounded-xl border border-slate-200 p-6">
+    <h1 class="text-2xl font-bold text-slate-900">
+      Posicionamento — Cenário real
+      <span class="text-slate-600 text-base ml-2">({{ datasetId }})</span>
+    </h1>
+    <p class="text-slate-600 mt-1">Inferência do modelo sobre comentários reais do dataset selecionado.</p>
+  </header>
+
+  <div class="bg-white rounded-xl border border-slate-200 p-6" *ngIf="isLoading">Carregando…</div>
+  <div class="bg-white rounded-xl border border-slate-200 p-6 text-red-600" *ngIf="!isLoading && error">{{ error }}</div>
+  <div *ngIf="timedOut && !error" class="bg-amber-50 border border-amber-200 text-amber-700 rounded-md p-3">
+    Conexão lenta. Exibindo o que já foi carregado…
+  </div>
+
+  <ng-container *ngIf="!isLoading && !error">
+    <!-- Cards principais -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <app-analysis-stat-card
+        [label]="'Opiniões Analisadas'"
+        [value]="(totalComments | number) ?? '0'"
+        [icon]="'bi-chat-text'"
+        [color]="'blue'">
+      </app-analysis-stat-card>
+      <app-analysis-stat-card [label]="'Aprovação'" [value]="sentimentPercentages.positive + '%'" [icon]="'bi-emoji-smile'" [color]="'green'"></app-analysis-stat-card>
+      <app-analysis-stat-card [label]="'Desaprovação'" [value]="sentimentPercentages.negative + '%'" [icon]="'bi-emoji-frown'" [color]="'red'"></app-analysis-stat-card>
+      <app-analysis-stat-card [label]="'Neutro'" [value]="sentimentPercentages.neutral + '%'" [icon]="'bi-emoji-neutral'" [color]="'yellow'"></app-analysis-stat-card>
+    </div>
+
+    <!-- Distribuição + tópicos -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+      <app-positioning-distribution [counts]="sentimentCounts" [percentages]="sentimentPercentages"></app-positioning-distribution>
+      <app-topics-card [topicCounts]="topicCounts"></app-topics-card>
+    </div>
+
+    <!-- Volume semanal com drill-down -->
+    <div class="mt-6">
+      <app-weekly-stacked-chart *ngIf="comments.length"
+                                [comments]="comments"
+                                [bootstrapData]="bootstrapStats">
+      </app-weekly-stacked-chart>
+      <div class="bg-white rounded-xl border border-slate-200 p-6 text-slate-500" *ngIf="!comments.length">
+        Sem comentários para exibir.
+      </div>
+    </div>
+
+    <!-- Gráficos e métricas -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+      <app-positioning-doughnut-chart [data]="sentimentChartData" [options]="sentimentChartOptions"></app-positioning-doughnut-chart>
+    </div>
+  </ng-container>
+</div>

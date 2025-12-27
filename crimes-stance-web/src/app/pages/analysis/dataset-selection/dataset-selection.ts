@@ -1,12 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router'; // Importe o RouterModule para usar o routerLink
+import { RouterModule } from '@angular/router'; 
 import { SentimentService } from '../../../services/sentiment.service';
 
 @Component({
   selector: 'app-dataset-selection',
   standalone: true,
-  imports: [CommonModule, RouterModule], // Adicione o RouterModule
+  imports: [CommonModule, RouterModule],
   templateUrl: './dataset-selection.html',
   styleUrls: ['./dataset-selection.css']
 })

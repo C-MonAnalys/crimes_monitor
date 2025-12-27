@@ -6,31 +6,22 @@ import { ChartModule } from 'primeng/chart';
 import { EventsService } from '../../services/events.service';
 import { Chart, registerables } from 'chart.js';
 import zoomPlugin from 'chartjs-plugin-zoom';
+import { FooterComponent } from '../../components/footer/footer.component';
 
 Chart.register(...registerables, zoomPlugin);
 
 @Component({
   selector: 'app-operation-details',
   standalone: true,
-  imports: [CommonModule, FormsModule, ChartModule],
+  imports: [CommonModule, FormsModule, ChartModule, FooterComponent],
   template: `
     <div class="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       <!-- Header Section -->
-      <div class="bg-white shadow-sm border-b border-slate-200">
-        <div class="max-w-7xl mx-auto px-4 py-6">
+      <div class="bg-white rounded-xl border border-slate-200 p-6 mb-1">
+        <div class="max-w-7xl">
           <div class="flex items-center gap-4">
-            <button 
-              (click)="goBack()"
-              class="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-200"
-            >
-              <i class="bi bi-arrow-left"></i>
-              Voltar ao Dashboard
-            </button>
             <div>
-              <h1 class="text-3xl font-bold text-slate-900">
-                <i class="bi bi-shield-check text-blue-600 mr-2"></i>
-                Operação {{ operationId }}
-              </h1>
+              <h1 class="text-3xl font-bold text-slate-900">Detalhes da Operação</h1>
               <p class="text-slate-600 mt-1">Análise detalhada da operação policial</p>
             </div>
           </div>
@@ -39,64 +30,26 @@ Chart.register(...registerables, zoomPlugin);
 
       <div class="mx-auto py-8">
         <!-- Statistics Overview -->
-        <div class="mb-8">
-          <h2 class="text-2xl font-semibold text-slate-900 mb-6 flex items-center">
-            <i class="bi bi-graph-up text-blue-600 mr-2"></i>
-            Estatísticas da Operação
-          </h2>
-          
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div class="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
-              <div class="p-6">
-                <div class="flex items-center justify-between">
-                  <div>
-                    <div class="text-3xl font-bold text-blue-600 mb-1">{{ relatedVideos.length }}</div>
-                    <div class="text-slate-600 font-medium">Vídeos Relacionados</div>
-                  </div>
-                  <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <i class="bi bi-camera-video text-blue-600 text-xl"></i>
-                  </div>
-                </div>
-              </div>
+        <div class="bg-white rounded-xl border border-slate-200 p-6 mb-8">
+          <h2 class="text-xl font-semibold text-slate-900">Estatísticas da Operação</h2>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+            <div class="bg-white border border-slate-200 rounded-xl p-4">
+              <div class="text-slate-500 text-sm">Vídeos Relacionados</div>
+              <div class="text-2xl font-bold">{{ relatedVideos.length }}</div>
             </div>
-
-            <div class="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
-              <div class="p-6">
-                <div class="flex items-center justify-between">
-                  <div>
-                    <div class="text-3xl font-bold text-purple-600 mb-1">{{ percentage.toFixed(1) }}%</div>
-                    <div class="text-slate-600 font-medium">Do Total de Vídeos</div>
-                  </div>
-                  <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                    <i class="bi bi-pie-chart text-purple-600 text-xl"></i>
-                  </div>
-                </div>
-              </div>
+            <div class="bg-white border border-slate-200 rounded-xl p-4">
+              <div class="text-slate-500 text-sm">Porcentagem</div>
+              <div class="text-2xl font-bold">{{ percentage.toFixed(1) }}%</div>
             </div>
-
-            <div class="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
-              <div class="p-6">
-                <div class="flex items-center justify-between">
-                  <div>
-                    <div class="text-3xl font-bold text-emerald-600 mb-1">{{ dateRange }}</div>
-                    <div class="text-slate-600 font-medium">Período</div>
-                  </div>
-                  <div class="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center">
-                    <i class="bi bi-calendar-range text-emerald-600 text-xl"></i>
-                  </div>
-                </div>
-              </div>
+            <div class="bg-white border border-slate-200 rounded-xl p-4">
+              <div class="text-slate-500 text-sm">Período</div>
+              <div class="text-2xl font-bold">{{ dateRange }}</div>
             </div>
           </div>
         </div>
 
         <!-- Analysis Section -->
         <div class="mb-8">
-          <h2 class="text-2xl font-semibold text-slate-900 mb-6 flex items-center">
-            <i class="bi bi-search text-blue-600 mr-2"></i>
-            Análise da Operação
-          </h2>
-          
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div class="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
               <div class="p-6 border-b border-slate-100">
@@ -104,22 +57,30 @@ Chart.register(...registerables, zoomPlugin);
                   <i class="bi bi-lightbulb text-orange-600 mr-2"></i>
                   Padrões Identificados
                 </h3>
-                <p class="text-sm text-slate-600 mt-1">Características detectadas automaticamente</p>
+                <p class="text-sm text-slate-600 mt-1">
+                  Características detectadas automaticamente
+                </p>
               </div>
               <div class="p-6">
                 <div class="space-y-3">
-                  <div *ngFor="let pattern of identifiedPatterns" class="flex items-start gap-3 p-3 bg-emerald-50 rounded-lg border border-emerald-100">
+                  <div
+                    *ngFor="let pattern of identifiedPatterns"
+                    class="flex items-start gap-3 p-3 bg-emerald-50 rounded-lg border border-emerald-100"
+                  >
                     <i class="bi bi-check-circle-fill text-emerald-600 mt-0.5"></i>
                     <span class="text-slate-700">{{ pattern }}</span>
                   </div>
-                  <div *ngIf="identifiedPatterns.length === 0" class="flex items-start gap-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
+                  <div
+                    *ngIf="identifiedPatterns.length === 0"
+                    class="flex items-start gap-3 p-3 bg-slate-50 rounded-lg border border-slate-200"
+                  >
                     <i class="bi bi-info-circle text-slate-400 mt-0.5"></i>
                     <span class="text-slate-500">Nenhum padrão identificado ainda</span>
                   </div>
                 </div>
               </div>
             </div>
-            
+
             <div class="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
               <div class="p-6 border-b border-slate-100">
                 <h3 class="text-lg font-semibold text-slate-900 flex items-center">
@@ -130,10 +91,12 @@ Chart.register(...registerables, zoomPlugin);
               </div>
               <div class="p-6">
                 <div class="flex flex-wrap gap-2">
-                  <span *ngFor="let keyword of topKeywords" 
-                        class="inline-flex items-center px-3 py-1.5 rounded-full text-white font-medium transition-transform hover:scale-105"
-                        [style.background-color]="getKeywordColor(keyword.weight)"
-                        [style.font-size.px]="12 + keyword.weight * 6">
+                  <span
+                    *ngFor="let keyword of topKeywords"
+                    class="inline-flex items-center px-3 py-1.5 rounded-full text-white font-medium transition-transform hover:scale-105"
+                    [style.background-color]="getKeywordColor(keyword.weight)"
+                    [style.font-size.px]="12 + keyword.weight * 6"
+                  >
                     {{ keyword.word }}
                   </span>
                   <div *ngIf="topKeywords.length === 0" class="text-slate-500 italic">
@@ -147,11 +110,11 @@ Chart.register(...registerables, zoomPlugin);
 
         <!-- Charts Section -->
         <div class="mb-8">
-          <h2 class="text-2xl font-semibold text-slate-900 mb-6 flex items-center">
+          <!-- <h2 class="text-2xl font-semibold text-slate-900 mb-6 flex items-center">
             <i class="bi bi-bar-chart text-blue-600 mr-2"></i>
             Análise Temporal
-          </h2>
-          
+          </h2>-->
+
           <div class="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
             <div class="p-6 border-b border-slate-100">
               <div class="flex items-center justify-between">
@@ -161,10 +124,11 @@ Chart.register(...registerables, zoomPlugin);
                     Distribuição Temporal dos Vídeos
                   </h3>
                   <p class="text-sm text-slate-600 mt-1">
-                    Comparação entre vídeos da operação {{ operationId }} e o total de vídeos coletados por período
+                    Comparação entre vídeos da operação {{ operationId }} e o total de vídeos
+                    coletados por período
                   </p>
                 </div>
-                <button 
+                <button
                   (click)="resetZoom()"
                   class="flex items-center gap-2 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm rounded-lg transition-colors"
                   title="Resetar zoom"
@@ -176,7 +140,13 @@ Chart.register(...registerables, zoomPlugin);
             </div>
             <div class="p-6">
               <div class="h-[400px]">
-                <p-chart #timelineChart type="line" [data]="timelineChartData" [options]="timelineChartOptions" class="w-full h-full"></p-chart>
+                <p-chart
+                  #timelineChart
+                  type="line"
+                  [data]="timelineChartData"
+                  [options]="timelineChartOptions"
+                  class="w-full h-full"
+                ></p-chart>
               </div>
             </div>
           </div>
@@ -195,24 +165,24 @@ Chart.register(...registerables, zoomPlugin);
                   {{ filteredVideos.length }} de {{ relatedVideos.length }} vídeos
                 </p>
               </div>
-              
+
               <div class="flex gap-3">
                 <div class="relative flex-1 sm:w-80">
                   <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <i class="bi bi-search text-slate-400"></i>
                   </div>
-                  <input 
-                    type="text" 
-                    placeholder="Buscar por título..." 
-                    [(ngModel)]="searchTerm" 
+                  <input
+                    type="text"
+                    placeholder="Buscar por título..."
+                    [(ngModel)]="searchTerm"
                     (input)="filterVideos()"
                     class="block w-full pl-10 pr-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                  >
+                  />
                 </div>
-                
-                <select 
-                  [(ngModel)]="sortBy" 
-                  (change)="sortVideos()" 
+
+                <select
+                  [(ngModel)]="sortBy"
+                  (change)="sortVideos()"
                   class="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                 >
                   <option value="date">Data de publicação</option>
@@ -224,36 +194,47 @@ Chart.register(...registerables, zoomPlugin);
 
           <div class="p-6">
             <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        <div *ngFor="let video of filteredVideos" class="bg-slate-50 rounded-xl border border-slate-200 overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1 flex flex-col">
-          <div class="relative aspect-video overflow-hidden">
-                  <img 
+              <div
+                *ngFor="let video of paginatedVideos"
+                class="bg-slate-50 rounded-xl border border-slate-200 overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1 flex flex-col"
+              >
+                <div class="relative aspect-video overflow-hidden">
+                  <img
                     [src]="getThumbnail(video)"
                     [alt]="video.titulo || video.title || ''"
                     (error)="onImageError($event)"
                     class="w-full h-full object-cover"
+                  />
+                  <div
+                    *ngIf="video.duration"
+                    class="absolute bottom-2 right-2 bg-black bg-opacity-75 text-white text-xs px-2 py-1 rounded"
                   >
-                  <div *ngIf="video.duration" class="absolute bottom-2 right-2 bg-black bg-opacity-75 text-white text-xs px-2 py-1 rounded">
                     {{ video.duration }}
                   </div>
                 </div>
-                
-          <div class="p-4 flex flex-col flex-1">
+
+                <div class="p-4 flex flex-col flex-1">
                   <h4 class="font-semibold text-slate-900 mb-2 line-clamp-2">
                     {{ video.titulo || video.title || 'Título não disponível' }}
                   </h4>
-                  
+
                   <div class="flex items-center justify-between text-sm text-slate-600 mb-3">
                     <div class="flex items-center gap-1">
                       <i class="bi bi-person-circle"></i>
-                      <span>{{ (video.canal || video.channel || 'Canal não informado') | slice:0:20 }}</span>
+                      <span>{{
+                        video.canal || video.channel || 'Canal não informado' | slice : 0 : 20
+                      }}</span>
                     </div>
                     <div class="flex items-center gap-1">
                       <i class="bi bi-calendar3"></i>
                       <span>{{ formatDate(video.data_postagem || video.date) }}</span>
                     </div>
                   </div>
-                  
-                  <div *ngIf="video.visualizacoes || video.views || video.curtidas || video.likes" class="flex items-center gap-4 text-sm text-slate-600 mb-3">
+
+                  <div
+                    *ngIf="video.visualizacoes || video.views || video.curtidas || video.likes"
+                    class="flex items-center gap-4 text-sm text-slate-600 mb-3"
+                  >
                     <div *ngIf="video.visualizacoes || video.views" class="flex items-center gap-1">
                       <i class="bi bi-eye"></i>
                       <span>{{ formatNumber(video.visualizacoes || video.views) }}</span>
@@ -263,13 +244,16 @@ Chart.register(...registerables, zoomPlugin);
                       <span>{{ formatNumber(video.curtidas || video.likes) }}</span>
                     </div>
                   </div>
-                  
-                  <p *ngIf="video.descricao || video.description" class="text-sm text-slate-600 mb-4 line-clamp-2">
+
+                  <p
+                    *ngIf="video.descricao || video.description"
+                    class="text-sm text-slate-600 mb-4 line-clamp-2"
+                  >
                     {{ truncateText(video.descricao || video.description, 100) }}
                   </p>
 
-                  <a 
-                    [href]="getVideoUrl(video)" 
+                  <a
+                    [href]="getVideoUrl(video)"
                     target="_blank"
                     class="inline-flex items-center gap-2 w-full justify-center bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors duration-200 mt-auto"
                   >
@@ -288,19 +272,65 @@ Chart.register(...registerables, zoomPlugin);
               <h3 class="text-lg font-semibold text-slate-900 mb-2">Nenhum vídeo encontrado</h3>
               <p class="text-slate-600">Tente ajustar os critérios de busca ou filtros</p>
             </div>
+
+            <!-- Pagination -->
+            <div
+              *ngIf="filteredVideos.length > 0"
+              class="flex items-center justify-between mt-8 pt-6 border-t border-slate-200"
+            >
+              <div class="text-sm text-slate-600">
+                Mostrando {{ (currentPage - 1) * itemsPerPage + 1 }} - {{ getEndIndex() }} de
+                {{ filteredVideos.length }} vídeos
+              </div>
+
+              <div class="flex items-center gap-2">
+                <button
+                  (click)="previousPage()"
+                  [disabled]="currentPage === 1"
+                  class="px-3 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                >
+                  <i class="bi bi-chevron-left"></i>
+                </button>
+
+                <div class="flex items-center gap-1">
+                  <button
+                    *ngFor="let page of getPageNumbers()"
+                    (click)="goToPage(page)"
+                    [class]="
+                      page === currentPage
+                        ? 'px-3 py-2 text-sm font-medium text-white bg-blue-600 border border-blue-600 rounded-lg'
+                        : 'px-3 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 cursor-pointer'
+                    "
+                  >
+                    {{ page }}
+                  </button>
+                </div>
+
+                <button
+                  (click)="nextPage()"
+                  [disabled]="currentPage === totalPages"
+                  class="px-3 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                >
+                  <i class="bi bi-chevron-right"></i>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </div>
+    <app-footer></app-footer>
   `,
-  styles: [`
-    .line-clamp-2 {
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-  `]
+  styles: [
+    `
+      .line-clamp-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+    `,
+  ],
 })
 export class OperationDetailsComponent implements OnInit {
   @ViewChild('timelineChart') timelineChart: any;
@@ -320,6 +350,12 @@ export class OperationDetailsComponent implements OnInit {
   searchTerm = '';
   sortBy = 'date';
 
+  // Pagination properties
+  currentPage = 1;
+  itemsPerPage = 12;
+  totalPages = 1;
+  paginatedVideos: any[] = [];
+
   timelineChartData: any = {};
   timelineChartOptions: any = {};
   channelsChartData: any = {};
@@ -333,7 +369,9 @@ export class OperationDetailsComponent implements OnInit {
     // ajustar default thumbnail respeitando o base href (útil para GH Pages)
     const baseTag = document.getElementsByTagName('base')[0];
     const baseHref = (baseTag && baseTag.getAttribute('href')) || '/';
-    this.defaultThumbnail = baseHref.endsWith('/') ? `${baseHref}assets/default-thumbnail.svg` : `${baseHref}/assets/default-thumbnail.svg`;
+    this.defaultThumbnail = baseHref.endsWith('/')
+      ? `${baseHref}assets/default-thumbnail.svg`
+      : `${baseHref}/assets/default-thumbnail.svg`;
   }
 
   async ngOnInit() {
@@ -378,8 +416,10 @@ export class OperationDetailsComponent implements OnInit {
         }
 
         // Busca por string no operation field
-        if (String(video.operation) === String(this.operationId) ||
-          String(video.operacao) === String(this.operationId)) {
+        if (
+          String(video.operation) === String(this.operationId) ||
+          String(video.operacao) === String(this.operationId)
+        ) {
           return true;
         }
 
@@ -387,9 +427,11 @@ export class OperationDetailsComponent implements OnInit {
         const title = (video.titulo || video.title || '').toLowerCase();
         const searchTerm = String(this.operationId).toLowerCase();
 
-        return title.includes(searchTerm) ||
+        return (
+          title.includes(searchTerm) ||
           title.includes(`operação ${searchTerm}`) ||
-          title.includes(`op ${searchTerm}`);
+          title.includes(`op ${searchTerm}`)
+        );
       });
 
       console.log(`Operação ${this.operationId}: encontrados ${this.relatedVideos.length} vídeos`);
@@ -397,20 +439,24 @@ export class OperationDetailsComponent implements OnInit {
         console.log('Primeiros vídeos encontrados:', this.relatedVideos.slice(0, 3));
       } else {
         console.log('Nenhum vídeo encontrado. Verificando primeiros 10 vídeos da base:');
-        console.log(videos.slice(0, 10).map(v => ({
-          operation: v.operation,
-          operacao: v.operacao,
-          titulo: v.titulo,
-          id: v.id_video
-        })));
+        console.log(
+          videos.slice(0, 10).map((v) => ({
+            operation: v.operation,
+            operacao: v.operacao,
+            titulo: v.titulo,
+            id: v.id_video,
+          }))
+        );
       }
 
       this.filteredVideos = [...this.relatedVideos];
-      this.percentage = this.totalVideos > 0 ? (this.relatedVideos.length / this.totalVideos) * 100 : 0;
+      this.updatePagination();
+      this.percentage =
+        this.totalVideos > 0 ? (this.relatedVideos.length / this.totalVideos) * 100 : 0;
 
       // Calcular período
       const dates = this.relatedVideos
-        .map(v => v.data_postagem || v.date)
+        .map((v) => v.data_postagem || v.date)
         .filter(Boolean)
         .sort();
 
@@ -423,9 +469,8 @@ export class OperationDetailsComponent implements OnInit {
       }
 
       // Contar canais únicos
-      const channels = new Set(this.relatedVideos.map(v => v.canal || v.channel).filter(Boolean));
+      const channels = new Set(this.relatedVideos.map((v) => v.canal || v.channel).filter(Boolean));
       this.uniqueChannels = channels.size;
-
     } catch (error) {
       console.error('Erro ao carregar dados da operação:', error);
     }
@@ -436,7 +481,7 @@ export class OperationDetailsComponent implements OnInit {
     const savedPatterns = this.loadSavedPatterns();
 
     // Analisar títulos dos vídeos
-    const titles = this.relatedVideos.map(v => v.titulo || v.title || '').filter(Boolean);
+    const titles = this.relatedVideos.map((v) => v.titulo || v.title || '').filter(Boolean);
     console.log(`Analisando operação ${this.operationId}:`);
     console.log(`- Vídeos relacionados: ${this.relatedVideos.length}`);
     console.log(`- Títulos válidos: ${titles.length}`);
@@ -457,11 +502,11 @@ export class OperationDetailsComponent implements OnInit {
     const timelineData = await this.groupByMonthWithComparison();
 
     this.timelineChartData = {
-      labels: timelineData.map(d => d.month),
+      labels: timelineData.map((d) => d.month),
       datasets: [
         {
           label: `Operação ${this.operationId}`,
-          data: timelineData.map(d => d.operationCount),
+          data: timelineData.map((d) => d.operationCount),
           borderColor: '#3b82f6',
           backgroundColor: 'rgba(59, 130, 246, 0.1)',
           fill: false,
@@ -469,11 +514,11 @@ export class OperationDetailsComponent implements OnInit {
           pointBackgroundColor: '#3b82f6',
           pointBorderColor: '#ffffff',
           pointBorderWidth: 2,
-          pointRadius: 5
+          pointRadius: 5,
         },
         {
           label: 'Todos os Vídeos',
-          data: timelineData.map(d => d.totalCount),
+          data: timelineData.map((d) => d.totalCount),
           borderColor: '#e5e7eb',
           backgroundColor: 'rgba(229, 231, 235, 0.1)',
           fill: false,
@@ -482,9 +527,9 @@ export class OperationDetailsComponent implements OnInit {
           pointBorderColor: '#ffffff',
           pointBorderWidth: 2,
           pointRadius: 4,
-          borderDash: [5, 5]
-        }
-      ]
+          borderDash: [5, 5],
+        },
+      ],
     };
 
     this.timelineChartOptions = {
@@ -492,12 +537,12 @@ export class OperationDetailsComponent implements OnInit {
       maintainAspectRatio: false,
       interaction: {
         intersect: false,
-        mode: 'index'
+        mode: 'index',
       },
       plugins: {
         legend: {
           display: true,
-          position: 'top'
+          position: 'top',
         },
         tooltip: {
           callbacks: {
@@ -509,11 +554,12 @@ export class OperationDetailsComponent implements OnInit {
 
               if (datasetLabel.includes('Operação')) {
                 const totalForMonth = timelineData[dataIndex]?.totalCount || 0;
-                const percentage = totalForMonth > 0 ? ((value / totalForMonth) * 100).toFixed(1) : '0';
+                const percentage =
+                  totalForMonth > 0 ? ((value / totalForMonth) * 100).toFixed(1) : '0';
                 return [
                   `${datasetLabel}: ${value} vídeos`,
                   `${percentage}% do total em ${month}`,
-                  totalForMonth > 0 ? `Total geral: ${totalForMonth} vídeos` : ''
+                  totalForMonth > 0 ? `Total geral: ${totalForMonth} vídeos` : '',
                 ].filter(Boolean);
               } else {
                 return `${datasetLabel}: ${value} vídeos`;
@@ -522,63 +568,65 @@ export class OperationDetailsComponent implements OnInit {
             title: (context: any) => {
               const month = context[0].label;
               return `Período: ${month}`;
-            }
-          }
+            },
+          },
         },
         zoom: {
           pan: {
             enabled: true,
             mode: 'x',
-            modifierKey: 'shift'
+            modifierKey: 'shift',
           },
           zoom: {
             wheel: {
-              enabled: true
+              enabled: true,
             },
             pinch: {
-              enabled: true
+              enabled: true,
             },
             mode: 'x',
             onZoomComplete: (chart: any) => {
               // Callback opcional após zoom
               console.log('Zoom aplicado:', chart.chart.scales.x.min, chart.chart.scales.x.max);
-            }
+            },
           },
           limits: {
-            x: { min: 'original', max: 'original' }
-          }
-        }
+            x: { min: 'original', max: 'original' },
+          },
+        },
       },
       scales: {
         x: {
           display: true,
           title: {
             display: true,
-            text: 'Período (Mês/Ano) - Use scroll para zoom, Shift+drag para pan'
-          }
+            text: 'Período (Mês/Ano) - Use scroll para zoom, Shift+drag para pan',
+          },
         },
         y: {
           beginAtZero: true,
           title: {
             display: true,
-            text: 'Número de Vídeos'
+            text: 'Número de Vídeos',
           },
           ticks: {
-            stepSize: 1
-          }
-        }
-      }
+            stepSize: 1,
+          },
+        },
+      },
     };
 
     // Gráfico de canais (mantido como estava)
     const channelData = this.groupByChannel();
     this.channelsChartData = {
-      labels: channelData.map(d => d.channel),
-      datasets: [{
-        label: 'Vídeos por Canal',
-        data: channelData.map(d => d.count),
-        backgroundColor: ['#3b82f6', '#6366f1', '#8b5cf6', '#a855f7', '#c084fc']
-      }]
+      labels: channelData.map((d) => d.channel),
+      datasets: [
+        {
+          label: 'Vídeos por Canal',
+          data: channelData.map((d) => d.count),
+          backgroundColor: ['#3b82f6', '#6366f1', '#8b5cf6', '#a855f7', '#c084fc'],
+        },
+      ],
     };
 
     this.channelsChartOptions = {
@@ -587,19 +635,21 @@ export class OperationDetailsComponent implements OnInit {
       indexAxis: 'y',
       plugins: {
         legend: {
-          display: false
-        }
-      }
+          display: false,
+        },
+      },
     };
   }
 
-  async groupByMonthWithComparison(): Promise<{ month: string; operationCount: number; totalCount: number; date: Date }[]> {
+  async groupByMonthWithComparison(): Promise<
+    { month: string; operationCount: number; totalCount: number; date: Date }[]
+  > {
     // Usar os vídeos já carregados
     const allVideos = this.allVideos;
 
     // Agrupar vídeos da operação por mês
     const operationGroups: Record<string, number> = {};
-    this.relatedVideos.forEach(video => {
+    this.relatedVideos.forEach((video) => {
       const dateStr = video.data_postagem || video.date;
       if (dateStr) {
         const date = new Date(dateStr);
@@ -627,7 +677,7 @@ export class OperationDetailsComponent implements OnInit {
     const allMonths = new Set([...Object.keys(operationGroups), ...Object.keys(totalGroups)]);
 
     return Array.from(allMonths)
-      .map(monthKey => {
+      .map((monthKey) => {
         const [year, month] = monthKey.split('-').map(Number);
         const date = new Date(year, month - 1, 1);
 
@@ -635,7 +685,7 @@ export class OperationDetailsComponent implements OnInit {
           month: date.toLocaleDateString('pt-BR', { year: 'numeric', month: 'short' }),
           operationCount: operationGroups[monthKey] || 0,
           totalCount: totalGroups[monthKey] || 0,
-          date: date
+          date: date,
         };
       })
       .sort((a, b) => a.date.getTime() - b.date.getTime());
@@ -644,7 +694,7 @@ export class OperationDetailsComponent implements OnInit {
   groupByMonth(): { month: string; count: number }[] {
     const groups: Record<string, number> = {};
 
-    this.relatedVideos.forEach(video => {
+    this.relatedVideos.forEach((video) => {
       const dateStr = video.data_postagem || video.date;
       if (dateStr) {
         const date = new Date(dateStr);
@@ -663,7 +713,7 @@ export class OperationDetailsComponent implements OnInit {
   groupByChannel(): { channel: string; count: number }[] {
     const groups: Record<string, number> = {};
 
-    this.relatedVideos.forEach(video => {
+    this.relatedVideos.forEach((video) => {
       const channel = video.canal || video.channel || 'Canal Desconhecido';
       groups[channel] = (groups[channel] || 0) + 1;
     });
@@ -688,19 +738,25 @@ export class OperationDetailsComponent implements OnInit {
       { pattern: /operação|operacao/gi, label: 'Operação policial' },
       { pattern: /prisão|preso|detido|detida|captura/gi, label: 'Operação de prisão' },
       { pattern: /apreensão|apreensao|droga|drogas|entorpecente/gi, label: 'Apreensão de drogas' },
-      { pattern: /homicídio|homicidio|assassinato|morte|morto|morta|óbito/gi, label: 'Crime contra vida' },
+      {
+        pattern: /homicídio|homicidio|assassinato|morte|morto|morta|óbito/gi,
+        label: 'Crime contra vida',
+      },
       { pattern: /roubo|furto|assalto|latrocínio|latrocinio/gi, label: 'Crime contra patrimônio' },
       { pattern: /chacina|massacre|múltiplas|vítimas/gi, label: 'Crime com múltiplas vítimas' },
       { pattern: /tráfico|trafico|narcotráfico/gi, label: 'Tráfico de drogas' },
       { pattern: /polícia|policial|pm|civil|militar/gi, label: 'Ação policial' },
-      { pattern: /investigação|investigacao|inquérito|inquerito/gi, label: 'Investigação criminal' },
-      { pattern: /facção|faccao|organizada|criminosa/gi, label: 'Crime organizado' }
+      {
+        pattern: /investigação|investigacao|inquérito|inquerito/gi,
+        label: 'Investigação criminal',
+      },
+      { pattern: /facção|faccao|organizada|criminosa/gi, label: 'Crime organizado' },
     ];
 
     const foundPatterns = new Set<string>();
 
     operationPatterns.forEach(({ pattern, label }) => {
-      const matches = titles.some(title => pattern.test(title));
+      const matches = titles.some((title) => pattern.test(title));
       if (matches) {
         foundPatterns.add(label);
       }
@@ -711,15 +767,81 @@ export class OperationDetailsComponent implements OnInit {
 
     // Análise de palavras-chave (melhorada)
     const keywords: Record<string, number> = {};
-    const stopWords = new Set(['de', 'da', 'do', 'das', 'dos', 'em', 'na', 'no', 'nas', 'nos', 'para', 'por', 'com', 'sem', 'sob', 'sobre', 'após', 'antes', 'durante', 'contra', 'entre', 'até', 'desde', 'após', 'que', 'como', 'quando', 'onde', 'porque', 'porque', 'já', 'ainda', 'mais', 'menos', 'muito', 'pouco', 'todo', 'toda', 'todos', 'todas', 'este', 'esta', 'estes', 'estas', 'esse', 'essa', 'esses', 'essas', 'aquele', 'aquela', 'aqueles', 'aquelas', 'seu', 'sua', 'seus', 'suas', 'meu', 'minha', 'meus', 'minhas', 'nosso', 'nossa', 'nossos', 'nossas']);
+    const stopWords = new Set([
+      'de',
+      'da',
+      'do',
+      'das',
+      'dos',
+      'em',
+      'na',
+      'no',
+      'nas',
+      'nos',
+      'para',
+      'por',
+      'com',
+      'sem',
+      'sob',
+      'sobre',
+      'após',
+      'antes',
+      'durante',
+      'contra',
+      'entre',
+      'até',
+      'desde',
+      'após',
+      'que',
+      'como',
+      'quando',
+      'onde',
+      'porque',
+      'porque',
+      'já',
+      'ainda',
+      'mais',
+      'menos',
+      'muito',
+      'pouco',
+      'todo',
+      'toda',
+      'todos',
+      'todas',
+      'este',
+      'esta',
+      'estes',
+      'estas',
+      'esse',
+      'essa',
+      'esses',
+      'essas',
+      'aquele',
+      'aquela',
+      'aqueles',
+      'aquelas',
+      'seu',
+      'sua',
+      'seus',
+      'suas',
+      'meu',
+      'minha',
+      'meus',
+      'minhas',
+      'nosso',
+      'nossa',
+      'nossos',
+      'nossas',
+    ]);
 
-    titles.forEach(title => {
-      const words = title.toLowerCase()
+    titles.forEach((title) => {
+      const words = title
+        .toLowerCase()
         .replace(/[^\w\sáàâãéèêíìîóòôõúùûç]/g, ' ')
         .split(/\s+/)
-        .filter(word => word.length > 3 && !stopWords.has(word));
+        .filter((word) => word.length > 3 && !stopWords.has(word));
 
-      words.forEach(word => {
+      words.forEach((word) => {
         keywords[word] = (keywords[word] || 0) + 1;
       });
     });
@@ -742,15 +864,55 @@ export class OperationDetailsComponent implements OnInit {
 
   extractKeywords(titles: string[]): { word: string; weight: number }[] {
     const keywords: Record<string, number> = {};
-    const stopWords = new Set(['de', 'da', 'do', 'das', 'dos', 'em', 'na', 'no', 'nas', 'nos', 'para', 'por', 'com', 'sem', 'sob', 'sobre', 'após', 'antes', 'durante', 'contra', 'entre', 'até', 'desde', 'que', 'como', 'quando', 'onde', 'porque', 'já', 'ainda', 'mais', 'menos', 'muito', 'pouco', 'todo', 'toda', 'todos', 'todas']);
+    const stopWords = new Set([
+      'de',
+      'da',
+      'do',
+      'das',
+      'dos',
+      'em',
+      'na',
+      'no',
+      'nas',
+      'nos',
+      'para',
+      'por',
+      'com',
+      'sem',
+      'sob',
+      'sobre',
+      'após',
+      'antes',
+      'durante',
+      'contra',
+      'entre',
+      'até',
+      'desde',
+      'que',
+      'como',
+      'quando',
+      'onde',
+      'porque',
+      'já',
+      'ainda',
+      'mais',
+      'menos',
+      'muito',
+      'pouco',
+      'todo',
+      'toda',
+      'todos',
+      'todas',
+    ]);
 
-    titles.forEach(title => {
-      const words = title.toLowerCase()
+    titles.forEach((title) => {
+      const words = title
+        .toLowerCase()
         .replace(/[^\w\sáàâãéèêíìîóòôõúùûç]/g, ' ')
         .split(/\s+/)
-        .filter(word => word.length > 3 && !stopWords.has(word));
+        .filter((word) => word.length > 3 && !stopWords.has(word));
 
-      words.forEach(word => {
+      words.forEach((word) => {
         keywords[word] = (keywords[word] || 0) + 1;
       });
     });
@@ -758,7 +920,7 @@ export class OperationDetailsComponent implements OnInit {
     return Object.entries(keywords)
       .map(([word, count]) => ({
         word,
-        weight: Math.min(count / Math.max(titles.length, 1), 1)
+        weight: Math.min(count / Math.max(titles.length, 1), 1),
       }))
       .sort((a, b) => b.weight - a.weight)
       .slice(0, 10);
@@ -778,7 +940,7 @@ export class OperationDetailsComponent implements OnInit {
         patterns: this.identifiedPatterns,
         keywords: this.topKeywords,
         lastUpdated: new Date().toISOString(),
-        videosCount: this.relatedVideos.length
+        videosCount: this.relatedVideos.length,
       };
       localStorage.setItem('operationPatterns', JSON.stringify(savedPatterns));
     } catch (error) {
@@ -791,12 +953,14 @@ export class OperationDetailsComponent implements OnInit {
       this.filteredVideos = [...this.relatedVideos];
     } else {
       const term = this.searchTerm.toLowerCase();
-      this.filteredVideos = this.relatedVideos.filter(video =>
-        (video.titulo || video.title || '').toLowerCase().includes(term) ||
-        (video.descricao || video.description || '').toLowerCase().includes(term)
+      this.filteredVideos = this.relatedVideos.filter(
+        (video) =>
+          (video.titulo || video.title || '').toLowerCase().includes(term) ||
+          (video.descricao || video.description || '').toLowerCase().includes(term)
       );
     }
     this.sortVideos();
+    this.updatePagination();
   }
 
   sortVideos() {
@@ -811,6 +975,59 @@ export class OperationDetailsComponent implements OnInit {
           return dateB.getTime() - dateA.getTime();
       }
     });
+    this.updatePagination();
+  }
+
+  updatePagination() {
+    this.totalPages = Math.ceil(this.filteredVideos.length / this.itemsPerPage);
+    this.currentPage = Math.min(this.currentPage, this.totalPages || 1);
+    this.updatePaginatedVideos();
+  }
+
+  updatePaginatedVideos() {
+    const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+    const endIndex = startIndex + this.itemsPerPage;
+    this.paginatedVideos = this.filteredVideos.slice(startIndex, endIndex);
+  }
+
+  goToPage(page: number) {
+    this.currentPage = page;
+    this.updatePaginatedVideos();
+  }
+
+  previousPage() {
+    if (this.currentPage > 1) {
+      this.currentPage--;
+      this.updatePaginatedVideos();
+    }
+  }
+
+  nextPage() {
+    if (this.currentPage < this.totalPages) {
+      this.currentPage++;
+      this.updatePaginatedVideos();
+    }
+  }
+
+  getPageNumbers(): number[] {
+    const pages: number[] = [];
+    const maxVisiblePages = 5;
+    let startPage = Math.max(1, this.currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(this.totalPages, startPage + maxVisiblePages - 1);
+
+    if (endPage - startPage + 1 < maxVisiblePages) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+
+    return pages;
+  }
+
+  getEndIndex(): number {
+    return Math.min(this.currentPage * this.itemsPerPage, this.filteredVideos.length);
   }
 
   formatDate(date: string): string {

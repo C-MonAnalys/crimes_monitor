@@ -40,3 +40,5 @@ testem.log
 # System files
 .DS_Store
 Thumbs.db
+
+src/assets/data/sentiment/cenario-real/comentarios_2020_inferido_events.json

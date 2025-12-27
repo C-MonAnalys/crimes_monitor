@@ -1,0 +1,4 @@
+[
+  { "label": "RF", "file": "bootstrap_results_RF_BERT_SMOTE_031224.json" },
+  { "label": "SVM",       "file": "bootstrap_results_SVM_smote_031224.json" }
+]

@@ -1,6 +1,6 @@
 <div class="app-shell flex h-screen">
 	<!-- Sidebar desktop -->
-	<app-sidebar class="hidden md:block" [isCollapsed]="sidebarCollapsed"></app-sidebar>
+	<app-sidebar class="hidden md:block" [isCollapsed]="sidebarCollapsed" (collapsedChange)="onSidebarToggle()"></app-sidebar>
 	
 	<!-- Conteúdo principal -->
 	<div class="flex flex-col flex-1 h-screen overflow-hidden">
@@ -8,8 +8,8 @@
 		<app-header class="flex-shrink-0" (menuClick)="sidebarOpen = true" [sidebarCollapsed]="sidebarCollapsed" (toggleSidebar)="onSidebarToggle()"></app-header>
 		
 		<!-- Main content -->
-		<main class="flex-1 bg-slate-50 overflow-auto">
-			<div class="pl-6 pr-12 py-6 h-full">
+		<main #mainScroll class="flex-1 bg-slate-50 overflow-auto">
+			<div class="pl-6 pr-6 py-6 h-full">
 				<router-outlet />
 			</div>
 		</main>
@@ -18,6 +18,6 @@
 	<!-- Sidebar móvel -->
 	<ng-container *ngIf="sidebarOpen">
 		<div class="fixed inset-0 bg-black/40 z-40" (click)="sidebarOpen = false"></div>
-		<app-sidebar class="block md:hidden fixed top-0 left-0 h-screen z-50 bg-slate-900" (closeSidebar)="sidebarOpen = false"></app-sidebar>
+		<app-sidebar class="block md:hidden fixed top-0 left-0 h-screen z-50 bg-slate-900" (closeSidebar)="sidebarOpen = false" [isCollapsed]="false" (collapsedChange)="onSidebarToggle()"></app-sidebar>
 	</ng-container>
 </div>
