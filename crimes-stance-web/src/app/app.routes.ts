@@ -69,7 +69,7 @@ export const routes: Routes = [
   },
 
   // Cenário real — Eventos
-  { path: 'eventos', loadComponent: EventosList },
+  { path: 'eventos', redirectTo: 'eventos/brasil_all', pathMatch: 'full' },
   { path: 'eventos/:id', loadComponent: EventosReal },
 
   // Cenário real — Posicionamento

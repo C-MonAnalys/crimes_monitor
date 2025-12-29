@@ -36,9 +36,9 @@ export class EventosListComponent implements OnInit {
   }
 
   private apply(all: Record<string, any>) {
-    this.datasets = Object.entries(all || {}).map(([id, cfg]: any) => ({
-      id, label: cfg.label, description: cfg.description
-    }));
+    this.datasets = Object.entries(all || {})
+      .filter(([id, cfg]: any) => cfg && (cfg.file === '__ALL__' || id === 'brasil_all'))
+      .map(([id, cfg]: any) => ({ id, label: cfg.label, description: cfg.description }));
     this.isLoading = false;
     this.timedOut = false;
     this.error = '';

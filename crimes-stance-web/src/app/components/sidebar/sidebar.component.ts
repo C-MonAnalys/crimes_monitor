@@ -117,7 +117,7 @@ export class SidebarComponent {
       tooltip: 'Dados em contexto real',
       hasSubmenu: true,
       subItems: [
-        { id: 'cenario-eventos',        link: '/eventos',          icon: 'bi-collection-play',  text: 'Eventos',        tooltip: 'Heurística em datasets reais' },
+        { id: 'cenario-eventos',        link: '/eventos/brasil_all',  icon: 'bi-collection-play',  text: 'Eventos',        tooltip: 'Heurística em datasets reais' },
         { id: 'cenario-posicionamento', link: '/posicionamento',   icon: 'bi-chat-square-text', text: 'Posicionamento', tooltip: 'Modelo em datasets reais' }
       ]
     },
