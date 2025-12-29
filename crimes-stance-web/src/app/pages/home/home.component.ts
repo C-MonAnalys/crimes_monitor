@@ -102,14 +102,19 @@ export class HomeComponent implements OnInit {
     // events/cenario-real
     const ev = await this.fetchJson('assets/data/events/cenario-real/datasets.json');
     if (ev && typeof ev === 'object') {
-      const entries = Object.entries(ev) as Array<[string, any]>;
-      if (entries.length) {
-        const [id, cfg] = entries[entries.length - 1]; // “último” no arquivo
-        this.latestEvent.set({
-          id,
-          label: cfg?.label ?? id,
-          description: cfg?.description ?? ''
-        });
+      if (ev['brasil_all']) {
+        const cfg = ev['brasil_all'];
+        this.latestEvent.set({ id: 'brasil_all', label: cfg?.label ?? 'Brasil 2019–2025', description: cfg?.description ?? '' });
+      } else {
+        const entries = Object.entries(ev) as Array<[string, any]>;
+        if (entries.length) {
+          const [id, cfg] = entries[entries.length - 1]; // “último” no arquivo
+          this.latestEvent.set({
+            id,
+            label: cfg?.label ?? id,
+            description: cfg?.description ?? ''
+          });
+        }
       }
     }
 

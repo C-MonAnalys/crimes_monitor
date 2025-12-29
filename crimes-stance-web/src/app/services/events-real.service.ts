@@ -62,10 +62,28 @@ export class EventsRealService {
     const config = all[datasetId];
     if (!config) throw new Error(`Dataset "${datasetId}" não encontrado em datasets.json`);
 
-    // o "file" em datasets.json já é relativo à pasta assets/data/events/...
-    const fileUrl = this.resolveAssetUrl(config.file);
+    let raw: any[] = [];
 
-    const raw: any[] = await this.fetchJson(fileUrl);
+    if (config.file === '__ALL__') {
+      // compila todos os arquivos listados em datasets.json (exceto entradas __ALL__)
+      const files = Object.values(all)
+        .map((c: any) => c.file)
+        .filter((f: any) => f && f !== '__ALL__');
+
+      const fetches = files.map(f => this.fetchJson(this.resolveAssetUrl(f)).catch(e => {
+        console.error('[EventsRealService] erro ao buscar arquivo', f, e);
+        return null;
+      }));
+
+      const results = await Promise.all(fetches);
+      raw = results.filter(r => Array.isArray(r)).flat();
+      if (!raw.length) throw new Error('Nenhum arquivo disponível para compilar datasets.');
+    } else {
+      // o "file" em datasets.json já é relativo à pasta assets/data/events/...
+      const fileUrl = this.resolveAssetUrl(config.file);
+      raw = await this.fetchJson(fileUrl);
+    }
+
     const videos = this.normalizeVideos(raw);
 
     // agrega
