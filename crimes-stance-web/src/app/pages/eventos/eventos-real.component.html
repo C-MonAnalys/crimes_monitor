@@ -41,12 +41,18 @@
     </section>
 
 
-    <!-- Lista (amostra) -->
+    <!-- Lista de Vídeos com Paginação -->
     <section class="bg-white rounded-xl border border-slate-200 p-6">
-      <h2 class="font-semibold text-slate-900 mb-3">Vídeos</h2>
-      <ng-container *ngIf="filteredVideos?.length; else noVideos">
-        <div class="grid grid-cols-1 gap-4">
-          <article *ngFor="let v of filteredVideos | slice:0:20" class="border border-slate-200 rounded-lg p-4">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="font-semibold text-slate-900">Vídeos ({{ filteredVideos.length }} encontrados)</h2>
+        <div class="text-sm text-slate-500">
+          Página {{ currentPage }} de {{ totalPages }}
+        </div>
+      </div>
+      
+      <ng-container *ngIf="paginatedVideos?.length; else noVideos">
+        <div class="grid grid-cols-1 gap-4 mb-6">
+          <article *ngFor="let v of paginatedVideos" class="border border-slate-200 rounded-lg p-4">
             <div class="text-sm text-slate-500 mb-1">{{ v.data_postagem || (v.parsedDate ? (v.parsedDate | date:'yyyy-MM-dd HH:mm') : '—') }}</div>
             <div class="font-medium text-slate-800">{{ v.titulo || 'Sem título' }}</div>
             <div class="text-slate-500 text-sm truncate" title="{{ v.descricao || '' }}">{{ v.descricao || 'Sem descrição' }}</div>
@@ -57,6 +63,57 @@
               <a *ngIf="v.link || v.url" class="text-blue-600 hover:underline" [href]="v.link || v.url" target="_blank" rel="noopener">Abrir vídeo</a>
             </div>
           </article>
+        </div>
+
+        <!-- Controles de Paginação -->
+        <div class="flex flex-col sm:flex-row justify-between items-center gap-4" *ngIf="totalPages > 1">
+          <div class="text-sm text-slate-600">
+            Mostrando {{ (currentPage - 1) * pageSize + 1 }} - {{ getMin(currentPage * pageSize, filteredVideos.length) }} de {{ filteredVideos.length }} vídeos
+          </div>
+          
+          <div class="flex items-center gap-2">
+            <!-- Primeira página -->
+            <button 
+              (click)="firstPage()" 
+              [disabled]="currentPage === 1"
+              class="px-3 py-1 text-sm border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed">
+              ≪
+            </button>
+            
+            <!-- Página anterior -->
+            <button 
+              (click)="prevPage()" 
+              [disabled]="currentPage === 1"
+              class="px-3 py-1 text-sm border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed">
+              ‹
+            </button>
+            
+            <!-- Números das páginas -->
+            <ng-container *ngFor="let page of visiblePages">
+              <button 
+                (click)="goToPage(page)" 
+                [class.active-page]="page === currentPage"
+                class="px-3 py-1 text-sm border border-slate-300 rounded hover:bg-slate-50 min-w-[40px]">
+                {{ page }}
+              </button>
+            </ng-container>
+            
+            <!-- Próxima página -->
+            <button 
+              (click)="nextPage()" 
+              [disabled]="currentPage === totalPages"
+              class="px-3 py-1 text-sm border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed">
+              ›
+            </button>
+            
+            <!-- Última página -->
+            <button 
+              (click)="lastPage()" 
+              [disabled]="currentPage === totalPages"
+              class="px-3 py-1 text-sm border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed">
+              ≫
+            </button>
+          </div>
         </div>
       </ng-container>
       <ng-template #noVideos><div class="text-slate-500">Nenhum vídeo encontrado.</div></ng-template>

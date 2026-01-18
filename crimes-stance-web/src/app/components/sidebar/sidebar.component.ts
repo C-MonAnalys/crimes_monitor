@@ -111,15 +111,18 @@ export class SidebarComponent {
       tooltip: 'Página inicial',
     },
     {
-      id: 'cenario',
-      icon: 'bi-broadcast',
-      text: 'Cenário real',
-      tooltip: 'Dados em contexto real',
-      hasSubmenu: true,
-      subItems: [
-        { id: 'cenario-eventos',        link: '/eventos/brasil_all',  icon: 'bi-collection-play',  text: 'Eventos',        tooltip: 'Heurística em datasets reais' },
-        { id: 'cenario-posicionamento', link: '/posicionamento',   icon: 'bi-chat-square-text', text: 'Posicionamento', tooltip: 'Modelo em datasets reais' }
-      ]
+      id: 'eventos',
+      link: '/eventos/brasil_all',
+      icon: 'bi-collection-play',
+      text: 'Eventos',
+      tooltip: 'Heurística em datasets reais',
+    },
+    {
+      id: 'posicionamento',
+      link: '/posicionamento',
+      icon: 'bi-chat-square-text',
+      text: 'Posicionamento',
+      tooltip: 'Modelo em datasets reais',
     },
     {
       id: 'avaliacoes',

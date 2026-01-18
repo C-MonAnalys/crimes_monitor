@@ -3,15 +3,22 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { ChartModule } from 'primeng/chart';
-import { EventsRealService } from '../../../services/events-real.service';
-import { withTimeout } from '../../../services/promise-timeout.util';
+import { EventsRealService } from '../../services/events-real.service';
+import { withTimeout } from '../../services/promise-timeout.util';
 import { EventosTimelineChartComponent } from './eventos-timeline-chart.component';
 
 @Component({
   selector: 'app-eventos-real',
   standalone: true,
   imports: [CommonModule, FormsModule, ChartModule, EventosTimelineChartComponent],
-  templateUrl: './eventos-real.component.html'
+  templateUrl: './eventos-real.component.html',
+  styles: [`
+    .active-page {
+      background-color: #3b82f6 !important;
+      color: white !important;
+      border-color: #3b82f6 !important;
+    }
+  `]
 })
 export class EventosRealComponent implements OnInit {
   private route = inject(ActivatedRoute);
@@ -30,6 +37,11 @@ export class EventosRealComponent implements OnInit {
   private baseDayValues: number[] = [];
   chartStartDate: string = '';
   chartEndDate: string = '';
+
+  // paginação
+  currentPage = 1;
+  pageSize = 20;
+  totalPages = 1;
 
   // filtros e busca
   searchTerm = '';
@@ -66,6 +78,10 @@ export class EventosRealComponent implements OnInit {
       const db = b.data_postagem || b.date || b.day || '';
       return da.localeCompare(db);
     });
+
+    // calcular totalPages após definir filteredVideos
+    this.totalPages = Math.ceil(this.filteredVideos.length / this.pageSize);
+    this.currentPage = 1; // reset para primeira página
 
     // calcular operações mais comuns (para filtro)
     const opCounts: Record<string, number> = {};
@@ -163,6 +179,12 @@ export class EventosRealComponent implements OnInit {
       return matchesSearch && matchesOperation && matchesDate;
     });
 
+    // atualizar paginação
+    this.totalPages = Math.ceil(this.filteredVideos.length / this.pageSize);
+    if (this.currentPage > this.totalPages) {
+      this.currentPage = Math.max(1, this.totalPages);
+    }
+
     // filtros da amostra não alteram mais o gráfico: controle separado
   }
 
@@ -206,5 +228,55 @@ export class EventosRealComponent implements OnInit {
         data: filtValues
       }]
     };
+  }
+
+  // métodos de paginação
+  get paginatedVideos() {
+    const start = (this.currentPage - 1) * this.pageSize;
+    const end = start + this.pageSize;
+    return this.filteredVideos.slice(start, end);
+  }
+
+  goToPage(page: number) {
+    if (page >= 1 && page <= this.totalPages) {
+      this.currentPage = page;
+    }
+  }
+
+  nextPage() {
+    if (this.currentPage < this.totalPages) {
+      this.currentPage++;
+    }
+  }
+
+  prevPage() {
+    if (this.currentPage > 1) {
+      this.currentPage--;
+    }
+  }
+
+  firstPage() {
+    this.currentPage = 1;
+  }
+
+  lastPage() {
+    this.currentPage = this.totalPages;
+  }
+
+  get visiblePages(): number[] {
+    const pages: number[] = [];
+    const start = Math.max(1, this.currentPage - 2);
+    const end = Math.min(this.totalPages, this.currentPage + 2);
+    
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+    
+    return pages;
+  }
+
+  // função auxiliar para template
+  getMin(a: number, b: number): number {
+    return Math.min(a, b);
   }
 }

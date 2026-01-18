@@ -1,8 +1,8 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { SentimentRealService } from '../../../services/posicionamento-real.service';
-import { withTimeout } from '../../../services/promise-timeout.util';
+import { SentimentRealService } from '../../services/posicionamento-real.service';
+import { withTimeout } from '../../services/promise-timeout.util';
 
 @Component({
   selector: 'app-posicionamento-list',

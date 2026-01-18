@@ -123,8 +123,27 @@ export class EventsRealService {
         const dateStr = v.data_postagem || v.date || v.day || null;
         let parsedDate: Date | null = null;
         if (dateStr) {
+          // Tentar diferentes formatos de data
           const d = new Date(dateStr);
-          parsedDate = isNaN(d.getTime()) ? null : d;
+          if (!isNaN(d.getTime())) {
+            parsedDate = d;
+          } else {
+            // Tentar formato YYYY-MM-DD
+            const match = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
+            if (match) {
+              const year = parseInt(match[1]);
+              const month = parseInt(match[2]) - 1; // mês é 0-indexed
+              const day = parseInt(match[3]);
+              const testDate = new Date(year, month, day);
+              if (!isNaN(testDate.getTime())) {
+                parsedDate = testDate;
+              }
+            }
+          }
+        }
+        // Se não conseguiu parsear a data, define uma data padrão antiga para manter no final da lista
+        if (!parsedDate) {
+          parsedDate = new Date('1900-01-01T00:00:00');
         }
         // operation id pela heurística
         const opId = (v.operation_ner ?? v.operation ?? v.op ?? '').toString().trim();
@@ -134,7 +153,7 @@ export class EventsRealService {
           operation_id: opId,
         };
       })
-      .filter(v => !!v.parsedDate); // só mantém com data válida
+      .filter(v => true); // aceitar todos os vídeos, mesmo sem data válida
   }
 
   private aggregate(videos: any[]) {

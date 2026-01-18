@@ -1,8 +1,8 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { EventsRealService } from '../../../services/events-real.service';
-import { withTimeout } from '../../../services/promise-timeout.util';
+import { EventsRealService } from '../../services/events-real.service';
+import { withTimeout } from '../../services/promise-timeout.util';
 
 @Component({
   selector: 'app-eventos-list',
