@@ -25,19 +25,19 @@ const AnalisePosicionamentoExistente = () =>
     .then(m => m.OpinionAnalysisComponent);
 
 const EventosList = () =>
-  import('./pages/real/eventos/eventos-list.component')
+  import('./pages/eventos/eventos-list.component')
     .then(m => m.EventosListComponent);
 
 const EventosReal = () =>
-  import('./pages/real/eventos/eventos-real.component')
+  import('./pages/eventos/eventos-real.component')
     .then(m => m.EventosRealComponent);
 
 const PosicionamentoList = () =>
-  import('./pages/real/posicionamento/posicionamento-list.component')
+  import('./pages/posicionamento/posicionamento-list.component')
     .then(m => m.PosicionamentoListComponent);
 
 const PosicionamentoReal = () =>
-  import('./pages/real/posicionamento/posicionamento-real.component')
+  import('./pages/posicionamento/posicionamento-real.component')
     .then(m => m.PosicionamentoRealComponent);
 
 const Home = () =>
@@ -47,6 +47,12 @@ const Home = () =>
 
 export const routes: Routes = [
   { path: 'home', loadComponent: Home },
+  // Eventos
+  { path: 'eventos', redirectTo: 'eventos/brasil_all', pathMatch: 'full' },
+  { path: 'eventos/:id', loadComponent: EventosReal },
+  // Posicionamento
+  { path: 'posicionamento', loadComponent: PosicionamentoList },
+  { path: 'posicionamento/:id', loadComponent: PosicionamentoReal },
   {
     path: 'avaliacoes',
     children: [
@@ -67,14 +73,5 @@ export const routes: Routes = [
       { path: 'eventos', component: EventsAnalysisComponent },
     ]
   },
-
-  // Cenário real — Eventos
-  { path: 'eventos', redirectTo: 'eventos/brasil_all', pathMatch: 'full' },
-  { path: 'eventos/:id', loadComponent: EventosReal },
-
-  // Cenário real — Posicionamento
-  { path: 'posicionamento', loadComponent: PosicionamentoList },
-  { path: 'posicionamento/:id', loadComponent: PosicionamentoReal },
-
 	{ path: 'operacao/:id', component: OperationDetailsComponent }
 ];

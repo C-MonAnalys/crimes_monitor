@@ -1,0 +1,125 @@
+<div class="space-y-6">
+  <header class="bg-white rounded-xl border border-slate-200 p-6">
+    <h1 class="text-2xl font-bold text-slate-900">
+      Eventos
+      <span class="text-slate-600 text-base ml-2" *ngIf="meta?.label">({{ meta.label }})</span>
+    </h1>
+    <p class="text-slate-600 mt-1">Eventos detectados pela heurística no dataset selecionado.</p>
+  </header>
+
+  <div class="bg-white rounded-xl border border-slate-200 p-6" *ngIf="isLoading">Carregando…</div>
+  <div class="bg-white rounded-xl border border-slate-200 p-6 text-red-600" *ngIf="!isLoading && error">{{ error }}</div>
+  <div *ngIf="timedOut && !error" class="bg-amber-50 border border-amber-200 text-amber-700 rounded-md p-3">Conexão lenta. Exibindo o que já foi carregado…</div>
+
+  <ng-container *ngIf="!isLoading && !error">
+    
+
+    <!-- GRÁFICO: Eventos por período -->
+    <section class="bg-white rounded-xl border border-slate-200 p-6">
+      <app-eventos-timeline-chart
+        [videos]="videos"
+        [datasetId]="meta?.id"
+        [initialStartDate]="chartStartDate"
+        [initialEndDate]="chartEndDate"
+        (rangeChanged)="onRangeChanged($event)">
+      </app-eventos-timeline-chart>
+    </section>
+
+    <!-- Cards -->
+    <section class="flex justify-center">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 w-full ">
+        <div class="bg-white border border-slate-200 rounded-xl p-4">
+          <div class="text-slate-500 text-sm">Total de Vídeos</div>
+          <div class="text-2xl font-bold">{{ filteredVideos.length | number }}</div>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-xl p-4">
+          <div class="text-slate-500 text-sm">Eventos</div>
+          <div class="text-2xl font-bold">{{ filteredTotalOperations | number }}</div>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-xl p-4">
+          <div class="text-slate-500 text-sm">Período</div>
+          <div class="text-2xl font-bold">{{ currentPeriod }}</div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- Lista de Vídeos com Paginação -->
+    <section class="bg-white rounded-xl border border-slate-200 p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="font-semibold text-slate-900">Vídeos ({{ filteredVideos.length }} encontrados)</h2>
+        <div class="text-sm text-slate-500">
+          Página {{ currentPage }} de {{ totalPages }}
+        </div>
+      </div>
+      
+      <ng-container *ngIf="paginatedVideos?.length; else noVideos">
+        <div class="grid grid-cols-1 gap-4 mb-6">
+          <article *ngFor="let v of paginatedVideos" class="border border-slate-200 rounded-lg p-4">
+            <div class="text-sm text-slate-500 mb-1">{{ v.data_postagem || (v.parsedDate ? (v.parsedDate | date:'yyyy-MM-dd HH:mm') : '—') }}</div>
+            <div class="font-medium text-slate-800">{{ v.titulo || 'Sem título' }}</div>
+            <div class="text-slate-500 text-sm truncate" title="{{ v.descricao || '' }}">{{ v.descricao || 'Sem descrição' }}</div>
+            <div class="mt-2 text-sm">
+              <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700">Operação: {{ v.operation_id || '—' }}</span>
+            </div>
+            <div class="mt-3">
+              <a *ngIf="v.link || v.url" class="text-blue-600 hover:underline" [href]="v.link || v.url" target="_blank" rel="noopener">Abrir vídeo</a>
+            </div>
+          </article>
+        </div>
+
+        <!-- Controles de Paginação -->
+        <div class="flex flex-col sm:flex-row justify-between items-center gap-4" *ngIf="totalPages > 1">
+          <div class="text-sm text-slate-600">
+            Mostrando {{ (currentPage - 1) * pageSize + 1 }} - {{ getMin(currentPage * pageSize, filteredVideos.length) }} de {{ filteredVideos.length }} vídeos
+          </div>
+          
+          <div class="flex items-center gap-2">
+            <!-- Primeira página -->
+            <button 
+              (click)="firstPage()" 
+              [disabled]="currentPage === 1"
+              class="px-3 py-1 text-sm border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed">
+              ≪
+            </button>
+            
+            <!-- Página anterior -->
+            <button 
+              (click)="prevPage()" 
+              [disabled]="currentPage === 1"
+              class="px-3 py-1 text-sm border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed">
+              ‹
+            </button>
+            
+            <!-- Números das páginas -->
+            <ng-container *ngFor="let page of visiblePages">
+              <button 
+                (click)="goToPage(page)" 
+                [class.active-page]="page === currentPage"
+                class="px-3 py-1 text-sm border border-slate-300 rounded hover:bg-slate-50 min-w-[40px]">
+                {{ page }}
+              </button>
+            </ng-container>
+            
+            <!-- Próxima página -->
+            <button 
+              (click)="nextPage()" 
+              [disabled]="currentPage === totalPages"
+              class="px-3 py-1 text-sm border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed">
+              ›
+            </button>
+            
+            <!-- Última página -->
+            <button 
+              (click)="lastPage()" 
+              [disabled]="currentPage === totalPages"
+              class="px-3 py-1 text-sm border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed">
+              ≫
+            </button>
+          </div>
+        </div>
+      </ng-container>
+      <ng-template #noVideos><div class="text-slate-500">Nenhum vídeo encontrado.</div></ng-template>
+    </section>
+  </ng-container>
+</div>

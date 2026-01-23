@@ -4,22 +4,22 @@ import { ActivatedRoute } from '@angular/router';
 import { ChartModule } from 'primeng/chart';
 import { ChangeDetectorRef, NgZone } from '@angular/core';
 
-import { withTimeout } from '../../../services/promise-timeout.util';
-// import { SentimentService } from '../../../services/sentiment.service';
-import { SentimentRealService } from '../../../services/posicionamento-real.service';
+import { withTimeout } from '../../services/promise-timeout.util';
+// import { SentimentService } from '../../services/sentiment.service';
+import { SentimentRealService } from '../../services/posicionamento-real.service';
 
 // Reuso dos seus componentes
-import { AnalysisStatCardComponent } from '../../../components/opinion-analysis/analysis-stat-card/analysis-stat-card';
-import { PositioningDistributionComponent } from '../../../components/opinion-analysis/positioning-distribution/positioning-distribution';
-import { TopicsCardComponent } from '../../../components/opinion-analysis/topics-card/topics-card';
-import { TemporalEvolutionChartComponent } from '../../../components/opinion-analysis/temporal-evolution-chart/temporal-evolution-chart';
-import { PositioningDoughnutChartComponent } from '../../../components/opinion-analysis/positioning-doughnut-chart/positioning-doughnut-chart';
-import { MetricsBarChartComponent } from '../../../components/opinion-analysis/metrics-bar-chart/metrics-bar-chart';
-import { BootstrapResultsCardComponent } from '../../../components/opinion-analysis/bootstrap-results-card/bootstrap-results-card';
-import { DetailedMetricsCardComponent } from '../../../components/opinion-analysis/detailed-metrics-card/detailed-metrics-card';
-import { CommentsSampleCardComponent } from '../../../components/opinion-analysis/comments-sample-card/comments-sample-card';
-import { ModelAccuracyCardComponent } from '../../../components/opinion-analysis/model-accuracy-card/model-accuracy-card';
-import { WeeklyStackedChartComponent } from '../../../components/opinion-analysis/weekly-stacked-chart/weekly-stacked-chart';
+import { AnalysisStatCardComponent } from '../../components/opinion-analysis/analysis-stat-card/analysis-stat-card';
+import { PositioningDistributionComponent } from '../../components/opinion-analysis/positioning-distribution/positioning-distribution';
+import { TopicsCardComponent } from '../../components/opinion-analysis/topics-card/topics-card';
+import { TemporalEvolutionChartComponent } from '../../components/opinion-analysis/temporal-evolution-chart/temporal-evolution-chart';
+import { PositioningDoughnutChartComponent } from '../../components/opinion-analysis/positioning-doughnut-chart/positioning-doughnut-chart';
+import { MetricsBarChartComponent } from '../../components/opinion-analysis/metrics-bar-chart/metrics-bar-chart';
+import { BootstrapResultsCardComponent } from '../../components/opinion-analysis/bootstrap-results-card/bootstrap-results-card';
+import { DetailedMetricsCardComponent } from '../../components/opinion-analysis/detailed-metrics-card/detailed-metrics-card';
+import { CommentsSampleCardComponent } from '../../components/opinion-analysis/comments-sample-card/comments-sample-card';
+import { ModelAccuracyCardComponent } from '../../components/opinion-analysis/model-accuracy-card/model-accuracy-card';
+import { WeeklyStackedChartComponent } from '../../components/opinion-analysis/weekly-stacked-chart/weekly-stacked-chart';
 
 @Component({
   selector: 'app-posicionamento-real',
