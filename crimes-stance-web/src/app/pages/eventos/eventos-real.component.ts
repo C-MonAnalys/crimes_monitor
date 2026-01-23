@@ -50,6 +50,7 @@ export class EventosRealComponent implements OnInit {
   endDate: string = '';
   filteredVideos: any[] = [];
   topOperations: Array<{ operation: string; count: number }> = [];
+  filteredTotalOperations = 0;
 
   async ngOnInit() {
     this.datasetId = this.route.snapshot.paramMap.get('id') || '';
@@ -78,6 +79,8 @@ export class EventosRealComponent implements OnInit {
       const db = b.data_postagem || b.date || b.day || '';
       return da.localeCompare(db);
     });
+
+    this.calculateFilteredTotals();
 
     // calcular totalPages após definir filteredVideos
     this.totalPages = Math.ceil(this.filteredVideos.length / this.pageSize);
@@ -179,6 +182,8 @@ export class EventosRealComponent implements OnInit {
       return matchesSearch && matchesOperation && matchesDate;
     });
 
+    this.calculateFilteredTotals();
+
     // atualizar paginação
     this.totalPages = Math.ceil(this.filteredVideos.length / this.pageSize);
     if (this.currentPage > this.totalPages) {
@@ -278,5 +283,22 @@ export class EventosRealComponent implements OnInit {
   // função auxiliar para template
   getMin(a: number, b: number): number {
     return Math.min(a, b);
+  }
+
+  private calculateFilteredTotals() {
+    this.filteredTotalOperations = new Set(this.filteredVideos.map(v => (v.operation_id ?? v.operation ?? '').toString())).size;
+  }
+
+  get currentPeriod(): string {
+    if (this.startDate && this.endDate) {
+      return `${this.startDate} a ${this.endDate}`;
+    }
+    return this.meta?.period || '—';
+  }
+
+  onRangeChanged(event: {start: string, end: string}) {
+    this.startDate = event.start;
+    this.endDate = event.end;
+    this.applyFilters();
   }
 }

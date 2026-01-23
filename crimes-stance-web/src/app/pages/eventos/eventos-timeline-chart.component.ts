@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, SimpleChanges, ViewChild } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ChartModule, UIChart } from 'primeng/chart';
@@ -161,6 +161,9 @@ type Grouping = 'day' | 'week' | 'month';
 export class EventosTimelineChartComponent implements OnChanges {
   @Input() videos: any[] = [];
   @Input() datasetId = '';           // <<< para montar o nome do arquivo
+  @Input() initialStartDate = '';
+  @Input() initialEndDate = '';
+  @Output() rangeChanged = new EventEmitter<{start: string, end: string}>();
 
   @ViewChild('chartRef') chartComp?: UIChart;
 
@@ -183,6 +186,11 @@ export class EventosTimelineChartComponent implements OnChanges {
     if (changes['videos']) {
       this.buildBaseSeries();
       this.buildChartOptions();
+      this.applyRange();
+    }
+    if (changes['initialStartDate'] || changes['initialEndDate']) {
+      this.startDate = this.initialStartDate;
+      this.endDate = this.initialEndDate;
       this.applyRange();
     }
   }
@@ -313,6 +321,13 @@ export class EventosTimelineChartComponent implements OnChanges {
           hoverRadius: 5,
           hitRadius: 6
         }
+      },
+      onClick: (event: any, elements: any[]) => {
+        if (elements.length > 0) {
+          const index = elements[0].index;
+          const label = this.chartData.labels[index];
+          this.setPeriodFromLabel(label);
+        }
       }
     };
   }
@@ -374,11 +389,40 @@ export class EventosTimelineChartComponent implements OnChanges {
         fill: true
       }]
     };
+
+    // Emitir evento para sincronizar com a lista de vídeos
+    this.rangeChanged.emit({ start: this.startDate, end: this.endDate });
   }
 
   clearRange() {
     this.startDate = '';
     this.endDate = '';
+    this.applyRange();
+  }
+
+  // ===== definir período ao clicar no gráfico =====
+  setPeriodFromLabel(label: string) {
+    let start: string;
+    let end: string;
+
+    if (this.selectedGrouping === 'day') {
+      start = end = label;
+    } else if (this.selectedGrouping === 'week') {
+      const d = new Date(label + 'T00:00:00');
+      const endD = new Date(d);
+      endD.setDate(d.getDate() + 6);
+      start = this.formatDateISO(d);
+      end = this.formatDateISO(endD);
+    } else { // month
+      const [year, month] = label.split('-').map(Number);
+      const startD = new Date(year, month - 1, 1);
+      const endD = new Date(year, month, 0);
+      start = this.formatDateISO(startD);
+      end = this.formatDateISO(endD);
+    }
+
+    this.startDate = start;
+    this.endDate = end;
     this.applyRange();
   }
 

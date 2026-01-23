@@ -18,7 +18,10 @@
     <section class="bg-white rounded-xl border border-slate-200 p-6">
       <app-eventos-timeline-chart
         [videos]="videos"
-        [datasetId]="meta?.id">
+        [datasetId]="meta?.id"
+        [initialStartDate]="chartStartDate"
+        [initialEndDate]="chartEndDate"
+        (rangeChanged)="onRangeChanged($event)">
       </app-eventos-timeline-chart>
     </section>
 
@@ -27,15 +30,15 @@
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4 w-full ">
         <div class="bg-white border border-slate-200 rounded-xl p-4">
           <div class="text-slate-500 text-sm">Total de Vídeos</div>
-          <div class="text-2xl font-bold">{{ meta?.totalVideos | number }}</div>
+          <div class="text-2xl font-bold">{{ filteredVideos.length | number }}</div>
         </div>
         <div class="bg-white border border-slate-200 rounded-xl p-4">
           <div class="text-slate-500 text-sm">Eventos</div>
-          <div class="text-2xl font-bold">{{ meta?.totalOperations | number }}</div>
+          <div class="text-2xl font-bold">{{ filteredTotalOperations | number }}</div>
         </div>
         <div class="bg-white border border-slate-200 rounded-xl p-4">
           <div class="text-slate-500 text-sm">Período</div>
-          <div class="text-2xl font-bold">{{ meta?.period || '—' }}</div>
+          <div class="text-2xl font-bold">{{ currentPeriod }}</div>
         </div>
       </div>
     </section>
