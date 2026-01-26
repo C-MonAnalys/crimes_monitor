@@ -49,6 +49,8 @@ export class EventosRealComponent implements OnInit {
   startDate: string = '';
   endDate: string = '';
   filteredVideos: any[] = [];
+  groupedEvents: Array<{ operation_id: string; videos: any[]; firstDate: Date | null; firstDateStr: string; minDateStr: string; maxDateStr: string }> = [];
+  expandedEvents: Set<string> = new Set();
   topOperations: Array<{ operation: string; count: number }> = [];
   filteredTotalOperations = 0;
 
@@ -82,8 +84,11 @@ export class EventosRealComponent implements OnInit {
 
     this.calculateFilteredTotals();
 
-    // calcular totalPages após definir filteredVideos
-    this.totalPages = Math.ceil(this.filteredVideos.length / this.pageSize);
+    // agrupar vídeos por operation_id
+    this.groupVideosByOperation();
+
+    // calcular totalPages após definir groupedEvents
+    this.totalPages = Math.ceil(this.groupedEvents.length / this.pageSize);
     this.currentPage = 1; // reset para primeira página
 
     // calcular operações mais comuns (para filtro)
@@ -138,19 +143,8 @@ export class EventosRealComponent implements OnInit {
     this.timedOut = false;
     this.error = '';
 
-    // Define período padrão do gráfico diário: fim = última data; início = fim - 5 dias
-    if (this.baseDayLabels && this.baseDayLabels.length > 0) {
-      const lastLabel = this.baseDayLabels[this.baseDayLabels.length - 1]; // yyyy-mm-dd
-      const endDateObj = new Date(lastLabel + 'T12:00:00');
-      if (!isNaN(endDateObj.getTime())) {
-        const startDateObj = new Date(endDateObj);
-        startDateObj.setDate(startDateObj.getDate() - 40);
-        const fmt = (d: Date) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-        this.chartEndDate = fmt(endDateObj);
-        this.chartStartDate = fmt(startDateObj);
-        this.updateDayChartForRange(startDateObj, endDateObj);
-      }
-    }
+    // Não definir período padrão inicial para manter filtros limpos
+    // O gráfico será mostrado com o período completo inicialmente
   }
 
   applyFilters() {
@@ -184,8 +178,11 @@ export class EventosRealComponent implements OnInit {
 
     this.calculateFilteredTotals();
 
+    // agrupar vídeos por operation_id
+    this.groupVideosByOperation();
+
     // atualizar paginação
-    this.totalPages = Math.ceil(this.filteredVideos.length / this.pageSize);
+    this.totalPages = Math.ceil(this.groupedEvents.length / this.pageSize);
     if (this.currentPage > this.totalPages) {
       this.currentPage = Math.max(1, this.totalPages);
     }
@@ -236,10 +233,10 @@ export class EventosRealComponent implements OnInit {
   }
 
   // métodos de paginação
-  get paginatedVideos() {
+  get paginatedEvents() {
     const start = (this.currentPage - 1) * this.pageSize;
     const end = start + this.pageSize;
-    return this.filteredVideos.slice(start, end);
+    return this.groupedEvents.slice(start, end);
   }
 
   goToPage(page: number) {
@@ -300,5 +297,61 @@ export class EventosRealComponent implements OnInit {
     this.startDate = event.start;
     this.endDate = event.end;
     this.applyFilters();
+  }
+
+  private groupVideosByOperation() {
+    const groups: Record<string, any[]> = {};
+    for (const video of this.filteredVideos) {
+      const opId = (video.operation_id ?? video.operation ?? 'unknown').toString();
+      if (!groups[opId]) {
+        groups[opId] = [];
+      }
+      groups[opId].push(video);
+    }
+
+    this.groupedEvents = Object.entries(groups).map(([operation_id, videos]) => {
+      // ordenar vídeos por data
+      videos.sort((a, b) => {
+        const da = a.data_postagem || a.date || a.day || '';
+        const db = b.data_postagem || b.date || b.day || '';
+        return da.localeCompare(db);
+      });
+      // data do primeiro vídeo
+      const firstVideo = videos[0];
+      const firstDateStr = firstVideo.data_postagem || firstVideo.date || firstVideo.day || '';
+      const firstDate = firstDateStr ? new Date(firstDateStr) : null;
+
+      // calcular min e max date
+      let minDateStr: string = '';
+      let maxDateStr: string = '';
+      let minDate: Date | null = null;
+      let maxDate: Date | null = null;
+      for (const video of videos) {
+        const dateStr = video.data_postagem || video.date || video.day;
+        if (dateStr) {
+          const d = new Date(dateStr);
+          if (!isNaN(d.getTime())) {
+            if (!minDate || d < minDate) {
+              minDate = d;
+              minDateStr = dateStr;
+            }
+            if (!maxDate || d > maxDate) {
+              maxDate = d;
+              maxDateStr = dateStr;
+            }
+          }
+        }
+      }
+
+      return { operation_id, videos, firstDate, firstDateStr, minDateStr: minDateStr || '—', maxDateStr: maxDateStr || '—' };
+    }).sort((a, b) => (a.minDateStr || '').localeCompare(b.minDateStr || ''));
+  }
+
+  toggleEventExpansion(operation_id: string) {
+    if (this.expandedEvents.has(operation_id)) {
+      this.expandedEvents.delete(operation_id);
+    } else {
+      this.expandedEvents.add(operation_id);
+    }
   }
 }
