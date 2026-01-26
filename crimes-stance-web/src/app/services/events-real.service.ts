@@ -147,10 +147,13 @@ export class EventsRealService {
         }
         // operation id pela heurística
         const opId = (v.operation_ner ?? v.operation ?? v.op ?? '').toString().trim();
+        // gerar URL do YouTube se houver id_video
+        const url = v.id_video ? `https://www.youtube.com/watch?v=${v.id_video}` : null;
         return {
           ...v,
           parsedDate,
           operation_id: opId,
+          url,
         };
       })
       .filter(v => true); // aceitar todos os vídeos, mesmo sem data válida

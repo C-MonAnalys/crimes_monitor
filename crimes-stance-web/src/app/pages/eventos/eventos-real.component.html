@@ -44,26 +44,36 @@
     </section>
 
 
-    <!-- Lista de Vídeos com Paginação -->
+    <!-- Lista de Eventos com Paginação -->
     <section class="bg-white rounded-xl border border-slate-200 p-6">
       <div class="flex justify-between items-center mb-4">
-        <h2 class="font-semibold text-slate-900">Vídeos ({{ filteredVideos.length }} encontrados)</h2>
+        <h2 class="font-semibold text-slate-900">Eventos ({{ groupedEvents.length }} encontrados)</h2>
         <div class="text-sm text-slate-500">
           Página {{ currentPage }} de {{ totalPages }}
         </div>
       </div>
       
-      <ng-container *ngIf="paginatedVideos?.length; else noVideos">
+      <ng-container *ngIf="paginatedEvents?.length; else noEvents">
         <div class="grid grid-cols-1 gap-4 mb-6">
-          <article *ngFor="let v of paginatedVideos" class="border border-slate-200 rounded-lg p-4">
-            <div class="text-sm text-slate-500 mb-1">{{ v.data_postagem || (v.parsedDate ? (v.parsedDate | date:'yyyy-MM-dd HH:mm') : '—') }}</div>
-            <div class="font-medium text-slate-800">{{ v.titulo || 'Sem título' }}</div>
-            <div class="text-slate-500 text-sm truncate" title="{{ v.descricao || '' }}">{{ v.descricao || 'Sem descrição' }}</div>
-            <div class="mt-2 text-sm">
-              <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700">Operação: {{ v.operation_id || '—' }}</span>
+          <article *ngFor="let event of paginatedEvents" class="border border-slate-200 rounded-lg p-4">
+            <div class="text-sm text-slate-500 mb-1">{{ event.minDateStr }} - {{ event.maxDateStr }}</div>
+            <div class="font-medium text-slate-800">Evento: {{ event.operation_id }}</div>
+            <div class="text-slate-500 text-sm">{{ event.videos.length }} vídeo(s)</div>
+            <div class="mt-2">
+              <button 
+                (click)="toggleEventExpansion(event.operation_id)"
+                class="text-blue-600 hover:underline text-sm">
+                {{ expandedEvents.has(event.operation_id) ? 'Recolher vídeos' : 'Mostrar vídeos' }}
+              </button>
             </div>
-            <div class="mt-3">
-              <a *ngIf="v.link || v.url" class="text-blue-600 hover:underline" [href]="v.link || v.url" target="_blank" rel="noopener">Abrir vídeo</a>
+            <div *ngIf="expandedEvents.has(event.operation_id)" class="mt-3 border-t pt-3">
+              <div class="space-y-2">
+                <div *ngFor="let video of event.videos" class="text-sm">
+                  <div class="font-medium">{{ video.titulo || 'Sem título' }}</div>
+                  <div class="text-slate-500 truncate" title="{{ video.descricao || '' }}">{{ video.descricao || 'Sem descrição' }}</div>
+                  <a *ngIf="video.link || video.url" class="text-blue-600 hover:underline" [href]="video.link || video.url" target="_blank" rel="noopener">Abrir vídeo</a>
+                </div>
+              </div>
             </div>
           </article>
         </div>
@@ -71,7 +81,7 @@
         <!-- Controles de Paginação -->
         <div class="flex flex-col sm:flex-row justify-between items-center gap-4" *ngIf="totalPages > 1">
           <div class="text-sm text-slate-600">
-            Mostrando {{ (currentPage - 1) * pageSize + 1 }} - {{ getMin(currentPage * pageSize, filteredVideos.length) }} de {{ filteredVideos.length }} vídeos
+            Mostrando {{ (currentPage - 1) * pageSize + 1 }} - {{ getMin(currentPage * pageSize, groupedEvents.length) }} de {{ groupedEvents.length }} eventos
           </div>
           
           <div class="flex items-center gap-2">
@@ -119,7 +129,7 @@
           </div>
         </div>
       </ng-container>
-      <ng-template #noVideos><div class="text-slate-500">Nenhum vídeo encontrado.</div></ng-template>
+      <ng-template #noEvents><div class="text-slate-500">Nenhum evento encontrado.</div></ng-template>
     </section>
   </ng-container>
 </div>
