@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
@@ -6,6 +6,8 @@ import { ChartModule } from 'primeng/chart';
 import { EventsRealService } from '../../services/events-real.service';
 import { withTimeout } from '../../services/promise-timeout.util';
 import { EventosTimelineChartComponent } from './eventos-timeline-chart.component';
+
+type ClassName = 'Aprovação' | 'Desaprovação' | 'Neutro';
 
 @Component({
   selector: 'app-eventos-real',
@@ -23,6 +25,8 @@ import { EventosTimelineChartComponent } from './eventos-timeline-chart.componen
 export class EventosRealComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private real = inject(EventsRealService);
+  private cdr = inject(ChangeDetectorRef);
+  private zone = inject(NgZone);
 
   isLoading = true;
   timedOut = false;
@@ -49,10 +53,105 @@ export class EventosRealComponent implements OnInit {
   startDate: string = '';
   endDate: string = '';
   filteredVideos: any[] = [];
-  groupedEvents: Array<{ operation_id: string; videos: any[]; firstDate: Date | null; firstDateStr: string; minDateStr: string; maxDateStr: string }> = [];
-  expandedEvents: Set<string> = new Set();
+  // dados de sentiment (comentários)
+  comments: any[] = [];
+  bootstrapStats: any[] = [];
+  groupedEvents: Array<{ 
+    operation_id: string; 
+    videos: any[]; 
+    firstDate: Date | null; 
+    firstDateStr: string; 
+    minDateStr: string; 
+    maxDateStr: string;
+    totalComments: number;
+    approvalCount: number;
+    disapprovalCount: number;
+    neutralityCount: number;
+    isSignificant: boolean;
+
+  }> = [];
   topOperations: Array<{ operation: string; count: number }> = [];
   filteredTotalOperations = 0;
+  expandedEvents: Set<string> = new Set();
+
+  // Modal de detalhes
+  isModalVisible: boolean = false;
+  selectedEvent: any = null;
+  selectedMetric: 'precision' | 'recall' | 'f1' = 'precision';
+  drillDownChartData: any;
+  drillDownChartOptions: any;
+
+  errorBarPlugin: any = {
+    id: 'errorBarPlugin',
+    afterDatasetsDraw: (chart: any) => {
+      const opts = chart?.options?.plugins?.errorBarPlugin || {};
+      const errorData: Array<{ low: number; high: number; mean?: number }> = opts.data || [];
+      const counts: number[] = opts.counts || [];
+      const barValues: number[] = opts.barValues || [];
+      if (!errorData.length) return;
+
+      const ctx = chart.ctx;
+      const meta = chart.getDatasetMeta(0);
+      const yScale = chart.scales.y;
+
+      const capSize   = opts.capSize ?? 8;
+      const lineWidth = opts.lineWidth ?? 2;
+      const color     = opts.color ?? '#111827';
+
+      ctx.save();
+      ctx.lineWidth = lineWidth;
+      ctx.strokeStyle = color;
+
+      errorData.forEach((ci, i) => {
+        const elem = meta.data[i];
+        if (!elem) return;
+
+        const x = elem.x;
+        const lowY  = yScale.getPixelForValue(ci.low);
+        const highY = yScale.getPixelForValue(ci.high);
+
+        ctx.beginPath();
+        ctx.moveTo(x, highY);
+        ctx.lineTo(x, lowY);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(x - capSize, highY); ctx.lineTo(x + capSize, highY);
+        ctx.moveTo(x - capSize, lowY);  ctx.lineTo(x + capSize, lowY);
+        ctx.stroke();
+
+        if (typeof ci.mean === 'number') {
+          const meanY = yScale.getPixelForValue(ci.mean);
+          ctx.beginPath();
+          ctx.moveTo(x - capSize * 0.6, meanY);
+          ctx.lineTo(x + capSize * 0.6, meanY);
+          ctx.stroke();
+        }
+      });
+
+      if (counts.length) {
+        ctx.fillStyle = opts.countColor ?? '#334155';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        ctx.font = opts.countFont ?? '12px system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica Neue, Arial';
+
+        errorData.forEach((ci, i) => {
+          const elem = meta.data[i];
+          if (!elem) return;
+          const x = elem.x;
+
+          const topValue = Math.max(ci.high ?? 0, barValues[i] ?? 0);
+          let y = yScale.getPixelForValue(topValue) - 8;
+          y = Math.max(8, y);
+
+          const n = counts[i] ?? 0;
+          ctx.fillText(`n=${n}`, x, y);
+        });
+      }
+
+      ctx.restore();
+    }
+  };
 
   async ngOnInit() {
     this.datasetId = this.route.snapshot.paramMap.get('id') || '';
@@ -60,11 +159,18 @@ export class EventosRealComponent implements OnInit {
     const load = this.real.loadDataset(this.datasetId);
     try {
       const data = await withTimeout(load, 5000);
-      this.apply(data);
+      this.zone.run(() => this.apply(data));
+      // Tenta carregar comentários de forma assíncrona (não bloqueia o carregamento)
+      this.loadComments().catch(() => console.log('Comentários não disponíveis para este dataset'));
     } catch (e:any) {
       if (e?.message === 'TIMEOUT') {
         this.timedOut = true; this.isLoading = false;
-        load.then(full => this.apply(full))
+        load.then(full => {
+          this.zone.run(() => {
+            this.apply(full);
+            this.loadComments().catch(() => {});
+          });
+        })
             .catch(() => { this.error = 'Não foi possível carregar o dataset.'; });
       } else {
         this.error = 'Não foi possível carregar o dataset.'; this.isLoading = false;
@@ -343,8 +449,282 @@ export class EventosRealComponent implements OnInit {
         }
       }
 
-      return { operation_id, videos, firstDate, firstDateStr, minDateStr: minDateStr || '—', maxDateStr: maxDateStr || '—' };
+      return { 
+        operation_id, 
+        videos, 
+        firstDate, 
+        firstDateStr, 
+        minDateStr: minDateStr || '—', 
+        maxDateStr: maxDateStr || '—',
+        totalComments: 0,
+        approvalCount: 0,
+        disapprovalCount: 0,
+        neutralityCount: 0,
+        isSignificant: false
+      };
     }).sort((a, b) => (a.minDateStr || '').localeCompare(b.minDateStr || ''));
+
+    // Agregar dados de sentiment se comentários estiverem disponíveis
+    if (this.comments && this.comments.length > 0) {
+      this.aggregateSentimentToEvents();
+    }
+  }
+
+  private aggregateSentimentToEvents(): void {
+    if (!this.comments || this.comments.length === 0) return;
+
+    for (const event of this.groupedEvents) {
+      // ids de vídeo do evento (vários formatos possíveis)
+      const vidIds = new Set<string>(event.videos
+        .map((v: any) => (v.id_video || v.video_id || v.id || '').toString())
+        .filter((x: string) => !!x));
+
+      // Procura comentários associados a este evento por operação OU por id de vídeo
+      const eventComments = this.comments.filter((c: any) => {
+        const commentOp = (c.operation_id || c.operation || c.operation_ner || '').toString();
+        if (commentOp && commentOp === event.operation_id) return true;
+        const commentVid = (c.id_video || c.video_id || c.id || '').toString();
+        if (commentVid && vidIds.has(commentVid)) return true;
+        return false;
+      });
+
+      if (eventComments.length === 0) continue;
+
+      // Contadores por sentimento (campo: new_BERT -> 1,0,-1)
+      const approval = eventComments.filter((c: any) => c.new_BERT === 1).length;
+      const disapproval = eventComments.filter((c: any) => c.new_BERT === -1).length;
+      const neutrality = eventComments.filter((c: any) => c.new_BERT === 0).length;
+      const total = eventComments.length;
+
+      event.totalComments = total;
+      event.approvalCount = approval;
+      event.disapprovalCount = disapproval;
+      event.neutralityCount = neutrality;
+
+      // Calcula significância para cada evento
+      if (this.bootstrapStats && this.bootstrapStats.length > 0) {
+        event.isSignificant = this.computeEventSignificance(event);
+      }
+    }
+  }
+
+  // Abre o modal com as métricas detalhadas de um evento
+  openEventMetrics(event: any) {
+    this.selectedEvent = event;
+    this.updateEventDrillDownChart();
+    this.isModalVisible = true;
+  }
+
+  // Atualiza o gráfico de detalhes com a métrica selecionada
+  updateEventDrillDownChart(): void {
+    if (!this.selectedEvent) return;
+
+    const labels: ClassName[] = ['Aprovação', 'Desaprovação', 'Neutro'];
+    const { approvalCount: Aprova, disapprovalCount: Desaprova, neutralityCount: Neutro, totalComments: total } = this.selectedEvent;
+    const denom = Math.max(1, total);
+
+    const proportions = [Aprova / denom, Desaprova / denom, Neutro / denom];
+    const counts = [Aprova, Desaprova, Neutro];
+
+    const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
+
+    const errorBars = labels.map((label, idx) => {
+      const prop = proportions[idx];
+      const ci = this.getBootstrapCI(this.selectedMetric, label);
+      const minus = Math.max(0, ci.minus);
+      const plus  = Math.max(0, ci.plus);
+      const low  = clamp01(prop - minus);
+      const high = clamp01(prop + plus);
+      return { low, high, mean: prop };
+    });
+
+    this.drillDownChartData = {
+      labels,
+      datasets: [
+        {
+          label: 'Proporção no Evento',
+          data: proportions,
+          backgroundColor: ['#10b981', '#ef4444', '#6b7280'],
+          barPercentage: 0.6,
+          categoryPercentage: 0.8
+        }
+      ]
+    };
+
+    this.drillDownChartOptions = {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'top' },
+        tooltip: {
+          callbacks: {
+            label: (ctx: any) => {
+              const p = ctx.parsed.y;
+              const ci = errorBars[ctx.dataIndex];
+              const n  = counts[ctx.dataIndex];
+              return [
+                `Proporção: ${(p * 100).toFixed(1)}%`,
+                `IC 95% (modelo): [${(ci.low * 100).toFixed(1)}% – ${(ci.high * 100).toFixed(1)}%]`,
+                `Quantidade: ${n}`
+              ];
+            }
+          }
+        },
+        errorBarPlugin: {
+          data: errorBars,
+          barValues: proportions,
+          counts,
+          capSize: 8,
+          lineWidth: 2,
+          color: '#111827',
+          countColor: '#334155',
+          countFont: '12px system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica Neue, Arial'
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          min: 0,
+          max: 1,
+          ticks: { callback: (v: any) => (v * 100) + '%' },
+          title: { display: true, text: `Proporção (${this.selectedMetric})` }
+        },
+        x: { title: { display: true, text: 'Classe' } }
+      }
+    };
+  }
+
+  // Calcula significância (sobreposição de IC entre Aprovação e Desaprovação)
+  private computeEventSignificance(event: any): boolean {
+    if (event.totalComments === 0) return false;
+
+    const ciA = this.getBootstrapCI('precision', 'Aprovação');
+    const ciD = this.getBootstrapCI('precision', 'Desaprovação');
+
+    const minusA = Math.max(0, ciA.minus);
+    const plusA  = Math.max(0, ciA.plus);
+    const minusD = Math.max(0, ciD.minus);
+    const plusD  = Math.max(0, ciD.plus);
+
+    const clamp = (v: number) => Math.max(0, Math.min(1, v));
+
+    const denom = Math.max(1, event.approvalCount + event.disapprovalCount);
+    const pA = event.approvalCount / denom;
+    const pD = event.disapprovalCount / denom;
+
+    const lowA  = clamp(pA - minusA);
+    const highA = clamp(pA + plusA);
+    const lowD  = clamp(pD - minusD);
+    const highD = clamp(pD + plusD);
+
+    const overlap = !(highA < lowD || highD < lowA);
+    return !overlap; // true = significante (sem sobreposição)
+  }
+
+  // Obtém o intervalo de confiança do bootstrap para uma métrica e classe
+  private getBootstrapCI(metricType: 'precision'|'recall'|'f1', className: ClassName) {
+    const keys = (this.bootstrapStats || []).map((d: any) => d['']).filter(Boolean) as string[];
+
+    const detectId = (preferredLabels: string[]): string | null => {
+      const ids = new Set(
+        keys
+          .filter(k => k.startsWith(metricType + '_class_'))
+          .map(k => k.split('_class_')[1])
+      );
+      if (ids.size === 0) return null;
+
+      if (preferredLabels.includes('Neutro') && ids.has('0')) return '0';
+      if (preferredLabels.includes('Aprovação') && ids.has('1')) return '1';
+      if (preferredLabels.includes('Desaprovação') && ids.has('2')) return '2';
+
+      return Array.from(ids).sort()[0] || null;
+    };
+
+    const idFor = (label: ClassName): string | null => {
+      if (label === 'Neutro') return detectId(['Neutro']);
+      if (label === 'Aprovação') return detectId(['Aprovação']);
+      return detectId(['Desaprovação']);
+    };
+
+    const classId = idFor(className);
+    if (!classId) return { mean: 0, plus: 0, minus: 0 };
+
+    const key = `${metricType}_class_${classId}`;
+    const metricData = this.bootstrapStats.find((d: any) => d[''] === key);
+
+    if (!metricData) return { mean: 0, plus: 0, minus: 0 };
+
+    return {
+      mean: metricData.mean,
+      plus: Math.max(0, metricData.upper_95_ci - metricData.mean),
+      minus: Math.max(0, metricData.mean - metricData.lower_95_ci),
+    };
+  }
+
+  private async loadComments(): Promise<void> {
+    const baseHref = document.getElementsByTagName('base')[0]?.getAttribute('href') || '/';
+    const root = baseHref.endsWith('/') ? baseHref : baseHref + '/';
+    
+    // Mapeia dataset IDs para possíveis arquivos de comentários
+    const commentFilesMap: Record<string, string> = {
+      'brasil_all': 'assets/data/sentiment/cenario-real/comentarios_2021_inferido_events.json',
+      'brasil_19': 'assets/data/sentiment/cenario-real/comentarios_2021_inferido_events.json',
+      'brasil_20': 'assets/data/sentiment/cenario-real/comentarios_2021_inferido_events.json',
+      'brasil_21': 'assets/data/sentiment/cenario-real/comentarios_2021_inferido_events.json',
+      'brasil_22': 'assets/data/sentiment/cenario-real/comentarios_2021_inferido_events.json',
+      'brasil_23': 'assets/data/sentiment/cenario-real/comentarios_2021_inferido_events.json',
+      'brasil_24': 'assets/data/sentiment/cenario-real/comentarios_2021_inferido_events.json',
+      'brasil_25': 'assets/data/sentiment/cenario-real/comentarios_2021_inferido_events.json',
+    };
+
+    const bootstrapFilesMap: Record<string, string> = {
+      'brasil_all': 'assets/data/sentiment/cenario-real/bootstrap_results_211124.json',
+      'brasil_19': 'assets/data/sentiment/cenario-real/bootstrap_results_211124.json',
+      'brasil_20': 'assets/data/sentiment/cenario-real/bootstrap_results_211124.json',
+      'brasil_21': 'assets/data/sentiment/cenario-real/bootstrap_results_211124.json',
+      'brasil_22': 'assets/data/sentiment/cenario-real/bootstrap_results_211124.json',
+      'brasil_23': 'assets/data/sentiment/cenario-real/bootstrap_results_211124.json',
+      'brasil_24': 'assets/data/sentiment/cenario-real/bootstrap_results_211124.json',
+      'brasil_25': 'assets/data/sentiment/cenario-real/bootstrap_results_211124.json',
+    };
+
+    const commentsFile = commentFilesMap[this.datasetId];
+    const bootstrapFile = bootstrapFilesMap[this.datasetId];
+
+    if (!commentsFile && !bootstrapFile) {
+      return; // Sem arquivos para este dataset
+    }
+
+    try {
+      const promises = [];
+      
+      if (commentsFile) {
+        promises.push(
+          fetch(`${root}${commentsFile}`).then(r => r.ok ? r.json() : []).catch(() => [])
+        );
+      } else {
+        promises.push(Promise.resolve([]));
+      }
+
+      if (bootstrapFile) {
+        promises.push(
+          fetch(`${root}${bootstrapFile}`).then(r => r.ok ? r.json() : []).catch(() => [])
+        );
+      } else {
+        promises.push(Promise.resolve([]));
+      }
+
+      const [comments, bootstrap] = await Promise.all(promises);
+      
+      this.comments = Array.isArray(comments) ? comments : [];
+      this.bootstrapStats = Array.isArray(bootstrap) ? bootstrap : [];
+
+      if (this.comments && this.comments.length > 0) {
+        this.aggregateSentimentToEvents();
+      }
+    } catch (error) {
+      console.log(`Dados não disponíveis para dataset ${this.datasetId}`);
+    }
   }
 
   toggleEventExpansion(operation_id: string) {
@@ -354,4 +734,5 @@ export class EventosRealComponent implements OnInit {
       this.expandedEvents.add(operation_id);
     }
   }
+
 }
