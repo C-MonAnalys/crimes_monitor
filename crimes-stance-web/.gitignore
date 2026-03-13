@@ -42,3 +42,8 @@ testem.log
 Thumbs.db
 
 src/assets/data/sentiment/cenario-real/comentarios_2020_inferido_events.json
+
+# Environment variables
+.env
+.env.*
+!.env.example
