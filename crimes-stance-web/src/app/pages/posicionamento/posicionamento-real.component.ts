@@ -12,8 +12,6 @@ import { SentimentRealService } from '../../services/posicionamento-real.service
 // Reuso dos seus componentes
 import { AnalysisStatCardComponent } from '../../components/opinion-analysis/analysis-stat-card/analysis-stat-card';
 import { PositioningDistributionComponent } from '../../components/opinion-analysis/positioning-distribution/positioning-distribution';
-import { TemporalEvolutionChartComponent } from '../../components/opinion-analysis/temporal-evolution-chart/temporal-evolution-chart';
-import { PositioningDoughnutChartComponent } from '../../components/opinion-analysis/positioning-doughnut-chart/positioning-doughnut-chart';
 import { CommentsSampleCardComponent } from '../../components/opinion-analysis/comments-sample-card/comments-sample-card';
 import { WeeklyStackedChartComponent } from '../../components/opinion-analysis/weekly-stacked-chart/weekly-stacked-chart';
 
@@ -23,7 +21,6 @@ import { WeeklyStackedChartComponent } from '../../components/opinion-analysis/w
   imports: [
     CommonModule, ChartModule,
     AnalysisStatCardComponent, PositioningDistributionComponent,
-    TemporalEvolutionChartComponent, PositioningDoughnutChartComponent, 
     CommentsSampleCardComponent, WeeklyStackedChartComponent,
     FormsModule
   ],
