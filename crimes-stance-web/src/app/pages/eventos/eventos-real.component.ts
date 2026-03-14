@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { ChartModule } from 'primeng/chart';
 import { EventsRealService } from '../../services/events-real.service';
+import { DATA_CONFIG } from '../../data-config';
 import { withTimeout } from '../../services/promise-timeout.util';
 import { EventosTimelineChartComponent } from './eventos-timeline-chart.component';
 
@@ -15,10 +16,185 @@ type ClassName = 'Aprovação' | 'Desaprovação' | 'Neutro';
   imports: [CommonModule, FormsModule, ChartModule, EventosTimelineChartComponent],
   templateUrl: './eventos-real.component.html',
   styles: [`
-    .active-page {
-      background-color: #3b82f6 !important;
-      color: white !important;
-      border-color: #3b82f6 !important;
+    :host {
+      display: block;
+      color: #334155;
+    }
+
+    .dashboard-container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .page-header {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      padding: 2.5rem 2rem;
+      border-radius: 1.5rem;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+      color: white;
+      margin-bottom: 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .page-header::after {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -10%;
+      width: 300px;
+      height: 300px;
+      background: radial-gradient(circle, rgba(59, 130, 246, 0.2) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .stat-card {
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(8px);
+      border: 1px border-slate-100;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+
+    .stat-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.08);
+      border-color: #3b82f6;
+    }
+
+    .chart-container {
+      background: white;
+      border-radius: 1.5rem;
+      border: 1px solid #f1f5f9;
+      padding: 2rem;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+
+    .event-card {
+      background: white;
+      border-radius: 1.25rem;
+      border: 1px solid #f1f5f9;
+      transition: all 0.2s ease;
+      overflow: hidden;
+    }
+
+    .event-card:hover {
+      border-color: #3b82f644;
+      background: #f8fafc;
+    }
+
+    .sentiment-badge {
+      padding: 0.5rem 0.75rem;
+      border-radius: 0.75rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-width: 80px;
+    }
+
+    .pagination-btn {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 0.75rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+      transition: all 0.2s ease;
+      border: 1px solid #e2e8f0;
+      background: white;
+      color: #64748b;
+    }
+
+    .pagination-btn:hover:not(:disabled) {
+      background: #f1f5f9;
+      color: #1e293b;
+      border-color: #cbd5e1;
+    }
+
+    .pagination-btn.active {
+      background: #3b82f6;
+      color: white;
+      border-color: #3b82f6;
+      box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
+    }
+
+    .pagination-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .btn-show-videos {
+      background: transparent;
+      border: none;
+      color: #3b82f6;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      cursor: pointer;
+      padding: 0.5rem 0;
+      transition: color 0.2s;
+    }
+
+    .btn-show-videos:hover {
+      color: #2563eb;
+    }
+
+    .significance-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.025em;
+    }
+
+    .video-item {
+      padding: 1rem;
+      border-radius: 1rem;
+      background: #f8fafc;
+      border: 1px solid #f1f5f9;
+      transition: all 0.2s;
+    }
+
+    .video-item:hover {
+      background: #f1f5f9;
+      border-color: #e2e8f0;
+    }
+
+    /* Feedback global de ponteiro */
+    button, 
+    select, 
+    input[type="date"], 
+    .pagination-btn, 
+    .btn-show-videos,
+    a {
+      cursor: pointer !important;
+    }
+
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
     }
   `]
 })
@@ -52,6 +228,7 @@ export class EventosRealComponent implements OnInit {
   selectedOperation = '';
   startDate: string = '';
   endDate: string = '';
+  sortBy: 'relevance' | 'newest' | 'date' = 'relevance';
   filteredVideos: any[] = [];
   // dados de sentiment (comentários)
   comments: any[] = [];
@@ -388,15 +565,51 @@ export class EventosRealComponent implements OnInit {
     return Math.min(a, b);
   }
 
+  formatDate(dateStr: string | null | undefined): string {
+    if (!dateStr || dateStr === '—') return '—';
+    try {
+      const clean = dateStr.replace(' ', 'T').split('+')[0]; // Remove offset se existir
+      const d = new Date(clean);
+      if (isNaN(d.getTime())) return dateStr;
+      return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    } catch {
+      return dateStr;
+    }
+  }
+
+  changeSort(mode: 'relevance' | 'newest' | 'date') {
+    this.sortBy = mode;
+    this.sortEvents();
+    this.currentPage = 1;
+  }
+
+  private sortEvents() {
+    if (this.sortBy === 'relevance') {
+      this.groupedEvents.sort((a, b) => b.videos.length - a.videos.length || (b.minDateStr || '').localeCompare(a.minDateStr || ''));
+    } else if (this.sortBy === 'newest') {
+      this.groupedEvents.sort((a, b) => (b.minDateStr || '').localeCompare(a.minDateStr || ''));
+    } else if (this.sortBy === 'date') {
+      this.groupedEvents.sort((a, b) => (a.minDateStr || '').localeCompare(b.minDateStr || ''));
+    }
+  }
+
   private calculateFilteredTotals() {
     this.filteredTotalOperations = new Set(this.filteredVideos.map(v => (v.operation_id ?? v.operation ?? '').toString())).size;
   }
 
   get currentPeriod(): string {
     if (this.startDate && this.endDate) {
-      return `${this.startDate} a ${this.endDate}`;
+      return `${this.formatDate(this.startDate)} a ${this.formatDate(this.endDate)}`;
     }
-    return this.meta?.period || '—';
+    if (this.meta?.period) {
+      // Tenta split por ' a ' ou ' - ' ou ' – '
+      const parts = this.meta.period.split(/\s+(?:a|-|–)\s+/);
+      if (parts.length === 2) {
+        return `${this.formatDate(parts[0])} — ${this.formatDate(parts[1])}`;
+      }
+      return this.meta.period;
+    }
+    return '—';
   }
 
   onRangeChanged(event: {start: string, end: string}) {
@@ -462,8 +675,9 @@ export class EventosRealComponent implements OnInit {
         neutralityCount: 0,
         isSignificant: false
       };
-    }).sort((a, b) => (a.minDateStr || '').localeCompare(b.minDateStr || ''));
+    });
 
+    this.sortEvents();
     // Agregar dados de sentiment se comentários estiverem disponíveis
     if (this.comments && this.comments.length > 0) {
       this.aggregateSentimentToEvents();
@@ -662,31 +876,38 @@ export class EventosRealComponent implements OnInit {
   }
 
   private async loadComments(): Promise<void> {
-    const baseHref = document.getElementsByTagName('base')[0]?.getAttribute('href') || '/';
+    const baseTag = document.getElementsByTagName('base')[0];
+    const baseHref = (baseTag && baseTag.getAttribute('href')) || '/';
     const root = baseHref.endsWith('/') ? baseHref : baseHref + '/';
     
     // Mapeia dataset IDs para possíveis arquivos de comentários
     const commentFilesMap: Record<string, string> = {
-      'brasil_all': 'assets/data/sentiment/cenario-real/comentarios_2021_inferido_events.json',
-      'brasil_19': 'assets/data/sentiment/cenario-real/comentarios_2021_inferido_events.json',
-      'brasil_20': 'assets/data/sentiment/cenario-real/comentarios_2021_inferido_events.json',
-      'brasil_21': 'assets/data/sentiment/cenario-real/comentarios_2021_inferido_events.json',
-      'brasil_22': 'assets/data/sentiment/cenario-real/comentarios_2021_inferido_events.json',
-      'brasil_23': 'assets/data/sentiment/cenario-real/comentarios_2021_inferido_events.json',
-      'brasil_24': 'assets/data/sentiment/cenario-real/comentarios_2021_inferido_events.json',
-      'brasil_25': 'assets/data/sentiment/cenario-real/comentarios_2021_inferido_events.json',
+      'brasil_all': 'sentiment/cenario-real/comentarios_2021_inferido_events.json',
+      'brasil_19': 'sentiment/cenario-real/comentarios_2021_inferido_events.json',
+      'brasil_20': 'sentiment/cenario-real/comentarios_2021_inferido_events.json',
+      'brasil_21': 'sentiment/cenario-real/comentarios_2021_inferido_events.json',
+      'brasil_22': 'sentiment/cenario-real/comentarios_2021_inferido_events.json',
+      'brasil_23': 'sentiment/cenario-real/comentarios_2021_inferido_events.json',
+      'brasil_24': 'sentiment/cenario-real/comentarios_2021_inferido_events.json',
+      'brasil_25': 'sentiment/cenario-real/comentarios_2021_inferido_events.json',
     };
 
     const bootstrapFilesMap: Record<string, string> = {
-      'brasil_all': 'assets/data/sentiment/cenario-real/bootstrap_results_211124.json',
-      'brasil_19': 'assets/data/sentiment/cenario-real/bootstrap_results_211124.json',
-      'brasil_20': 'assets/data/sentiment/cenario-real/bootstrap_results_211124.json',
-      'brasil_21': 'assets/data/sentiment/cenario-real/bootstrap_results_211124.json',
-      'brasil_22': 'assets/data/sentiment/cenario-real/bootstrap_results_211124.json',
-      'brasil_23': 'assets/data/sentiment/cenario-real/bootstrap_results_211124.json',
-      'brasil_24': 'assets/data/sentiment/cenario-real/bootstrap_results_211124.json',
-      'brasil_25': 'assets/data/sentiment/cenario-real/bootstrap_results_211124.json',
+      'brasil_all': 'sentiment/cenario-real/bootstrap_results_211124.json',
+      'brasil_19': 'sentiment/cenario-real/bootstrap_results_211124.json',
+      'brasil_20': 'sentiment/cenario-real/bootstrap_results_211124.json',
+      'brasil_21': 'sentiment/cenario-real/bootstrap_results_211124.json',
+      'brasil_22': 'sentiment/cenario-real/bootstrap_results_211124.json',
+      'brasil_23': 'sentiment/cenario-real/bootstrap_results_211124.json',
+      'brasil_24': 'sentiment/cenario-real/bootstrap_results_211124.json',
+      'brasil_25': 'sentiment/cenario-real/bootstrap_results_211124.json',
     };
+
+    // Na visão consolidada (/eventos), não carregamos sentimentos/comentários 
+    // pois não há um arquivo unificado e os arquivos individuais são pesados.
+    if (!this.datasetId) {
+      return;
+    }
 
     const commentsFile = commentFilesMap[this.datasetId];
     const bootstrapFile = bootstrapFilesMap[this.datasetId];
@@ -695,12 +916,20 @@ export class EventosRealComponent implements OnInit {
       return; // Sem arquivos para este dataset
     }
 
+    // Função auxiliar para resolver a URL final (Cloudflare vs Local)
+    const resolve = (path: string) => {
+      if (DATA_CONFIG.BASE_DATA_URL) {
+        return `${DATA_CONFIG.BASE_DATA_URL}/${path}`;
+      }
+      return `${root}assets/data/${path}`;
+    };
+
     try {
       const promises = [];
       
       if (commentsFile) {
         promises.push(
-          fetch(`${root}${commentsFile}`).then(r => r.ok ? r.json() : []).catch(() => [])
+          fetch(resolve(commentsFile)).then(r => r.ok ? r.json() : []).catch(() => [])
         );
       } else {
         promises.push(Promise.resolve([]));
@@ -708,7 +937,7 @@ export class EventosRealComponent implements OnInit {
 
       if (bootstrapFile) {
         promises.push(
-          fetch(`${root}${bootstrapFile}`).then(r => r.ok ? r.json() : []).catch(() => [])
+          fetch(resolve(bootstrapFile)).then(r => r.ok ? r.json() : []).catch(() => [])
         );
       } else {
         promises.push(Promise.resolve([]));

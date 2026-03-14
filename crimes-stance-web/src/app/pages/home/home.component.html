@@ -15,10 +15,9 @@
 
       <div class="actions" *ngIf="latestEvent() || latestSent()">
         <a
-          *ngIf="latestEvent()"
           class="btn primary"
-          [routerLink]="['/eventos', latestEvent()!.id]"
-          >Abrir último dataset de Eventos</a
+          routerLink="/eventos"
+          >Abrir Painel de Eventos</a
         >
         <a
           *ngIf="latestSent()"
@@ -107,11 +106,11 @@
         <i class="bi bi-arrow-right"></i>
       </a>
 
-      <a routerLink="/eventos/brasil_all" class="tile">
+      <a routerLink="/eventos" class="tile">
         <div class="tile-icon"><i class="bi bi-collection-play"></i></div>
         <div class="tile-body">
           <h3>Cenário Real — Eventos</h3>
-          <p>Heurística aplicada em contexto real.</p>
+          <p>Heurística aplicada em todos os anos.</p>
         </div>
         <i class="bi bi-arrow-right"></i>
       </a>
@@ -129,17 +128,17 @@
     <!-- ÚLTIMOS ADICIONADOS -->
     <section class="grid grid-2">
       <!-- Último dataset de eventos (cenário real) -->
-      <div class="card" *ngIf="latestEvent(); else noLastEvent">
+      <div class="card">
         <div class="flex items-start justify-between">
           <div>
-            <h3 class="mb-1">Último — Cenário Real (Eventos)</h3>
-            <div class="text-slate-600 text-sm">{{ latestEvent()?.label }}</div>
-            <p class="muted mt-2" *ngIf="latestEvent()?.description">{{ latestEvent()?.description }}</p>
+            <h3 class="mb-1">Cenário Real (Eventos)</h3>
+            <div class="text-slate-600 text-sm">Visão Consolidada (Geral)</div>
+            <p class="muted mt-2">Exibindo eventos detectados em todos os anos disponíveis no Cloudflare.</p>
           </div>
           <i class="bi bi-collection-play text-xl text-slate-400"></i>
         </div>
         <div class="mt-4">
-          <a class="btn link" [routerLink]="['/eventos', latestEvent()?.id]">Abrir dataset →</a>
+          <a class="btn link" routerLink="/eventos">Abrir Visão Geral →</a>
         </div>
       </div>
       <ng-template #noLastEvent>

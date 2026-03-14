@@ -12,134 +12,89 @@ type Grouping = 'day' | 'week' | 'month';
   standalone: true,
   imports: [CommonModule, FormsModule, ChartModule],
   template: `
-    <div class="space-y-3">
+    <div class="space-y-6">
       <!-- CABEÇALHO -->
-      <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-        <!-- Título -->
-        <div class="flex-shrink-0">
-          <h2 class="font-semibold text-slate-900 leading-tight">Eventos por período</h2>
+      <div class="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between border-b border-slate-100 pb-6">
+        <div>
+          <h3 class="text-sm font-black text-slate-400 uppercase tracking-widest mb-1">Visualização de Dados</h3>
+          <h2 class="text-2xl font-black text-slate-900 leading-tight">Timeline de Eventos</h2>
         </div>
 
-        <!-- Controles -->
-        <div class="flex flex-col gap-2 w-full lg:w-auto">
-          <!-- Linha 1: Agrupamento -->
-          <div class="flex flex-wrap items-center gap-2">
-            <span class="text-sm text-slate-700">Agrupar por:</span>
-            <div class="inline-flex rounded-lg border border-slate-300 bg-white overflow-hidden">
-              <button
-                type="button"
-                class="px-2.5 py-1 text-xs md:text-sm border-r border-slate-200 hover:bg-slate-50"
-                [ngClass]="selectedGrouping === 'day'
-                  ? 'bg-blue-600 text-white hover:bg-blue-700'
-                  : 'text-slate-700'"
-                (click)="setGrouping('day')"
-              >
-                Dia
-              </button>
-              <button
-                type="button"
-                class="px-2.5 py-1 text-xs md:text-sm border-r border-slate-200 hover:bg-slate-50"
-                [ngClass]="selectedGrouping === 'week'
-                  ? 'bg-blue-600 text-white hover:bg-blue-700'
-                  : 'text-slate-700'"
-                (click)="setGrouping('week')"
-              >
-                Semana
-              </button>
-              <button
-                type="button"
-                class="px-2.5 py-1 text-xs md:text-sm hover:bg-slate-50"
-                [ngClass]="selectedGrouping === 'month'
-                  ? 'bg-blue-600 text-white hover:bg-blue-700'
-                  : 'text-slate-700'"
-                (click)="setGrouping('month')"
-              >
-                Mês
-              </button>
-            </div>
+        <div class="flex flex-wrap items-center gap-3">
+          <!-- Agrupamento -->
+          <div class="flex items-center bg-slate-100 p-1 rounded-xl">
+            <button
+              *ngFor="let g of [{id:'day', l:'Dia'}, {id:'week', l:'Semana'}, {id:'month', l:'Mês'}]"
+              type="button"
+              class="px-4 py-2 text-xs font-bold rounded-lg transition-all"
+              [ngClass]="selectedGrouping === g.id
+                ? 'bg-white text-blue-600 shadow-sm'
+                : 'text-slate-500 hover:text-slate-700'"
+              (click)="setGrouping($any(g.id))"
+            >
+              {{ g.l }}
+            </button>
           </div>
 
-          <!-- Linha 2: Datas + ações -->
-          <div class="flex flex-wrap items-center gap-2">
-            <!-- INÍCIO -->
-            <label class="text-sm text-slate-700 flex items-center gap-1">
-              Início:
-              <div class="relative">
-                <input
-                  #startInput
-                  type="date"
-                  class="pl-2 pr-8 py-1 border border-slate-300 rounded text-sm"
-                  [(ngModel)]="startDate"
-                />
-                <button
-                  type="button"
-                  class="absolute right-1 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer p-0 bg-transparent border-none"
-                  (click)="openDatePicker(startInput)"
-                  aria-label="Abrir calendário de início"
-                >
-                  <i class="bi bi-calendar-event text-sm"></i>
-                </button>
-              </div>
-            </label>
+          <div class="h-6 w-px bg-slate-200 hidden md:block mx-1"></div>
 
-            <!-- FIM -->
-            <label class="text-sm text-slate-700 flex items-center gap-1">
-              Fim:
-              <div class="relative">
-                <input
-                  #endInput
-                  type="date"
-                  class="pl-2 pr-8 py-1 border border-slate-300 rounded text-sm"
-                  [(ngModel)]="endDate"
-                />
-                <button
-                  type="button"
-                  class="absolute right-1 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer p-0 bg-transparent border-none"
-                  (click)="openDatePicker(endInput)"
-                  aria-label="Abrir calendário de fim"
-                >
-                  <i class="bi bi-calendar-event text-sm"></i>
-                </button>
-              </div>
-            </label>
-
-            <button
-              type="button"
-              class="px-3 py-1.5 text-sm rounded-lg bg-blue-600 text-white hover:bg-blue-700"
-              (click)="applyRange()"
-            >
-              Aplicar
+          <!-- Ações de Exportação -->
+          <div class="flex items-center gap-2">
+            <button (click)="downloadPng()" class="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-blue-200 transition-all flex items-center gap-2 text-xs font-bold" title="Baixar PNG">
+              <i class="bi bi-download"></i>
+              <span>PNG</span>
             </button>
-            <button
-              type="button"
-              class="px-3 py-1.5 text-sm rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50"
-              (click)="clearRange()"
-            >
-              Limpar
-            </button>
-
-            <span class="hidden md:inline-block w-px h-5 bg-slate-200 mx-1"></span>
-
-            <button
-              type="button"
-              class="px-3 py-1.5 text-sm rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50"
-              (click)="downloadPng()"
-            >
-              Baixar PNG
-            </button>
-            <button
-              type="button"
-              class="px-3 py-1.5 text-sm rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50"
-              (click)="downloadPdf()"
-            >
-              Baixar PDF
+            <button (click)="downloadPdf()" class="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-blue-200 transition-all flex items-center gap-2 text-xs font-bold" title="Baixar PDF">
+              <i class="bi bi-file-earmark-pdf"></i>
+              <span>PDF</span>
             </button>
           </div>
         </div>
       </div>
 
-      <!-- GRÁFICO -->
-      <div class="h-80">
+      <div class="flex flex-wrap items-center gap-4 bg-slate-50/50 p-4 rounded-2xl border border-slate-100">
+        <div class="flex items-center gap-3">
+          <div class="relative group">
+            <input
+              #startInput
+              type="date"
+              [(ngModel)]="startDate"
+              class="pl-4 pr-10 py-2 bg-white border border-slate-200 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all w-full"
+              placeholder="Início"
+            />
+            <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors pointer-events-none z-10">
+              <i class="bi bi-calendar3"></i>
+            </span>
+          </div>
+
+          <div class="text-slate-300 font-light text-sm">até</div>
+
+          <div class="relative group">
+            <input
+              #endInput
+              type="date"
+              [(ngModel)]="endDate"
+              class="pl-4 pr-10 py-2 bg-white border border-slate-200 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all w-full"
+              placeholder="Fim"
+            />
+            <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors pointer-events-none z-10">
+              <i class="bi bi-calendar3"></i>
+            </span>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button (click)="applyRange()" class="px-6 py-2 bg-slate-900 text-white rounded-xl text-sm font-bold hover:bg-blue-600 transition-all shadow-lg shadow-slate-900/10">
+            Aplicar Filtro
+          </button>
+          <button (click)="clearRange()" class="px-4 py-2 text-slate-500 text-sm font-bold hover:text-red-500 transition-all">
+            Limpar
+          </button>
+        </div>
+      </div>
+
+      <!-- ÁREA DO GRÁFICO -->
+      <div class="h-96 w-full relative">
         <ng-container *ngIf="chartData?.labels?.length; else noData">
           <p-chart
             #chartRef
@@ -150,13 +105,43 @@ type Grouping = 'day' | 'week' | 'month';
           ></p-chart>
         </ng-container>
         <ng-template #noData>
-          <div class="h-full flex items-center justify-center text-slate-500 text-sm">
-            Sem dados suficientes para montar a série temporal de eventos.
+          <div class="h-full flex flex-col items-center justify-center text-slate-400 bg-slate-50/30 rounded-3xl border-2 border-dashed border-slate-100">
+            <i class="bi bi-bar-chart text-4xl mb-2 opacity-20"></i>
+            <p class="font-medium">Sem dados para este período</p>
           </div>
         </ng-template>
       </div>
     </div>
-  `
+  `,
+  styles: [`
+    :host { display: block; }
+    
+    button, input[type="date"] {
+      cursor: pointer !important;
+    }
+
+    input[type="date"] {
+      min-width: 150px;
+      position: relative;
+    }
+
+    input[type="date"]::-webkit-calendar-picker-indicator {
+      position: absolute;
+      right: 0;
+      top: 0;
+      width: 40px;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      cursor: pointer;
+      opacity: 0;
+      z-index: 20;
+    }
+    
+    input[type="date"]:hover::-webkit-calendar-picker-indicator {
+      opacity: 1;
+    }
+  `]
 })
 export class EventosTimelineChartComponent implements OnChanges {
   @Input() videos: any[] = [];

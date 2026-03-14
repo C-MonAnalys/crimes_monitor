@@ -2,20 +2,27 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { lastValueFrom } from 'rxjs';
 import { assetUrl } from './asset-url.util';
+import { DATA_CONFIG } from '../data-config';
 
 @Injectable({ providedIn: 'root' })
 export class SentimentService {
   private base: string;
 
   constructor(private http: HttpClient) {
-    const baseTag = document.getElementsByTagName('base')[0];
-    const baseHref = (baseTag && baseTag.getAttribute('href')) || '/';
-    this.base = baseHref.endsWith('/') ? `${baseHref}assets/data/sentiment` : `${baseHref}/assets/data/sentiment`;
+    if (DATA_CONFIG.BASE_DATA_URL) {
+      this.base = `${DATA_CONFIG.BASE_DATA_URL}/sentiment`;
+    } else {
+      const baseTag = document.getElementsByTagName('base')[0];
+      const baseHref = (baseTag && baseTag.getAttribute('href')) || '/';
+      const root = baseHref.endsWith('/') ? baseHref : baseHref + '/';
+      this.base = `${root}assets/data/sentiment`;
+    }
   }
 
   private async fetchJson(fileName: string): Promise<any> {
     try {
-      const resp = await fetch(`${this.base}/${fileName}`);
+      const url = fileName.startsWith('http') ? fileName : `${this.base}/${fileName}`;
+      const resp = await fetch(url);
       if (!resp.ok) return null;
       return resp.json();
     } catch (e) {
@@ -24,8 +31,27 @@ export class SentimentService {
     }
   }
 
-  async getDatasets(): Promise<any> {
-    return this.fetchJson('datasets.json');
+  /** Lista os datasets (id -> { title, commentsFile, bootstrapFile }) */
+  async getDatasets(): Promise<Record<string, { title: string; commentsFile: string; bootstrapFile: string }>> {
+    // Busca base local para fallback
+    const baseTag = document.getElementsByTagName('base')[0];
+    const baseHref = (baseTag && baseTag.getAttribute('href')) || '/';
+    const root = baseHref.endsWith('/') ? baseHref : baseHref + '/';
+    const localUrl = `${root}assets/data/sentiment/datasets.json`;
+
+    const remoteUrl = DATA_CONFIG.BASE_DATA_URL ? `${this.base}/datasets.json` : null;
+
+    try {
+      const [localData, remoteData] = await Promise.all([
+        this.fetchJson(localUrl).catch(() => ({})),
+        remoteUrl ? this.fetchJson(remoteUrl).catch(() => ({})) : Promise.resolve({})
+      ]);
+
+      return { ...localData, ...remoteData };
+    } catch (e) {
+      console.error('[SentimentService] Error merging datasets:', e);
+      return {};
+    }
   }
 
   async loadDataset(datasetId: string): Promise<{ bootstrap: any[]; comments: any[] }> {
@@ -76,32 +102,15 @@ export class SentimentService {
   }
 
   async getTrainingStats() {
-    // Respeita <base href> (ex.: GitHub Pages)
-    const baseTag = document.getElementsByTagName('base')[0];
-    const baseHref = (baseTag && baseTag.getAttribute('href')) || '/';
-    const root = baseHref.endsWith('/') ? baseHref : baseHref + '/';
-
-    // Caminhos dos arquivos
-    const trainUrl = `${root}assets/data/sentiment/treinamento_model_211124.json`;
-    const bootstrapUrl = `${root}assets/data/sentiment/bootstrap_results_211124.json`;
-
-    // 1) Tenta ler o arquivo único de treino (amostra que você enviou)
-    let train: any[] = [];
-    try {
-      const resp = await fetch(trainUrl);
-      if (resp.ok) {
-        train = await resp.json();
-      }
-    } catch (e) {
-      console.warn('[SentimentService.getTrainingStats] Falha ao ler treino único:', e);
-    }
+    // 1) Tenta ler o arquivo único de treino
+    const train = await this.fetchJson('treinamento_model_211124.json');
 
     // 2) Se não houver, cai no fallback antigo (opcional)
     if (!Array.isArray(train) || !train.length) {
       try {
         const [labels, bootstrap] = await Promise.all([
-          this.http.get<any>('assets/data/sentiment/train_labels.json').toPromise(),
-          this.http.get<any[]>(bootstrapUrl).toPromise(),
+          this.fetchJson('train_labels.json'),
+          this.fetchJson('bootstrap_results_211124.json')
         ]);
         const total = Object.values(labels || {}).reduce((s: any, n: any) => s + (n as number), 0);
         return {
@@ -142,14 +151,8 @@ export class SentimentService {
     })();
     const pShort = total ? Math.round((shortCount / total) * 100) : 0;
 
-    // 4) Bootstrap (métricas do modelo)
-    let bootstrap: any[] = [];
-    try {
-      const resp = await fetch(bootstrapUrl);
-      if (resp.ok) bootstrap = await resp.json();
-    } catch (e) {
-      console.warn('[SentimentService.getTrainingStats] Bootstrap indisponível:', e);
-    }
+    // 4) Bootstrap (médricas do modelo)
+    const bootstrap = await this.fetchJson('bootstrap_results_211124.json');
 
     return {
       total,
@@ -268,26 +271,32 @@ export class SentimentService {
     return out;
   }
 
+  private async fetchText(fileName: string): Promise<string | null> {
+    try {
+      const url = fileName.startsWith('http') ? fileName : `${this.base}/${fileName}`;
+      const resp = await fetch(url);
+      if (!resp.ok) return null;
+      return resp.text();
+    } catch (e) {
+      console.error('SentimentService.fetchText error', fileName, e);
+      return null;
+    }
+  }
+
   // === MÉTODO PRINCIPAL (substitua o antigo por este) ===
   async getBootstrapComparisons(): Promise<Array<{ model: string; metrics: Record<'precision'|'recall'|'f1', { class: 0|1|2; mean:number; lower:number; upper:number }[]> }>> {
-    const baseTag = document.getElementsByTagName('base')[0];
-    const baseHref = (baseTag && baseTag.getAttribute('href')) || '/';
-    const root = baseHref.endsWith('/') ? baseHref : baseHref + '/';
-
-    const baselineJsonUrl = `${root}assets/data/sentiment/bootstrap_results_211124.json`;
-    const indexUrl = `${root}assets/data/sentiment/bootstrap/index.json`;
+    const baselineJsonUrl = 'bootstrap_results_211124.json';
+    const indexUrl        = 'bootstrap/index.json';
 
     const models: Array<{ model: string; metrics: any }> = [];
 
     // 1) baseline JSON
     try {
-      const resp = await fetch(baselineJsonUrl);
-      if (resp.ok) {
-        const arr = await resp.json();
+      const arr = await this.fetchJson(baselineJsonUrl);
+      if (arr) {
         const rows = this.normalizeModelRows(arr);
         const metrics = this.extractByMetricKey(rows);
         models.push({ model: 'BERTimbau', metrics });
-
       }
     } catch (e) {
       console.warn('[getBootstrapComparisons] baseline JSON indisponível:', e);
@@ -295,34 +304,28 @@ export class SentimentService {
 
     // 2) extras via manifest (JSON ou CSV)
     try {
-      const respIdx = await fetch(indexUrl);
-      if (respIdx.ok) {
-        const list = await respIdx.json() as Array<{ label: string; file: string }>;
+      const list = await this.fetchJson(indexUrl) as Array<{ label: string; file: string }>;
+      if (list && Array.isArray(list)) {
         for (const item of list) {
-          const url = `${root}assets/data/sentiment/bootstrap/${item.file}`;
           try {
             const isJson = item.file.toLowerCase().endsWith('.json');
             let rows: { key: string; mean: number; lower: number; upper: number }[] = [];
 
-            const r = await fetch(url);
-            if (!r.ok) continue;
-
             if (isJson) {
-              const j = await r.json();
-              rows = this.normalizeModelRows(j);
+              const j = await this.fetchJson(`bootstrap/${item.file}`);
+              if (j) rows = this.normalizeModelRows(j);
             } else {
-              const text = await r.text();
-              const rowsCsv = this.parseCsv(text);
-              rows = this.normalizeModelRows(rowsCsv as any);
+              const text = await this.fetchText(`bootstrap/${item.file}`);
+              if (text) {
+                const rowsCsv = this.parseCsv(text);
+                rows = this.normalizeModelRows(rowsCsv as any);
+              }
             }
 
-            const metrics = this.extractByMetricKey(rows);
-
-            // DEBUG opcional: veja o que está chegando
-            // console.log('[bootstrap] sample rows', item.file, rows.slice(0, 5));
-            // console.log('[bootstrap] metrics parsed', item.file, metrics);
-
-            models.push({ model: item.label || item.file, metrics });
+            if (rows.length) {
+              const metrics = this.extractByMetricKey(rows);
+              models.push({ model: item.label || item.file, metrics });
+            }
           } catch (e) {
             console.warn('[getBootstrapComparisons] falha ao ler', item.file, e);
           }

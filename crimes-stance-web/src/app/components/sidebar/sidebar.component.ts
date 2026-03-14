@@ -112,7 +112,7 @@ export class SidebarComponent {
     },
     {
       id: 'eventos',
-      link: '/eventos/brasil_all',
+      link: '/eventos',
       icon: 'bi-collection-play',
       text: 'Eventos',
       tooltip: 'Heurística em datasets reais',

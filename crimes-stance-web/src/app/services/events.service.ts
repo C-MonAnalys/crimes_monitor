@@ -2,25 +2,32 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { lastValueFrom } from 'rxjs';
 import { assetUrl } from './asset-url.util';
+import { DATA_CONFIG } from '../data-config';
 
 @Injectable({ providedIn: 'root' })
 export class EventsService {
     private base: string;
 
     constructor(private http: HttpClient) {
-        // Construir base usando o <base href> presente no index.html para suportar GitHub Pages
-        const baseTag = document.getElementsByTagName('base')[0];
-        const baseHref = (baseTag && baseTag.getAttribute('href')) || '/';
-        this.base = baseHref.endsWith('/') ? `${baseHref}assets/data/events` : `${baseHref}/assets/data/events`;
+        if (DATA_CONFIG.BASE_DATA_URL) {
+            this.base = `${DATA_CONFIG.BASE_DATA_URL}/events`;
+        } else {
+            // Se não houver Cloudflare, usa local (apenas para desenvolvimento sem .env)
+            const baseTag = document.getElementsByTagName('base')[0];
+            const baseHref = (baseTag && baseTag.getAttribute('href')) || '/';
+            const root = baseHref.endsWith('/') ? baseHref : baseHref + '/';
+            this.base = `${root}assets/data/events`;
+        }
     }
 
     private async fetchJson(fileName: string): Promise<any> {
         try {
-            const resp = await fetch(`${this.base}/${fileName}`);
+            const url = fileName.startsWith('http') ? fileName : `${this.base}/${fileName}`;
+            const resp = await fetch(url);
             if (!resp.ok) return null;
             return resp.json();
         } catch (e) {
-            console.error('fetchJson error', fileName, e);
+            // Silencia erro para não poluir console se o arquivo não existir remotamente
             return null;
         }
     }
@@ -107,12 +114,18 @@ export class EventsService {
 
     // dataset bruto (o que já alimenta /coletas/eventos)
     getEventsRaw() {
-      return this.http.get<any>('assets/data/events.json'); // ajuste o caminho
+      const url = DATA_CONFIG.BASE_DATA_URL 
+        ? `${DATA_CONFIG.BASE_DATA_URL}/events.json` 
+        : 'assets/data/events.json';
+      return this.http.get<any>(url);
     }
 
     // série temporal (separado, se tiver)
     getEventsTimeSeries() {
-      return this.http.get<any>('assets/data/events_timeseries.json');
+      const url = DATA_CONFIG.BASE_DATA_URL 
+        ? `${DATA_CONFIG.BASE_DATA_URL}/events_timeseries.json` 
+        : 'assets/data/events_timeseries.json';
+      return this.http.get<any>(url);
     }
 
     // avaliação consolidada para /avaliacoes/eventos

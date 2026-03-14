@@ -1,36 +1,88 @@
-<div class="space-y-6">
-  <header class="bg-white rounded-xl border border-slate-200 p-6">
-    <h1 class="text-2xl font-bold text-slate-900">
-      Posicionamento — Cenário real
-      <span class="text-slate-600 text-base ml-2">({{ datasetId }})</span>
-    </h1>
-    <p class="text-slate-600 mt-1">Inferência do modelo sobre comentários reais do dataset selecionado.</p>
-  </header>
+<div class="space-y-6" style="cursor: default;">
+  <style>
+    button, input[type="date"], select, .group, [p-chart] canvas { cursor: pointer !important; }
+  </style>
+  <!-- Hero Section Premium -->
+  <div class="relative overflow-hidden bg-slate-900 rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800">
+    <div class="relative z-10">
+      <div class="flex items-center gap-3 mb-6">
+        <span class="px-3 py-1 bg-blue-500/10 text-blue-400 rounded-full text-xs font-bold uppercase tracking-wider border border-blue-500/20">
+          Cenário Real
+        </span>
+        <span class="text-slate-400">/</span>
+        <span class="text-slate-300 text-sm">Sentiment Analysis</span>
+      </div>
+      <h1 class="text-4xl md:text-5xl font-black mb-4 tracking-tight text-white">
+        Painel de <span class="text-blue-400">Posicionamento</span>
+      </h1>
+      <p class="text-slate-300 mt-3 max-w-2xl text-lg leading-relaxed">
+        Analise a percepção da audiência sobre operações policiais. Explore sentimentos extraídos automaticamente por modelos de inteligência artificial.
+      </p>
+    </div>
+    
+    <!-- Efeito de gradiente no fundo -->
+    <div class="absolute -right-20 -top-20 w-80 h-80 bg-blue-600/10 rounded-full blur-3xl"></div>
+    <div class="absolute -left-20 -bottom-20 w-60 h-60 bg-indigo-600/10 rounded-full blur-3xl"></div>
+  </div>
 
-  <div class="bg-white rounded-xl border border-slate-200 p-6" *ngIf="isLoading">Carregando…</div>
-  <div class="bg-white rounded-xl border border-slate-200 p-6 text-red-600" *ngIf="!isLoading && error">{{ error }}</div>
-  <div *ngIf="timedOut && !error" class="bg-amber-50 border border-amber-200 text-amber-700 rounded-md p-3">
-    Conexão lenta. Exibindo o que já foi carregado…
+  <div class="bg-white rounded-xl border border-slate-200 p-6 text-red-600" *ngIf="!isLoading && error">
+    <i class="bi bi-exclamation-triangle mr-2"></i> {{ error }}
+  </div>
+
+  <!-- Experiência de Carregamento Premium (Skeleton) -->
+  <div class="space-y-8 animate-pulse" *ngIf="isLoading">
+    <!-- Hero Skeleton -->
+    <div class="bg-slate-800/50 rounded-3xl p-12 h-64 flex flex-col justify-center gap-4 relative overflow-hidden">
+      <div class="h-6 w-32 bg-slate-700/50 rounded-full"></div>
+      <div class="h-12 w-3/4 bg-slate-700/50 rounded-2xl"></div>
+      <div class="h-6 w-1/2 bg-slate-700/30 rounded-full mt-2"></div>
+      
+      <!-- Progress Indicator -->
+      <div class="absolute bottom-8 right-8 flex items-center gap-3">
+        <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-400"></div>
+        <span class="text-slate-400 text-sm font-medium">Processando dados massivos...</span>
+      </div>
+    </div>
+
+    <!-- Stats Cards Skeleton -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div class="h-32 bg-slate-100/80 rounded-3xl border border-slate-50" *ngFor="let i of [1,2,3,4]"></div>
+    </div>
+
+    <!-- Chart Skeleton -->
+    <div class="bg-white rounded-3xl border border-slate-100 p-8 h-[500px] flex flex-col gap-6">
+      <div class="h-8 w-48 bg-slate-100 rounded-full"></div>
+      <div class="flex-grow bg-slate-50/50 rounded-2xl border border-dashed border-slate-100 flex items-center justify-center">
+        <i class="bi bi-bar-chart-steps text-4xl text-slate-100"></i>
+      </div>
+    </div>
   </div>
 
   <ng-container *ngIf="!isLoading && !error">
-    <!-- Cards principais -->
+    <!-- Grade de Métricas Premium -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-      <app-analysis-stat-card
-        [label]="'Opiniões Analisadas'"
-        [value]="(totalComments | number) ?? '0'"
-        [icon]="'bi-chat-text'"
-        [color]="'blue'">
-      </app-analysis-stat-card>
-      <app-analysis-stat-card [label]="'Aprovação'" [value]="sentimentPercentages.positive + '%'" [icon]="'bi-emoji-smile'" [color]="'green'"></app-analysis-stat-card>
-      <app-analysis-stat-card [label]="'Desaprovação'" [value]="sentimentPercentages.negative + '%'" [icon]="'bi-emoji-frown'" [color]="'red'"></app-analysis-stat-card>
-      <app-analysis-stat-card [label]="'Neutro'" [value]="sentimentPercentages.neutral + '%'" [icon]="'bi-emoji-neutral'" [color]="'yellow'"></app-analysis-stat-card>
+      <!-- Card: Período de Análise -->
+      <div class="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm hover:shadow-md transition-shadow flex items-center gap-4">
+        <div class="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center flex-shrink-0">
+          <i class="bi bi-calendar-event text-2xl text-slate-500"></i>
+        </div>
+        <div>
+          <div class="text-slate-500 text-sm font-medium uppercase tracking-wide">Período de Análise</div>
+          <div class="text-lg font-bold text-slate-900 mt-1 leading-tight">
+            {{ currentPeriod }}
+          </div>
+          <div class="text-xs text-slate-500 font-medium mt-1">Total de dados processados</div>
+        </div>
+      </div>
+
+      <app-analysis-stat-card [label]="'Opiniões Analisadas'" [value]="(totalComments | number) ?? '0'" [icon]="'bi-chat-text'" [color]="'blue'" [isLoading]="isLoading"></app-analysis-stat-card>
+      <app-analysis-stat-card [label]="'Aprovação'" [value]="sentimentPercentages.positive + '%'" [icon]="'bi-emoji-smile'" [color]="'green'" [isLoading]="isLoading"></app-analysis-stat-card>
+      <app-analysis-stat-card [label]="'Desaprovação'" [value]="sentimentPercentages.negative + '%'" [icon]="'bi-emoji-frown'" [color]="'red'" [isLoading]="isLoading"></app-analysis-stat-card>
     </div>
 
-    <!-- Distribuição + tópicos -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+    <!-- Seção de Distribuição -->
+    <div class="mt-6">
       <app-positioning-distribution [counts]="sentimentCounts" [percentages]="sentimentPercentages"></app-positioning-distribution>
-      <app-topics-card [topicCounts]="topicCounts"></app-topics-card>
     </div>
 
     <!-- Volume semanal com drill-down -->
@@ -44,9 +96,186 @@
       </div>
     </div>
 
-    <!-- Gráficos e métricas -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-      <app-positioning-doughnut-chart [data]="sentimentChartData" [options]="sentimentChartOptions"></app-positioning-doughnut-chart>
+    <!-- Amostra de Comentários -->
+    <!-- Nova Seção: Análise por Evento Detectado -->
+    <div class="mt-12">
+      <div class="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-6">
+        <div>
+          <h2 class="text-3xl font-black text-slate-900 tracking-tight">Análise por Evento</h2>
+          <p class="text-slate-500 mt-1">Dados agrupados por operação policial detectada nos comentários analisados.</p>
+        </div>
+        
+        <!-- Controles de Ordenação -->
+        <div class="flex flex-wrap items-center gap-2 bg-slate-50 p-2 rounded-2xl border border-slate-100">
+          <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-3">Ordenar por:</span>
+          <button (click)="sortEvents('comments')" 
+                  [class.bg-white]="currentSort === 'comments'"
+                  [class.shadow-sm]="currentSort === 'comments'"
+                  [class.text-blue-600]="currentSort === 'comments'"
+                  class="px-4 py-2 rounded-xl text-xs font-bold transition-all hover:text-blue-600">
+            Opiniões
+          </button>
+          <button (click)="sortEvents('videos')" 
+                  [class.bg-white]="currentSort === 'videos'"
+                  [class.shadow-sm]="currentSort === 'videos'"
+                  [class.text-blue-600]="currentSort === 'videos'"
+                  class="px-4 py-2 rounded-xl text-xs font-bold transition-all hover:text-blue-600">
+            Vídeos
+          </button>
+          <button (click)="sortEvents('approval')" 
+                  [class.bg-white]="currentSort === 'approval'"
+                  [class.shadow-sm]="currentSort === 'approval'"
+                  [class.text-blue-600]="currentSort === 'approval'"
+                  class="px-4 py-2 rounded-xl text-xs font-bold transition-all hover:text-blue-600">
+            Aprovação
+          </button>
+          <button (click)="sortEvents('disapproval')" 
+                  [class.bg-white]="currentSort === 'disapproval'"
+                  [class.shadow-sm]="currentSort === 'disapproval'"
+                  [class.text-blue-600]="currentSort === 'disapproval'"
+                  class="px-4 py-2 rounded-xl text-xs font-bold transition-all hover:text-blue-600">
+            Desaprovação
+          </button>
+        </div>
+      </div>
+
+      <!-- Grade de Eventos -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div *ngFor="let ev of paginatedEvents" 
+             class="bg-white rounded-[2rem] border border-slate-100 overflow-hidden shadow-sm hover:shadow-2xl transition-all group flex flex-col">
+          
+          <!-- Player do YouTube (Vídeo mais recorrente) -->
+          <div class="aspect-video bg-slate-900 relative overflow-hidden">
+            <iframe 
+              *ngIf="ev.topVideo"
+              [src]="getSafeUrl(ev.topVideo)" 
+              class="w-full h-full border-0"
+              allowfullscreen>
+            </iframe>
+            <div *ngIf="!ev.topVideo" class="flex flex-col items-center justify-center h-full text-slate-500 bg-slate-800 gap-3">
+              <i class="bi bi-play-btn-fill text-5xl opacity-20"></i>
+              <span class="text-xs font-bold uppercase tracking-widest opacity-40">Prévia indisponível</span>
+            </div>
+          </div>
+
+          <div class="p-8 flex-grow flex flex-col relative group/card">
+            <!-- Botão de Info (Hover) -->
+            <div class="absolute top-4 right-4 z-20 opacity-0 group-hover/card:opacity-100 transition-opacity">
+              <div class="relative group/info">
+                <button class="w-8 h-8 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center hover:bg-blue-500 hover:text-white transition-all shadow-sm">
+                  <i class="bi bi-info-lg"></i>
+                </button>
+                <!-- Tooltip explicativo -->
+                <div class="absolute right-0 top-10 w-64 p-4 bg-slate-900 text-white text-[10px] rounded-2xl shadow-2xl opacity-0 group-hover/info:opacity-100 pointer-events-none transition-all z-30 font-medium leading-relaxed border border-slate-700">
+                  <div class="flex items-center gap-2 mb-2 text-blue-400">
+                    <i class="bi bi-lightning-charge-fill"></i>
+                    <span class="font-black uppercase tracking-widest">Sobre os Dados</span>
+                  </div>
+                  O vídeo exibido acima é o de maior recorrência identificada para este evento dentro dos dados coletados. 
+                  Os comentários foram agrupados automaticamente através de extração de inteligência artificial.
+                </div>
+              </div>
+            </div>
+
+            <div class="flex items-start justify-between mb-6">
+              <div class="flex-grow">
+                <h3 class="text-xl font-black text-slate-900 leading-tight mb-1">
+                  {{ ev.id === 'Operação Não Identificada' ? 'Outras Ocorrências' : 'Operação ' + ev.id }}
+                </h3>
+                <div class="flex items-center gap-2 text-slate-400">
+                  <i class="bi bi-calendar3 text-[10px]"></i>
+                  <span class="text-[10px] font-bold uppercase tracking-tight">
+                    {{ formatDate(ev.minDate) }} — {{ formatDate(ev.maxDate) }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Stats Rápidos -->
+            <div class="grid grid-cols-2 gap-3 mb-8">
+              <div class="bg-slate-50/50 rounded-2xl p-4 border border-slate-50">
+                <div class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Vídeos</div>
+                <div class="flex items-center gap-2">
+                  <div class="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]"></div>
+                  <span class="text-lg font-black text-slate-800">{{ ev.videoCount }}</span>
+                </div>
+              </div>
+              <div class="bg-slate-50/50 rounded-2xl p-4 border border-slate-50">
+                <div class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Opiniões</div>
+                <div class="flex items-center gap-2">
+                  <div class="w-2 h-2 rounded-full bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.5)]"></div>
+                  <span class="text-lg font-black text-slate-800">{{ ev.commentCount | number }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Termômetro de Posicionamento -->
+            <div class="mt-auto">
+              <div class="flex justify-between items-end mb-3 px-1">
+                <div class="flex items-center gap-2">
+                  <i class="bi bi-shield-check text-green-600 text-xs"></i>
+                  <span class="text-[11px] font-black text-green-600 uppercase tracking-tight">Aprovação {{ ev.percentages.positive }}%</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-[11px] font-black text-red-500 uppercase tracking-tight">{{ ev.percentages.negative }}% Desaprovação</span>
+                  <i class="bi bi-shield-x text-red-500 text-xs"></i>
+                </div>
+              </div>
+              <div class="h-4 w-full bg-slate-100 rounded-full overflow-hidden flex shadow-inner p-0.5">
+                <div class="h-full bg-green-500 rounded-full transition-all duration-1000 shadow-[0_0_12px_rgba(34,197,94,0.3)]" 
+                     [style.width.%]="ev.percentages.positive"
+                     *ngIf="ev.percentages.positive > 0"></div>
+                <div class="h-full bg-slate-300 rounded-full transition-all duration-1000" 
+                     [style.width.%]="ev.percentages.neutral"
+                     *ngIf="ev.percentages.neutral > 0"></div>
+                <div class="h-full bg-red-500 rounded-full transition-all duration-1000 shadow-[0_0_12px_rgba(239,68,68,0.3)]" 
+                     [style.width.%]="ev.percentages.negative"
+                     *ngIf="ev.percentages.negative > 1"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Paginação no Rodapé -->
+      <div class="mt-12 flex items-center justify-center gap-6" *ngIf="totalPages > 1">
+        <button (click)="prevPage()" 
+                [disabled]="currentPage === 1"
+                class="flex items-center gap-2 px-6 py-3 rounded-2xl border border-slate-200 bg-white text-sm font-black text-slate-600 hover:bg-slate-50 disabled:opacity-30 disabled:hover:bg-white transition-all shadow-sm active:scale-95">
+          <i class="bi bi-arrow-left"></i> Anterior
+        </button>
+        
+        <div class="flex items-center gap-2">
+          <span class="w-8 h-8 flex items-center justify-center rounded-lg bg-blue-500 text-white text-xs font-black shadow-lg shadow-blue-500/30">
+            {{ currentPage }}
+          </span>
+          <span class="text-slate-300">/</span>
+          <span class="text-xs font-black text-slate-400">{{ totalPages }} páginas</span>
+        </div>
+
+        <button (click)="nextPage()" 
+                [disabled]="currentPage === totalPages"
+                class="flex items-center gap-2 px-6 py-3 rounded-2xl border border-slate-200 bg-white text-sm font-black text-slate-600 hover:bg-slate-50 disabled:opacity-30 disabled:hover:bg-white transition-all shadow-sm active:scale-95">
+          Próximo <i class="bi bi-arrow-right"></i>
+        </button>
+      </div>
+    </div>
+
+    <div class="mt-16">
+      <app-comments-sample-card [comments]="sampleComments"></app-comments-sample-card>
+    </div>
+
+    <!-- Info Card Final -->
+    <div class="bg-white rounded-xl border border-slate-200 p-8 flex flex-col md:flex-row justify-between items-center gap-6 mt-6 mb-12">
+      <div class="flex-grow">
+        <h3 class="text-xl font-bold text-slate-900 mb-2">Sobre esta análise</h3>
+        <p class="text-slate-600 max-w-2xl">
+          Esta visualização apresenta a inferência automática realizada pelo modelo BERT ajustado para o contexto de segurança pública de acordo com o dataset selecionado.
+        </p>
+      </div>
+      <div class="flex-shrink-0">
+        <i class="bi bi-info-circle text-5xl text-blue-500 opacity-20"></i>
+      </div>
     </div>
   </ng-container>
 </div>

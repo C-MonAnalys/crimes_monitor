@@ -48,10 +48,10 @@ const Home = () =>
 export const routes: Routes = [
   { path: 'home', loadComponent: Home },
   // Eventos
-  { path: 'eventos', redirectTo: 'eventos/brasil_all', pathMatch: 'full' },
+  { path: 'eventos', loadComponent: EventosReal },
   { path: 'eventos/:id', loadComponent: EventosReal },
   // Posicionamento
-  { path: 'posicionamento', loadComponent: PosicionamentoList },
+  { path: 'posicionamento', loadComponent: PosicionamentoReal },
   { path: 'posicionamento/:id', loadComponent: PosicionamentoReal },
   {
     path: 'avaliacoes',

@@ -28,8 +28,12 @@
               "src/assets"
             ],
             "styles": [
+              "node_modules/bootstrap-icons/font/bootstrap-icons.css",
               "src/styles.css"
-            ]
+            ],
+            "define": {
+              "import.meta.env.VITE_BASE_DATA_URL": "\"https://pub-a051ee79c31b4aceb32bd398630bc042.r2.dev\""
+            }
           },
           "configurations": {
             "production": {
@@ -45,12 +49,24 @@
                   "maximumError": "8kB"
                 }
               ],
+              "fileReplacements": [
+                {
+                  "replace": "src/app/environments/environment.ts",
+                  "with": "src/app/environments/environment.ts"
+                }
+              ],
               "outputHashing": "all"
             },
             "development": {
               "optimization": false,
               "extractLicenses": false,
-              "sourceMap": true
+              "sourceMap": true,
+              "fileReplacements": [
+                {
+                  "replace": "src/app/environments/environment.ts",
+                  "with": "src/app/environments/environment.development.ts"
+                }
+              ]
             }
           },
           "defaultConfiguration": "production"

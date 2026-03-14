@@ -1,217 +1,358 @@
-<div class="space-y-6">
-  <header class="bg-white rounded-xl border border-slate-200 p-6">
-    <h1 class="text-2xl font-bold text-slate-900">
-      Eventos
-      <span class="text-slate-600 text-base ml-2" *ngIf="meta?.label">({{ meta.label }})</span>
-    </h1>
-    <p class="text-slate-600 mt-1">Eventos detectados pela heurística no dataset selecionado.</p>
-  </header>
+<div class="dashboard-container space-y-8 p-4 sm:p-6 lg:p-8">
+  <!-- LOADING / ERRO -->
+  <div class="chart-container flex items-center justify-center min-h-[400px]" *ngIf="isLoading">
+    <div class="flex flex-col items-center gap-4">
+      <div class="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+      <p class="text-slate-500 font-medium">Sincronizando dados do Cloudflare...</p>
+    </div>
+  </div>
 
-  <div class="bg-white rounded-xl border border-slate-200 p-6" *ngIf="isLoading">Carregando…</div>
-  <div class="bg-white rounded-xl border border-slate-200 p-6 text-red-600" *ngIf="!isLoading && error">{{ error }}</div>
-  <div *ngIf="timedOut && !error" class="bg-amber-50 border border-amber-200 text-amber-700 rounded-md p-3">Conexão lenta. Exibindo o que já foi carregado…</div>
+  <div class="bg-red-50 border border-red-200 rounded-2xl p-6 text-red-600 flex items-center gap-4" *ngIf="!isLoading && error">
+    <i class="bi bi-exclamation-octagon-fill text-2xl"></i>
+    <div>
+      <h3 class="font-bold">Erro ao carregar dados</h3>
+      <p>{{ error }}</p>
+    </div>
+  </div>
+
+  <div *ngIf="timedOut && !error" class="bg-amber-50 border border-amber-200 text-amber-700 rounded-2xl p-4 flex items-center gap-3">
+    <i class="bi bi-hourglass-split"></i>
+    <span>A conexão está um pouco lenta, mas já estamos exibindo os dados carregados.</span>
+  </div>
 
   <ng-container *ngIf="!isLoading && !error">
-    
-
-    <!-- GRÁFICO: Eventos por período -->
-    <section class="bg-white rounded-xl border border-slate-200 p-6">
-      <app-eventos-timeline-chart
-        [videos]="videos"
-        [datasetId]="meta?.id"
-        [initialStartDate]="chartStartDate"
-        [initialEndDate]="chartEndDate"
-        (rangeChanged)="onRangeChanged($event)">
-      </app-eventos-timeline-chart>
-    </section>
-
-    <!-- Cards -->
-    <section class="flex justify-center">
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 w-full ">
-        <div class="bg-white border border-slate-200 rounded-xl p-4">
-          <div class="text-slate-500 text-sm">Total de Vídeos</div>
-          <div class="text-2xl font-bold">{{ filteredVideos.length | number }}</div>
+    <!-- PAGE HEADER -->
+    <header class="page-header">
+      <div class="relative z-10">
+        <div class="flex items-center gap-3 mb-2">
+          <span class="bg-blue-500/20 text-blue-300 text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">Cenário Real</span>
+          <span class="text-slate-400">/</span>
+          <span class="text-slate-300 text-sm">Heurística Temporal</span>
         </div>
-        <div class="bg-white border border-slate-200 rounded-xl p-4">
-          <div class="text-slate-500 text-sm">Eventos</div>
-          <div class="text-2xl font-bold">{{ filteredTotalOperations | number }}</div>
+        <h1 class="text-4xl md:text-5xl font-black mb-4 tracking-tight">
+        Painel de <span class="text-blue-400">Eventos</span>
+      </h1>
+        <p class="text-slate-300 mt-3 max-w-2xl text-lg leading-relaxed">
+          Explore as operações policiais detectadas automaticamente. Compare volumes, períodos e analise o engajamento da audiência por evento.
+        </p>
+      </div>
+    </header>
+
+    <!-- STATS GRID -->
+    <section class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div class="stat-card rounded-2xl p-6 flex items-start gap-4">
+        <div class="bg-blue-100/50 p-3 rounded-xl text-blue-600">
+          <i class="bi bi-camera-video text-2xl"></i>
         </div>
-        <div class="bg-white border border-slate-200 rounded-xl p-4">
-          <div class="text-slate-500 text-sm">Período</div>
-          <div class="text-2xl font-bold">{{ currentPeriod }}</div>
+        <div>
+          <div class="text-slate-500 text-sm font-medium uppercase tracking-wide">Total de Vídeos</div>
+          <div class="text-3xl font-black text-slate-900 mt-1">{{ filteredVideos.length | number }}</div>
+          <div class="text-xs text-blue-600 font-semibold mt-1">Registrados no R2</div>
+        </div>
+      </div>
+
+      <div class="stat-card rounded-2xl p-6 flex items-start gap-4">
+        <div class="bg-indigo-100/50 p-3 rounded-xl text-indigo-600">
+          <i class="bi bi-lightning-charge text-2xl"></i>
+        </div>
+        <div>
+          <div class="text-slate-500 text-sm font-medium uppercase tracking-wide">Eventos Detectados</div>
+          <div class="text-3xl font-black text-slate-900 mt-1">{{ filteredTotalOperations | number }}</div>
+          <div class="text-xs text-indigo-600 font-semibold mt-1">Filtro aplicado</div>
+        </div>
+      </div>
+
+      <div class="stat-card rounded-2xl p-6 flex items-start gap-4">
+        <div class="bg-slate-100/50 p-3 rounded-xl text-slate-600">
+          <i class="bi bi-calendar3 text-2xl"></i>
+        </div>
+        <div>
+          <div class="text-slate-500 text-sm font-medium uppercase tracking-wide">Período de Análise</div>
+          <div class="text-lg font-bold text-slate-900 mt-1 leading-tight">
+            {{ currentPeriod }}
+          </div>
+          <div class="text-xs text-slate-500 font-medium mt-1">Total de dados processados</div>
         </div>
       </div>
     </section>
 
-
-    <!-- Lista de Eventos com Paginação -->
-    <section class="bg-white rounded-xl border border-slate-200 p-6">
-      <div class="flex justify-between items-center mb-4">
-        <h2 class="font-semibold text-slate-900">Eventos ({{ groupedEvents.length }} encontrados)</h2>
-        <div class="text-sm text-slate-500">
-          Página {{ currentPage }} de {{ totalPages }}
+    <!-- CHART SECTION -->
+    <section class="chart-container">
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+        <div>
+          <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+            <i class="bi bi-graph-up text-blue-500"></i>
+            Evolução Temporal de Eventos
+          </h2>
+          <p class="text-slate-500 text-sm mt-1">Selecione um intervalo no gráfico para filtrar a lista abaixo.</p>
         </div>
       </div>
       
+      <div class="min-h-[350px]">
+        <app-eventos-timeline-chart
+          [videos]="videos"
+          [datasetId]="meta?.id"
+          [initialStartDate]="chartStartDate"
+          [initialEndDate]="chartEndDate"
+          (rangeChanged)="onRangeChanged($event)">
+        </app-eventos-timeline-chart>
+      </div>
+    </section>
+
+    <!-- LIST SECTION -->
+    <section class="space-y-6">
+      <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+        <h3 class="text-2xl font-bold text-slate-900 flex items-center gap-2">
+          <i class="bi bi-list-stars text-blue-600"></i>
+          Eventos Encontrados
+          <span class="bg-blue-100 text-blue-700 text-sm px-3 py-1 rounded-full font-bold ml-2">{{ groupedEvents.length }}</span>
+        </h3>
+        
+        <!-- SELETOR DE ORDENAÇÃO -->
+        <div class="flex items-center bg-slate-100 p-1 rounded-xl">
+          <button (click)="changeSort('relevance')" 
+                  [class.bg-white]="sortBy === 'relevance'"
+                  [class.text-blue-600]="sortBy === 'relevance'"
+                  [class.shadow-sm]="sortBy === 'relevance'"
+                  class="px-4 py-1.5 text-xs font-bold rounded-lg transition-all text-slate-500">
+            Relevância
+          </button>
+          <button (click)="changeSort('newest')" 
+                  [class.bg-white]="sortBy === 'newest'"
+                  [class.text-blue-600]="sortBy === 'newest'"
+                  [class.shadow-sm]="sortBy === 'newest'"
+                  class="px-4 py-1.5 text-xs font-bold rounded-lg transition-all text-slate-500">
+            Mais Recentes
+          </button>
+          <button (click)="changeSort('date')" 
+                  [class.bg-white]="sortBy === 'date'"
+                  [class.text-blue-600]="sortBy === 'date'"
+                  [class.shadow-sm]="sortBy === 'date'"
+                  class="px-4 py-1.5 text-xs font-bold rounded-lg transition-all text-slate-500">
+            Mais Antigos
+          </button>
+        </div>
+      </div>
+
       <ng-container *ngIf="paginatedEvents.length; else noEvents">
-        <div class="grid grid-cols-1 gap-4 mb-6">
-          <article *ngFor="let event of paginatedEvents" class="border border-slate-200 rounded-lg p-4">
-            <div class="text-sm text-slate-500 mb-1">{{ event.minDateStr }} - {{ event.maxDateStr }}</div>
-
-            <div class="md:flex md:items-start md:justify-between">
-              <!-- Left: Evento e detalhes básicos -->
-              <div class="md:w-2/3">
-                <div class="font-medium text-slate-800">Evento: {{ event.operation_id }}</div>
-
-                <div class="mt-3">
-                  <div class="bg-slate-50 p-2 rounded max-w-xs">
-                    <div class="text-slate-600 text-xs">Vídeos</div>
-                    <div class="font-semibold text-slate-900">{{ event.videos.length }}</div>
+        <div class="grid grid-cols-1 gap-6">
+          <article *ngFor="let event of paginatedEvents" class="event-card group">
+            <div class="p-6 md:p-8">
+              <div class="flex flex-col lg:flex-row gap-6 justify-between">
+                
+                <!-- Info do Evento -->
+                <div class="flex-1">
+                  <div class="flex items-center gap-2 mb-3">
+                    <span class="bg-slate-100 text-slate-600 text-xs font-black px-2 py-1 rounded uppercase">Operação</span>
+                    <span class="text-slate-400 text-sm">•</span>
+                    <span class="text-slate-500 text-sm font-medium">
+                      <i class="bi bi-calendar-event mr-1"></i>
+                      {{ formatDate(event.minDateStr) }} a {{ formatDate(event.maxDateStr) }}
+                    </span>
                   </div>
 
-                  <div class="flex items-start gap-3 mt-2">
-                    <div class="bg-blue-50 p-2 rounded" *ngIf="event.totalComments > 0">
-                      <div class="text-slate-600 text-xs">Comentários</div>
-                      <div class="font-semibold text-blue-900">{{ event.totalComments }}</div>
+                  <h4 class="text-2xl font-black text-slate-900 group-hover:text-blue-600 transition-colors">
+                    {{ event.operation_id }}
+                  </h4>
+
+                  <div class="flex flex-wrap gap-4 mt-6">
+                    <div class="bg-white border border-slate-100 shadow-sm px-4 py-2 rounded-xl flex items-center gap-3">
+                      <div class="text-blue-500"><i class="bi bi-play-circle-fill text-lg"></i></div>
+                      <div>
+                        <div class="text-[10px] uppercase font-bold text-slate-400 leading-none">Vídeos</div>
+                        <div class="text-lg font-black text-slate-800">{{ event.videos.length }}</div>
+                      </div>
                     </div>
+
+                    <div class="bg-white border border-slate-100 shadow-sm px-4 py-2 rounded-xl flex items-center gap-3" *ngIf="event.totalComments > 0">
+                      <div class="text-indigo-500"><i class="bi bi-chat-dots-fill text-lg"></i></div>
+                      <div>
+                        <div class="text-[10px] uppercase font-bold text-slate-400 leading-none">Comentários</div>
+                        <div class="text-lg font-black text-slate-800">{{ event.totalComments }}</div>
+                      </div>
+                    </div>
+
+                    <div *ngIf="event.totalComments > 0" 
+                         [ngClass]="event.isSignificant ? 'bg-blue-50 text-blue-700 border-blue-100' : 'bg-slate-50 text-slate-500 border-slate-100'"
+                         class="border px-4 py-2 rounded-xl flex items-center gap-2 text-xs font-bold uppercase tracking-tight">
+                      <i class="bi" [ngClass]="event.isSignificant ? 'bi-check-circle-fill' : 'bi-dash-circle'"></i>
+                      {{ event.isSignificant ? 'Diferença Significativa' : 'Sem Diferença' }}
+                    </div>
+                  </div>
+
+                  <div class="mt-6">
+                    <button class="btn-show-videos" (click)="toggleEventExpansion(event.operation_id)">
+                      <i class="bi" [ngClass]="expandedEvents.has(event.operation_id) ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+                      {{ expandedEvents.has(event.operation_id) ? 'Recolher vídeos da operação' : 'Explorar '+event.videos.length+' vídeos' }}
+                    </button>
                   </div>
                 </div>
 
-                <div class="mt-3">
-                  <button 
-                    (click)="toggleEventExpansion(event.operation_id)"
-                    class="text-blue-600 hover:underline text-sm">
-                    {{ expandedEvents.has(event.operation_id) ? 'Recolher vídeos' : 'Mostrar vídeos' }}
-                  </button>
-                </div>
-
-                <!-- Lista de Vídeos Expandida -->
-                <div *ngIf="expandedEvents.has(event.operation_id)" class="mt-3 border-t pt-3">
-                  <div class="space-y-2">
-                    <div *ngFor="let video of event.videos" class="text-sm">
-                      <div class="font-medium">{{ video.titulo || 'Sem título' }}</div>
-                      <div class="text-slate-500 truncate" title="{{ video.descricao || '' }}">{{ video.descricao || 'Sem descrição' }}</div>
-                      <a *ngIf="video.link || video.url" class="text-blue-600 hover:underline" [href]="video.link || video.url" target="_blank" rel="noopener">Abrir vídeo</a>
+                <!-- Painel de Sentimento -->
+                <div class="lg:w-80 flex-shrink-0" *ngIf="event.totalComments > 0">
+                  <div class="bg-slate-900 rounded-2xl p-5 text-white shadow-lg overflow-hidden relative">
+                    <div class="absolute top-0 right-0 p-4 opacity-10">
+                      <i class="bi bi-pie-chart-fill text-6xl"></i>
                     </div>
+                    
+                    <h5 class="text-xs font-bold uppercase text-slate-400 mb-4 tracking-widest">Distribuição de Opinião</h5>
+                    
+                    <div class="flex justify-between items-end gap-3 h-24 mb-6">
+                      <!-- Aprova -->
+                      <div class="flex-1 flex flex-col items-center">
+                        <div class="text-xs font-bold text-emerald-400 mb-2">{{ ((event.approvalCount / event.totalComments) * 100).toFixed(0) }}%</div>
+                        <div class="w-full bg-emerald-500 rounded-t-lg transition-all duration-500" [style.height.%]="(event.approvalCount / event.totalComments) * 100"></div>
+                        <div class="text-[10px] mt-2 uppercase text-slate-400">Aprova</div>
+                      </div>
+                      <!-- Neutro -->
+                      <div class="flex-1 flex flex-col items-center">
+                        <div class="text-xs font-bold text-slate-300 mb-2">{{ ((event.neutralityCount / event.totalComments) * 100).toFixed(0) }}%</div>
+                        <div class="w-full bg-slate-500 rounded-t-lg transition-all duration-500" [style.height.%]="(event.neutralityCount / event.totalComments) * 100"></div>
+                        <div class="text-[10px] mt-2 uppercase text-slate-400">Neutro</div>
+                      </div>
+                      <!-- Desaprova -->
+                      <div class="flex-1 flex flex-col items-center">
+                        <div class="text-xs font-bold text-rose-400 mb-2">{{ ((event.disapprovalCount / event.totalComments) * 100).toFixed(0) }}%</div>
+                        <div class="w-full bg-rose-500 rounded-t-lg transition-all duration-500" [style.height.%]="(event.disapprovalCount / event.totalComments) * 100"></div>
+                        <div class="text-[10px] mt-2 uppercase text-slate-400">Desaprova</div>
+                      </div>
+                    </div>
+
+                    <button (click)="openEventMetrics(event)" 
+                            class="w-full bg-white/10 hover:bg-white/20 border border-white/10 text-white text-xs font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2">
+                      <i class="bi bi-zoom-in"></i>
+                      Ver Análise Detalhada
+                    </button>
                   </div>
                 </div>
               </div>
 
-              <!-- Right: Painel de análise (fixo à direita em telas médias+) -->
-              <div class="mt-3 md:mt-0 md:ml-4 w-full md:w-80 flex-shrink-0">
-                <div *ngIf="event.totalComments > 0" class="p-4 border rounded bg-white">
-                  <div class="grid grid-cols-3 gap-3 text-sm mb-4">
-                    <div class="bg-green-50 p-3 rounded">
-                      <div class="text-green-700 text-sm">Aprovação</div>
-                      <div class="font-semibold text-green-900">{{ event.approvalCount }}</div>
-                    </div>
-                    <div class="bg-gray-50 p-3 rounded">
-                      <div class="text-gray-700 text-sm">Neutro</div>
-                      <div class="font-semibold text-gray-900">{{ event.neutralityCount }}</div>
-                    </div>
-                    <div class="bg-red-50 p-3 rounded">
-                      <div class="text-red-700 text-sm">Desaprovação</div>
-                      <div class="font-semibold text-red-900">{{ event.disapprovalCount }}</div>
+              <!-- Expansão de Vídeos -->
+              <div *ngIf="expandedEvents.has(event.operation_id)" class="mt-8 pt-8 border-t border-slate-100 animate-fadeIn">
+                <h5 class="text-sm font-bold text-slate-400 uppercase tracking-widest mb-6">Lista de vídeos associados</h5>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div *ngFor="let video of event.videos" class="video-item group/v">
+                    <div class="flex justify-between items-start gap-4">
+                      <div class="flex-1 min-w-0">
+                        <div class="font-bold text-slate-900 group-hover/v:text-blue-600 transition-colors truncate">{{ video.titulo || 'Sem título' }}</div>
+                        <p class="text-slate-500 text-xs mt-1 line-clamp-2 h-8 leading-relaxed">{{ video.descricao || 'Sem descrição' }}</p>
+                      </div>
+                      <a [href]="video.link || video.url" target="_blank" 
+                         class="bg-white p-2 rounded-lg border border-slate-200 text-blue-600 hover:bg-blue-600 hover:text-white transition-all shadow-sm">
+                        <i class="bi bi-box-arrow-up-right"></i>
+                      </a>
                     </div>
                   </div>
-
-                  <!-- Botão de Significância -->
-                  <button 
-                    (click)="openEventMetrics(event)"
-                    [ngClass]="event.isSignificant ? 
-                      'bg-blue-100 border-blue-300 text-blue-700 hover:bg-blue-200' : 
-                      'bg-gray-100 border-gray-300 text-gray-700 hover:bg-gray-200'"
-                    class="w-full px-3 py-2 rounded border text-sm font-medium transition-colors">
-                    {{ event.isSignificant ? '✓ Diferença Significativa' : '− Sem Diferença Significativa' }}
-                  </button>
                 </div>
               </div>
             </div>
           </article>
         </div>
 
-        <!-- Controles de Paginação -->
-        <div class="flex flex-col sm:flex-row justify-between items-center gap-4" *ngIf="totalPages > 1">
-          <div class="text-sm text-slate-600">
-            Mostrando {{ (currentPage - 1) * pageSize + 1 }} - {{ getMin(currentPage * pageSize, groupedEvents.length) }} de {{ groupedEvents.length }} eventos
+        <!-- PAGINAÇÃO MODERNA -->
+        <div class="flex flex-col md:flex-row justify-between items-center gap-8 py-8" *ngIf="totalPages > 1">
+          <div class="text-slate-500 font-medium">
+            Exibindo <span class="text-slate-900 font-bold">{{ (currentPage - 1) * pageSize + 1 }}–{{ getMin(currentPage * pageSize, groupedEvents.length) }}</span> 
+            de <span class="text-slate-900 font-bold">{{ groupedEvents.length }}</span> eventos
           </div>
           
-          <div class="flex items-center gap-2">
-            <!-- Primeira página -->
-            <button 
-              (click)="firstPage()" 
-              [disabled]="currentPage === 1"
-              class="px-3 py-1 text-sm border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed">
-              ≪
-            </button>
+          <nav class="flex items-center gap-1.5">
+            <button (click)="firstPage()" [disabled]="currentPage === 1" class="pagination-btn" title="Primeira"><i class="bi bi-chevron-double-left"></i></button>
+            <button (click)="prevPage()" [disabled]="currentPage === 1" class="pagination-btn" title="Anterior"><i class="bi bi-chevron-left"></i></button>
             
-            <!-- Página anterior -->
-            <button 
-              (click)="prevPage()" 
-              [disabled]="currentPage === 1"
-              class="px-3 py-1 text-sm border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed">
-              ‹
-            </button>
-            
-            <!-- Números das páginas -->
-            <ng-container *ngFor="let page of visiblePages">
-              <button 
-                (click)="goToPage(page)" 
-                [class.active-page]="page === currentPage"
-                class="px-3 py-1 text-sm border border-slate-300 rounded hover:bg-slate-50 min-w-[40px]">
+            <div class="hidden sm:flex items-center gap-1.5">
+              <button *ngFor="let page of visiblePages" 
+                      (click)="goToPage(page)" 
+                      [class.active]="page === currentPage" 
+                      class="pagination-btn">
                 {{ page }}
               </button>
-            </ng-container>
-            
-            <!-- Próxima página -->
-            <button 
-              (click)="nextPage()" 
-              [disabled]="currentPage === totalPages"
-              class="px-3 py-1 text-sm border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed">
-              ›
-            </button>
-            
-            <!-- Última página -->
-            <button 
-              (click)="lastPage()" 
-              [disabled]="currentPage === totalPages"
-              class="px-3 py-1 text-sm border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed">
-              ≫
-            </button>
-          </div>
+            </div>
+
+            <button (click)="nextPage()" [disabled]="currentPage === totalPages" class="pagination-btn" title="Próxima"><i class="bi bi-chevron-right"></i></button>
+            <button (click)="lastPage()" [disabled]="currentPage === totalPages" class="pagination-btn" title="Última"><i class="bi bi-chevron-double-right"></i></button>
+          </nav>
         </div>
       </ng-container>
-      <ng-template #noEvents><div class="text-slate-500">Nenhum evento encontrado.</div></ng-template>
+
+      <ng-template #noEvents>
+        <div class="chart-container flex flex-col items-center justify-center py-20 text-center">
+          <div class="bg-slate-50 p-6 rounded-full text-slate-300 mb-4">
+            <i class="bi bi-search text-6xl"></i>
+          </div>
+          <h3 class="text-xl font-bold text-slate-800">Nenhum evento encontrado</h3>
+          <p class="text-slate-500 mt-2">Tente ajustar seus filtros ou selecionar um período diferente no gráfico.</p>
+        </div>
+      </ng-template>
     </section>
 
-    <!-- Modal de Detalhes das Métricas -->
-    <div *ngIf="isModalVisible" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-4xl mx-4">
-        <div class="flex justify-between items-center mb-4">
-          <div>
-            <h3 class="text-xl font-bold text-slate-900">Análise do Evento</h3>
-            <p *ngIf="selectedEvent" class="text-sm text-slate-600">{{ selectedEvent.operation_id }} — {{ selectedEvent.minDateStr }} a {{ selectedEvent.maxDateStr }}</p>
+    <!-- MODAL DE DETALHES -->
+    <div *ngIf="isModalVisible" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-[100] p-4 sm:p-6 animate-fadeIn">
+      <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-5xl overflow-hidden animate-slideUp">
+        
+        <!-- Modal Header -->
+        <div class="bg-slate-900 p-8 text-white flex justify-between items-start relative overflow-hidden">
+          <div class="absolute top-0 right-0 p-8 opacity-5">
+             <i class="bi bi-bar-chart-fill text-9xl"></i>
           </div>
-          <button (click)="isModalVisible = false" class="text-slate-500 hover:text-slate-800 text-2xl">&times;</button>
+          <div class="relative z-10">
+            <div class="flex items-center gap-2 mb-3">
+              <span class="bg-blue-500 text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-widest">Análise Estatística</span>
+            </div>
+            <h3 class="text-3xl font-black">{{ selectedEvent?.operation_id }}</h3>
+            <p class="text-slate-400 mt-2 font-medium flex items-center gap-2">
+              <i class="bi bi-calendar3"></i>
+              {{ selectedEvent?.minDateStr }} a {{ selectedEvent?.maxDateStr }}
+            </p>
+          </div>
+          <button (click)="isModalVisible = false" class="relative z-10 bg-white/10 hover:bg-white/20 p-2 rounded-full text-white transition-all">
+            <i class="bi bi-x-lg text-xl"></i>
+          </button>
         </div>
 
-        <div class="mb-4">
-          <label class="text-sm font-medium text-slate-700 mr-2">Métrica:</label>
-          <select [(ngModel)]="selectedMetric" (change)="updateEventDrillDownChart()" class="border border-slate-300 rounded-md px-2 py-1 text-sm">
-            <option value="precision">Precisão</option>
-            <option value="recall">Revocação (Recall)</option>
-            <option value="f1">F1-Score</option>
-          </select>
-        </div>
+        <div class="p-8">
+          <div class="flex flex-col lg:flex-row gap-8">
+            <!-- Controles e Contexto -->
+            <div class="lg:w-64 space-y-6">
+              <div>
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block">Métrica exibida</label>
+                <div class="space-y-2">
+                  <button *ngFor="let m of [{id:'precision', l:'Precisão'}, {id:'recall', l:'Revocação'}, {id:'f1', l:'F1-Score'}]"
+                          (click)="selectedMetric = $any(m.id); updateEventDrillDownChart()"
+                          [class.bg-blue-600]="selectedMetric === m.id"
+                          [class.text-white]="selectedMetric === m.id"
+                          [class.bg-slate-100]="selectedMetric !== m.id"
+                          class="w-full text-left px-4 py-3 rounded-xl text-sm font-bold transition-all">
+                    {{ m.l }}
+                  </button>
+                </div>
+              </div>
 
-        <div class="relative h-96">
-          <p-chart
-            type="bar"
-            [data]="drillDownChartData"
-            [options]="drillDownChartOptions"
-            [plugins]="[errorBarPlugin]"
-            height="100%">
-          </p-chart>
+              <div class="bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                <i class="bi bi-info-circle text-blue-500 mb-3 block text-xl"></i>
+                <p class="text-xs text-slate-500 leading-relaxed font-medium">
+                  Este gráfico mostra a proporção de cada classe de sentimento no evento, incluindo o **Intervalo de Confiança (IC 95%)** do modelo.
+                </p>
+              </div>
+            </div>
+
+            <!-- Gráfico principal -->
+            <div class="flex-1">
+              <div class="h-[450px] relative">
+                <p-chart
+                  type="bar"
+                  [data]="drillDownChartData"
+                  [options]="drillDownChartOptions"
+                  [plugins]="[errorBarPlugin]"
+                  height="100%">
+                </p-chart>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="bg-slate-50 p-4 text-center border-t border-slate-100">
+           <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Metodologia: Bootstrap Resampling com α=0.05</p>
         </div>
       </div>
     </div>
