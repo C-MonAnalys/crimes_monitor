@@ -5,6 +5,7 @@ import { ChartModule } from 'primeng/chart';
 
 import { EventsService } from '../../services/events.service';
 import { SentimentService } from '../../services/sentiment.service';
+import { DATA_CONFIG } from '../../data-config';
 
 // ----- Tipos mínimos usados aqui -----
 interface EventsOverview {
@@ -87,10 +88,21 @@ export class HomeComponent implements OnInit {
   // -------- helpers de dados locais --------
   private async fetchJson(path: string): Promise<any | null> {
     try {
-      const baseTag  = document.getElementsByTagName('base')[0];
-      const baseHref = (baseTag && baseTag.getAttribute('href')) || '/';
-      const root = baseHref.endsWith('/') ? baseHref : baseHref + '/';
-      const resp = await fetch(root + path);
+      let url = path;
+      if (DATA_CONFIG.BASE_DATA_URL) {
+        // Se já for URL absoluta, não muda. Se for path relativo tipo 'events/...', acrescenta base.
+        if (!path.startsWith('http')) {
+          const cleanPath = path.startsWith('assets/data/') ? path.replace('assets/data/', '') : path;
+          url = `${DATA_CONFIG.BASE_DATA_URL}/${cleanPath}`;
+        }
+      } else if (!path.startsWith('http')) {
+        const baseTag = document.getElementsByTagName('base')[0];
+        const baseHref = (baseTag && baseTag.getAttribute('href')) || '/';
+        const root = baseHref.endsWith('/') ? baseHref : baseHref + '/';
+        url = root + path;
+      }
+
+      const resp = await fetch(url);
       if (!resp.ok) return null;
       return await resp.json();
     } catch {
@@ -99,37 +111,38 @@ export class HomeComponent implements OnInit {
   }
 
   private async loadLatestDatasets() {
+    // Sem merge: se tem Cloudflare, usa apenas Cloudflare.
+    const loadOnly = async (path: string) => {
+      return await this.fetchJson(path);
+    };
+
     // events/cenario-real
-    const ev = await this.fetchJson('assets/data/events/cenario-real/datasets.json');
-    if (ev && typeof ev === 'object') {
+    const ev = await loadOnly('assets/data/events/cenario-real/datasets.json');
+    if (ev && Object.keys(ev).length) {
       if (ev['brasil_all']) {
         const cfg = ev['brasil_all'];
         this.latestEvent.set({ id: 'brasil_all', label: cfg?.label ?? 'Brasil 2019–2025', description: cfg?.description ?? '' });
       } else {
         const entries = Object.entries(ev) as Array<[string, any]>;
-        if (entries.length) {
-          const [id, cfg] = entries[entries.length - 1]; // “último” no arquivo
-          this.latestEvent.set({
-            id,
-            label: cfg?.label ?? id,
-            description: cfg?.description ?? ''
-          });
-        }
+        const [id, cfg] = entries[entries.length - 1]; // “último” no arquivo
+        this.latestEvent.set({
+          id,
+          label: cfg?.label ?? id,
+          description: cfg?.description ?? ''
+        });
       }
     }
 
     // sentiment/cenario-real
-    const se = await this.fetchJson('assets/data/sentiment/cenario-real/datasets.json');
-    if (se && typeof se === 'object') {
+    const se = await loadOnly('assets/data/sentiment/cenario-real/datasets.json');
+    if (se && Object.keys(se).length) {
       const entries = Object.entries(se) as Array<[string, any]>;
-      if (entries.length) {
-        const [id, cfg] = entries[entries.length - 1];
-        this.latestSent.set({
-          id,
-          label: cfg?.title ?? id,
-          description: ''
-        });
-      }
+      const [id, cfg] = entries[entries.length - 1];
+      this.latestSent.set({
+        id,
+        label: cfg?.title ?? id,
+        description: ''
+      });
     }
   }
 

@@ -3,17 +3,47 @@
   <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-6 flex flex-col h-full">
     <h3 class="text-lg font-semibold text-slate-900 mb-4">Volume Semanal por Classe</h3>
 
-    <div class="flex flex-wrap items-center gap-4 mb-4">
-      <label class="flex items-center gap-2 text-sm">
-        Início:
-        <input type="date" [(ngModel)]="startDate" class="border border-slate-300 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500">
-      </label>
-      <label class="flex items-center gap-2 text-sm">
-        Fim:
-        <input type="date" [(ngModel)]="endDate" class="border border-slate-300 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500">
-      </label>
-      <button (click)="applyFilter()" class="bg-blue-600 text-white px-3 py-1 rounded-md text-sm hover:bg-blue-700 transition-colors">Aplicar</button>
-      <button (click)="clearFilter()" class="bg-slate-200 text-slate-700 px-3 py-1 rounded-md text-sm hover:bg-slate-300 transition-colors">Limpar</button>
+    <div class="flex flex-wrap items-center gap-4 bg-slate-50/50 p-4 rounded-2xl border border-slate-100 mb-6">
+      <div class="flex items-center gap-3">
+        <div class="relative group">
+          <input
+            #startInput
+            type="date"
+            [(ngModel)]="startDate"
+            class="pl-4 pr-10 py-2 bg-white border border-slate-200 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all w-full"
+            placeholder="Início"
+          />
+          <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors pointer-events-none z-10">
+            <i class="bi bi-calendar3"></i>
+          </span>
+        </div>
+
+        <div class="text-slate-300 font-light text-sm">até</div>
+
+        <div class="relative group">
+          <input
+            #endInput
+            type="date"
+            [(ngModel)]="endDate"
+            class="pl-4 pr-10 py-2 bg-white border border-slate-200 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all w-full"
+            placeholder="Fim"
+          />
+          <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors pointer-events-none z-10">
+            <i class="bi bi-calendar3"></i>
+          </span>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button (click)="applyFilter()" 
+                class="bg-slate-900 text-white px-6 py-2 rounded-xl text-sm font-bold hover:bg-slate-800 transition-all shadow-sm hover:shadow-md active:scale-95">
+          Aplicar Filtro
+        </button>
+        <button (click)="clearFilter()" 
+                class="px-4 py-2 text-sm font-bold text-slate-500 hover:text-slate-700 transition-colors">
+          Limpar
+        </button>
+      </div>
     </div>
 
     <div class="relative flex-grow min-h-[400px]">

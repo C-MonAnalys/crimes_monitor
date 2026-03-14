@@ -1,7 +1,0 @@
-{
-  "brasil_2021": {
-    "title": "Análise de Posicionamento - Brasil (2021)",
-    "commentsFile": "data/comentarios_2021_inferido_events.json",
-    "bootstrapFile": "data/bootstrap_results_211124.json"
-  }
-}

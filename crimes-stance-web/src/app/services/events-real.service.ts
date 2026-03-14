@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { DATA_CONFIG } from '../data-config';
 
 /**
  * Lê datasets de eventos em “cenário real” a partir de:
@@ -12,11 +13,15 @@ export class EventsRealService {
   private base: string;
 
   constructor() {
-    // monta base respeitando <base href> (GitHub Pages)
-    const baseTag = document.getElementsByTagName('base')[0];
-    const baseHref = (baseTag && baseTag.getAttribute('href')) || '/';
-    const root = baseHref.endsWith('/') ? baseHref : baseHref + '/';
-    this.base = `${root}assets/data/events/cenario-real`;
+    if (DATA_CONFIG.BASE_DATA_URL) {
+      this.base = `${DATA_CONFIG.BASE_DATA_URL}/events/cenario-real`;
+    } else {
+      // monta base respeitando <base href> (GitHub Pages)
+      const baseTag = document.getElementsByTagName('base')[0];
+      const baseHref = (baseTag && baseTag.getAttribute('href')) || '/';
+      const root = baseHref.endsWith('/') ? baseHref : baseHref + '/';
+      this.base = `${root}assets/data/events/cenario-real`;
+    }
   }
 
   private async fetchJson<T=any>(path: string): Promise<T> {
@@ -33,8 +38,13 @@ export class EventsRealService {
   /** Lista datasets disponíveis (id -> {label, description, file}) */
   async getDatasets(): Promise<Record<string, { label: string; description?: string; file: string }>> {
     const url = `${this.base}/datasets.json`;
-    const data = await this.fetchJson(url);
-    return data ?? {};
+    try {
+      const data = await this.fetchJson(url);
+      return data || {};
+    } catch (e) {
+      console.error('[EventsRealService] Error fetching datasets from Cloudflare:', e);
+      return {};
+    }
   }
 
   /**
@@ -59,12 +69,15 @@ export class EventsRealService {
     };
   }> {
     const all = await this.getDatasets();
-    const config = all[datasetId];
-    if (!config) throw new Error(`Dataset "${datasetId}" não encontrado em datasets.json`);
+    let config = all[datasetId];
+    const isAll = !datasetId || !config || (config && config.file === '__ALL__');
+    if (isAll && !config) {
+      config = { label: 'Eventos (Consolidado)', description: 'Todos os datasets unificados', file: '__ALL__' };
+    }
 
     let raw: any[] = [];
 
-    if (config.file === '__ALL__') {
+    if (isAll) {
       // compila todos os arquivos listados em datasets.json (exceto entradas __ALL__)
       const files = Object.values(all)
         .map((c: any) => c.file)
@@ -104,7 +117,15 @@ export class EventsRealService {
   }
 
   private resolveAssetUrl(fileField: string): string {
-    // tolera prefixos “events/…”
+    if (DATA_CONFIG.BASE_DATA_URL) {
+      // No R2, mantemos a estrutura /events/...
+      if (fileField.startsWith('events/')) {
+        return `${DATA_CONFIG.BASE_DATA_URL}/${fileField}`;
+      }
+      return `${this.base}/${fileField}`;
+    }
+
+    // Comportamento original para local assets
     if (fileField.startsWith('events/')) {
       // base já é .../events/cenario-real
       // mas o arquivo do exemplo está em "events/cenario-real/…"
