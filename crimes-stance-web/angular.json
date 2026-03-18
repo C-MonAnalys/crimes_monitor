@@ -23,17 +23,14 @@
               {
                 "glob": "**/*",
                 "input": "public",
-                "output": "/assets/"
+                "output": "assets"
               },
               "src/assets"
             ],
             "styles": [
               "node_modules/bootstrap-icons/font/bootstrap-icons.css",
               "src/styles.css"
-            ],
-            "define": {
-              "import.meta.env.VITE_BASE_DATA_URL": "\"https://pub-a051ee79c31b4aceb32bd398630bc042.r2.dev\""
-            }
+            ]
           },
           "configurations": {
             "production": {
@@ -52,7 +49,7 @@
               "fileReplacements": [
                 {
                   "replace": "src/app/environments/environment.ts",
-                  "with": "src/app/environments/environment.ts"
+                  "with": "src/app/environments/environment.prod.ts"
                 }
               ],
               "outputHashing": "all"

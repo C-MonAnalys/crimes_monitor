@@ -1,18 +1,18 @@
 # See https://docs.github.com/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
 
 # Compiled output
-/dist
-/tmp
-/out-tsc
-/bazel-out
+/crimes-stance-web/dist
+/crimes-stance-web/tmp
+/crimes-stance-web/out-tsc
+/crimes-stance-web/bazel-out
 
 # Node
-/node_modules
-npm-debug.log
-yarn-error.log
+/crimes-stance-web/node_modules
+/crimes-stance-web/npm-debug.log
+/crimes-stance-web/yarn-error.log
 
 # IDEs and editors
-.idea/
+/crimes-stance-web/.idea/
 .project
 .classpath
 .c9/
@@ -29,7 +29,7 @@ yarn-error.log
 .history/*
 
 # Miscellaneous
-/.angular/cache
+/crimes-stance-web/.angular/
 .sass-cache/
 /connect.lock
 /coverage
@@ -44,6 +44,9 @@ Thumbs.db
 src/assets/data/sentiment/cenario-real/comentarios_2020_inferido_events.json
 
 # Environment variables
-.env
-.env.*
-!.env.example
+/crimes-stance-web/.env
+/crimes-stance-web/.env.*
+!/crimes-stance-web/.env.example
+
+# Angular specific
+/crimes-stance-web/src/app/environments/environment.prod.ts

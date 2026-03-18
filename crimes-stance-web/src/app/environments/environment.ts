@@ -1,4 +1,4 @@
 export const environment = {
   production: false,
-  baseDataUrl: '' // No ambiente local/desenvolvimento (fallback local) usa vazio para buscar da pasta assets
+  baseDataUrl: 'https://pub-a051ee79c31b4aceb32bd398630bc042.r2.dev'
 };
