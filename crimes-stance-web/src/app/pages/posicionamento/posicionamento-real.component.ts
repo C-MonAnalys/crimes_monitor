@@ -35,6 +35,7 @@ export class PosicionamentoRealComponent implements OnInit {
 
   // estado base
   isLoading = true;
+  isRefreshing = false;
   error = '';
   datasetId = '';
 
@@ -61,6 +62,13 @@ export class PosicionamentoRealComponent implements OnInit {
 
   async ngOnInit() {
     this.datasetId = this.route.snapshot.paramMap.get('id') || '';
+    await this.loadData();
+  }
+
+  async loadData() {
+    this.isLoading = true;
+    this.error = '';
+    this.cdr.markForCheck();
 
     let loadPromise: Promise<{ meta: any; comments: any[]; bootstrap: any[] }>;
     
@@ -79,6 +87,24 @@ export class PosicionamentoRealComponent implements OnInit {
         this.isLoading = false;
         this.cdr.markForCheck();
       });
+    }
+  }
+
+  async refreshData() {
+    if (this.isRefreshing) return;
+    
+    this.isRefreshing = true;
+    this.cdr.markForCheck();
+
+    try {
+      // Limpa especificamente o cache consolidado ou do dataset atual
+      await this.sentiments.clearCache(this.datasetId || 'consolidado');
+      await this.loadData();
+    } catch (e) {
+      console.error('Erro ao atualizar dados:', e);
+    } finally {
+      this.isRefreshing = false;
+      this.cdr.markForCheck();
     }
   }
 

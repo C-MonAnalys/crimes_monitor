@@ -205,6 +205,7 @@ export class EventosRealComponent implements OnInit {
   private zone = inject(NgZone);
 
   isLoading = true;
+  isRefreshing = false;
   timedOut = false;
   error = '';
 
@@ -332,26 +333,46 @@ export class EventosRealComponent implements OnInit {
 
   async ngOnInit() {
     this.datasetId = this.route.snapshot.paramMap.get('id') || '';
+    await this.loadInitialData();
+  }
 
+  async loadInitialData() {
+    this.isLoading = true;
     const load = this.real.loadDataset(this.datasetId);
     try {
       const data = await withTimeout(load, 5000);
       this.zone.run(() => this.apply(data));
-      // Tenta carregar comentários de forma assíncrona (não bloqueia o carregamento)
-      this.loadComments().catch(() => console.log('Comentários não disponíveis para este dataset'));
-    } catch (e:any) {
+      this.loadComments().catch(() => {});
+    } catch (e: any) {
       if (e?.message === 'TIMEOUT') {
-        this.timedOut = true; this.isLoading = false;
+        this.timedOut = true;
+        this.isLoading = false;
         load.then(full => {
           this.zone.run(() => {
             this.apply(full);
             this.loadComments().catch(() => {});
           });
-        })
-            .catch(() => { this.error = 'Não foi possível carregar o dataset.'; });
+        }).catch(() => { this.error = 'Erro ao carregar dataset.'; });
       } else {
-        this.error = 'Não foi possível carregar o dataset.'; this.isLoading = false;
+        this.error = 'Não foi possível carregar o dataset.';
+        this.isLoading = false;
       }
+    }
+  }
+
+  async refreshData() {
+    if (this.isRefreshing) return;
+    this.isRefreshing = true;
+    try {
+      // Limpa cache no IndexedDB
+      await this.real.clearCache(this.datasetId || 'consolidado');
+      // Recarrega
+      await this.loadInitialData();
+    } catch (e) {
+      console.error('Erro ao sincronizar:', e);
+    } finally {
+      this.isRefreshing = false;
+      this.cdr.detectChanges();
     }
   }
 

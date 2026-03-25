@@ -3,9 +3,10 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve",
-    "build": "ng build",
-    "build:ghpages": "ng build --configuration production --base-href /crimes_stance_site/ && npx angular-cli-ghpages --dir=dist/crimes-stance-web/browser --branch=gh-pages",
+    "start": "npm run config && ng serve",
+    "build": "npm run config && ng build",
+    "build:ghpages": "npm run config && ng build --configuration production --base-href /crimes_monitor/ && npx angular-cli-ghpages --dir=dist/crimes-stance-web/browser --branch=gh-pages",
+    "config": "node scripts/set-env.js",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
   },
@@ -50,11 +51,14 @@
     "@angular/cli": "^20.2.2",
     "@angular/compiler-cli": "^20.2.0",
     "@tailwindcss/postcss": "^4.1.13",
+    "@types/dotenv": "^6.1.1",
     "@types/html2canvas": "^0.5.35",
     "@types/jasmine": "~5.1.0",
     "@types/jspdf": "^1.3.3",
+    "@types/node": "^25.5.0",
     "angular-cli-ghpages": "^2.0.3",
     "autoprefixer": "^10.4.21",
+    "dotenv": "^17.3.1",
     "jasmine-core": "~5.9.0",
     "karma": "~6.4.0",
     "karma-chrome-launcher": "~3.2.0",
@@ -63,6 +67,7 @@
     "karma-jasmine-html-reporter": "~2.1.0",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.13",
+    "ts-node": "^10.9.2",
     "typescript": "~5.9.2"
   }
 }
