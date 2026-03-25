@@ -11,6 +11,7 @@ import { DATA_CONFIG } from '../data-config';
 @Injectable({ providedIn: 'root' })
 export class SentimentRealService {
   private base: string;
+  private readonly CACHE_TTL = 24 * 60 * 60 * 1000; // 1 dia em milissegundos
 
   constructor() {
     if (DATA_CONFIG.BASE_DATA_URL) {
@@ -25,7 +26,10 @@ export class SentimentRealService {
   }
 
   private async fetchJson<T = any>(url: string): Promise<T> {
-    const resp = await fetch(url);
+    const t = Date.now();
+    const separator = url.includes('?') ? '&' : '?';
+    const finalUrl = `${url}${separator}t=${t}`;
+    const resp = await fetch(finalUrl);
     if (!resp.ok) throw new Error(`HTTP ${resp.status} @ ${url}`);
     return resp.json();
   }
@@ -80,15 +84,32 @@ export class SentimentRealService {
    * e retorna a união de todos os comentários + bootstrap médio? 
    * (Para bootstrap o ideal é pegar o do modelo mais recente ou o primeiro)
    */
+  /**
+   * Consolidado: Busca todos os datasets em sentiment/cenario-real/datasets.json
+   * e retorna a união de todos os comentários + bootstrap médio.
+   */
   async loadConsolidated(): Promise<{ meta: { id: string; title: string; total: number; period: string }, comments: any[], bootstrap: any[] }> {
-    // Tenta carregar do cache primeiro (IndexedDB simplificado)
+    const all = await this.getDatasets();
+    const fingerprint = JSON.stringify(all); // Fingerprint baseado no conteúdo do datasets.json
+
+    // Tenta carregar do cache primeiro (IndexedDB)
     const cached = await this.getFromCache('consolidado');
-    if (cached) {
-      console.log('[SentimentRealService] Carregado de cache (IndexedDB)');
-      return cached;
+    
+    // Se temos cache, o fingerprint bate e ainda está no prazo (TTL), retornamos
+    if (cached && cached.fingerprint === fingerprint) {
+      const isExpired = Date.now() - cached.timestamp > this.CACHE_TTL;
+      
+      if (!isExpired) {
+        console.log('[SentimentRealService] Carregado de cache (IndexedDB) - Versão atualizada e válida');
+        return cached.data;
+      }
+      console.log('[SentimentRealService] Cache expirou (TTL > 24h). Recarregando...');
     }
 
-    const all = await this.getDatasets();
+    if (cached) {
+      console.log('[SentimentRealService] Cache detectado como desatualizado. Recarregando...');
+    }
+
     const ids = Object.keys(all);
     
     // Carrega todos os datasets em paralelo
@@ -97,7 +118,7 @@ export class SentimentRealService {
 
     const allComments = valid.reduce((acc, r) => acc.concat(r.comments), []);
     
-    // Calcula período dinamicamente se não estiver nos metadados
+    // Calcula período dinamicamente
     let minDate = '';
     let maxDate = '';
     
@@ -121,24 +142,56 @@ export class SentimentRealService {
       bootstrap: firstBootstrap
     };
 
-    // Salva no cache silenciosamente
-    this.saveToCache('consolidado', result).catch(e => console.warn('Falha ao salvar cache:', e));
+    // Salva no cache com o novo fingerprint
+    this.saveToCache('consolidado', result, fingerprint).catch(e => console.warn('Falha ao salvar cache:', e));
 
     return result;
   }
 
-  private async getFromCache(key: string): Promise<any | null> {
+  /**
+   * Limpa o cache para forçar recarregamento
+   */
+  async clearCache(key: string = 'consolidado'): Promise<void> {
     return new Promise((resolve) => {
       try {
-        const request = indexedDB.open('CrimesMonitorDB', 1);
+        const request = indexedDB.open('CrimesMonitorDB', 2);
         request.onupgradeneeded = (e: any) => {
           const db = e.target.result;
-          if (!db.objectStoreNames.contains('sentimentCache')) {
-            db.createObjectStore('sentimentCache');
-          }
+          if (!db.objectStoreNames.contains('sentimentCache')) db.createObjectStore('sentimentCache');
+          if (!db.objectStoreNames.contains('eventsCache')) db.createObjectStore('eventsCache');
         };
         request.onsuccess = (e: any) => {
           const db = e.target.result;
+          if (!db.objectStoreNames.contains('sentimentCache')) { resolve(); return; }
+          const tx = db.transaction('sentimentCache', 'readwrite');
+          const store = tx.objectStore('sentimentCache');
+          store.delete(key);
+          tx.oncomplete = () => {
+            console.log(`[SentimentRealService] Cache "${key}" limpo com sucesso.`);
+            resolve();
+          };
+          tx.onerror = () => resolve();
+        };
+        request.onerror = () => resolve();
+      } catch { resolve(); }
+    });
+  }
+
+  private async getFromCache(key: string): Promise<{ data: any, fingerprint: string, timestamp: number } | null> {
+    return new Promise((resolve) => {
+      try {
+        const request = indexedDB.open('CrimesMonitorDB', 2);
+        request.onupgradeneeded = (e: any) => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains('sentimentCache')) db.createObjectStore('sentimentCache');
+          if (!db.objectStoreNames.contains('eventsCache')) db.createObjectStore('eventsCache');
+        };
+        request.onsuccess = (e: any) => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains('sentimentCache')) {
+            resolve(null);
+            return;
+          }
           const tx = db.transaction('sentimentCache', 'readonly');
           const store = tx.objectStore('sentimentCache');
           const getReq = store.get(key);
@@ -150,21 +203,15 @@ export class SentimentRealService {
     });
   }
 
-  private async saveToCache(key: string, data: any): Promise<void> {
+  private async saveToCache(key: string, data: any, fingerprint: string): Promise<void> {
     return new Promise((resolve) => {
       try {
-        const request = indexedDB.open('CrimesMonitorDB', 1);
-        request.onupgradeneeded = (e: any) => {
-          const db = e.target.result;
-          if (!db.objectStoreNames.contains('sentimentCache')) {
-            db.createObjectStore('sentimentCache');
-          }
-        };
+        const request = indexedDB.open('CrimesMonitorDB', 2);
         request.onsuccess = (e: any) => {
           const db = e.target.result;
           const tx = db.transaction('sentimentCache', 'readwrite');
           const store = tx.objectStore('sentimentCache');
-          store.put(data, key);
+          store.put({ data, fingerprint, timestamp: Date.now() }, key);
           tx.oncomplete = () => resolve();
           tx.onerror = () => resolve();
         };

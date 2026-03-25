@@ -1,28 +1,47 @@
 <div class="space-y-6" style="cursor: default;">
   <style>
     button, input[type="date"], select, .group, [p-chart] canvas { cursor: pointer !important; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
-  <!-- Hero Section Premium -->
-  <div class="relative overflow-hidden bg-slate-900 rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-800">
+  <!-- Hero Section Premium com Breakout Mobile -->
+  <div class="relative overflow-hidden bg-slate-900 md:rounded-3xl p-6 sm:p-10 md:p-16 shadow-2xl border-y border-slate-800 -mx-6 md:mx-0">
     <div class="relative z-10">
-      <div class="flex items-center gap-3 mb-6">
-        <span class="px-3 py-1 bg-blue-500/10 text-blue-400 rounded-full text-xs font-bold uppercase tracking-wider border border-blue-500/20">
-          Cenário Real
-        </span>
-        <span class="text-slate-400">/</span>
-        <span class="text-slate-300 text-sm">Sentiment Analysis</span>
+      <!-- Barra de Badges e Ações -->
+      <div class="flex flex-wrap items-center gap-3 mb-8">
+        <div class="flex items-center gap-2">
+          <span class="px-3 py-1 bg-blue-500/10 text-blue-400 rounded-lg text-[10px] font-black uppercase tracking-widest border border-blue-500/20">
+            Cenário Real
+          </span>
+          <span class="text-slate-700 font-bold hidden sm:inline">/</span>
+          <span class="text-slate-400 text-[10px] font-bold uppercase tracking-widest hidden sm:inline">Sentiment Analysis</span>
+        </div>
+
+        <div class="h-4 w-px bg-slate-800 hidden md:block mx-1"></div>
+
+        <!-- Botão de Sincronização Otimizado -->
+        <button (click)="refreshData()" 
+                [disabled]="isRefreshing"
+                class="flex items-center gap-2.5 px-4 py-1.5 bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white rounded-xl text-[10px] font-black uppercase tracking-widest border border-white/10 transition-all active:scale-95 disabled:opacity-50">
+          <i class="bi bi-arrow-clockwise" [class.animate-spin]="isRefreshing"></i>
+          <span class="hidden xs:inline">{{ isRefreshing ? 'Sincronizando...' : 'Sincronizar Dados' }}</span>
+          <span class="xs:hidden">{{ isRefreshing ? '...' : 'Sincronizar' }}</span>
+        </button>
       </div>
-      <h1 class="text-4xl md:text-5xl font-black mb-4 tracking-tight text-white">
-        Painel de <span class="text-blue-400">Posicionamento</span>
+
+      <h1 class="text-3xl sm:text-5xl md:text-6xl font-black mb-6 tracking-tighter text-white leading-[1.1]">
+        Painel de <br class="sm:hidden">
+        <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">Posicionamento</span>
       </h1>
-      <p class="text-slate-300 mt-3 max-w-2xl text-lg leading-relaxed">
-        Analise a percepção da audiência sobre operações policiais. Explore sentimentos extraídos automaticamente por modelos de inteligência artificial.
+      
+      <p class="text-slate-400 mt-4 max-w-2xl text-base sm:text-lg lg:text-xl leading-relaxed font-medium">
+        Analise a percepção da audiência sobre operações policiais através de modelos de <span class="text-slate-200">inteligência artificial</span> de ponta.
       </p>
     </div>
     
-    <!-- Efeito de gradiente no fundo -->
-    <div class="absolute -right-20 -top-20 w-80 h-80 bg-blue-600/10 rounded-full blur-3xl"></div>
-    <div class="absolute -left-20 -bottom-20 w-60 h-60 bg-indigo-600/10 rounded-full blur-3xl"></div>
+    <!-- Efeitos Visuais Refinados -->
+    <div class="absolute -right-20 -top-20 w-80 h-80 bg-blue-600/20 rounded-full blur-[100px] opacity-50"></div>
+    <div class="absolute -left-20 -bottom-20 w-60 h-60 bg-indigo-600/20 rounded-full blur-[100px] opacity-50"></div>
   </div>
 
   <div class="bg-white rounded-xl border border-slate-200 p-6 text-red-600" *ngIf="!isLoading && error">
@@ -99,43 +118,48 @@
     <!-- Amostra de Comentários -->
     <!-- Nova Seção: Análise por Evento Detectado -->
     <div class="mt-12">
-      <div class="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-6">
+      <div class="flex flex-col gap-6 mb-8 px-1">
         <div>
-          <h2 class="text-3xl font-black text-slate-900 tracking-tight">Análise por Evento</h2>
-          <p class="text-slate-500 mt-1">Dados agrupados por operação policial detectada nos comentários analisados.</p>
+          <h2 class="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
+            <span class="w-2 h-8 bg-blue-600 rounded-full"></span>
+            Análise por Evento
+          </h2>
+          <p class="text-slate-500 mt-2 text-sm font-medium">Dados agrupados por operação policial detectada nos comentários analisados.</p>
         </div>
         
-        <!-- Controles de Ordenação -->
-        <div class="flex flex-wrap items-center gap-2 bg-slate-50 p-2 rounded-2xl border border-slate-100">
-          <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-3">Ordenar por:</span>
-          <button (click)="sortEvents('comments')" 
-                  [class.bg-white]="currentSort === 'comments'"
-                  [class.shadow-sm]="currentSort === 'comments'"
-                  [class.text-blue-600]="currentSort === 'comments'"
-                  class="px-4 py-2 rounded-xl text-xs font-bold transition-all hover:text-blue-600">
-            Opiniões
-          </button>
-          <button (click)="sortEvents('videos')" 
-                  [class.bg-white]="currentSort === 'videos'"
-                  [class.shadow-sm]="currentSort === 'videos'"
-                  [class.text-blue-600]="currentSort === 'videos'"
-                  class="px-4 py-2 rounded-xl text-xs font-bold transition-all hover:text-blue-600">
-            Vídeos
-          </button>
-          <button (click)="sortEvents('approval')" 
-                  [class.bg-white]="currentSort === 'approval'"
-                  [class.shadow-sm]="currentSort === 'approval'"
-                  [class.text-blue-600]="currentSort === 'approval'"
-                  class="px-4 py-2 rounded-xl text-xs font-bold transition-all hover:text-blue-600">
-            Aprovação
-          </button>
-          <button (click)="sortEvents('disapproval')" 
-                  [class.bg-white]="currentSort === 'disapproval'"
-                  [class.shadow-sm]="currentSort === 'disapproval'"
-                  [class.text-blue-600]="currentSort === 'disapproval'"
-                  class="px-4 py-2 rounded-xl text-xs font-bold transition-all hover:text-blue-600">
-            Desaprovação
-          </button>
+        <!-- Controles de Ordenação - Horizontal Scroll no Mobile -->
+        <div class="flex items-center gap-2 overflow-x-auto pb-4 sm:pb-0 no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0">
+          <div class="flex items-center gap-2 bg-slate-100/50 p-1.5 rounded-2xl border border-slate-200/50 min-w-max">
+            <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest px-3 border-r border-slate-200 mr-1">Ordenar</span>
+            <button (click)="sortEvents('comments')" 
+                    [class.bg-white]="currentSort === 'comments'"
+                    [class.shadow-md]="currentSort === 'comments'"
+                    [class.text-blue-600]="currentSort === 'comments'"
+                    class="px-5 py-2.5 rounded-xl text-[11px] font-black transition-all hover:text-blue-600 uppercase tracking-wider">
+              Opiniões
+            </button>
+            <button (click)="sortEvents('videos')" 
+                    [class.bg-white]="currentSort === 'videos'"
+                    [class.shadow-md]="currentSort === 'videos'"
+                    [class.text-blue-600]="currentSort === 'videos'"
+                    class="px-5 py-2.5 rounded-xl text-[11px] font-black transition-all hover:text-blue-600 uppercase tracking-wider">
+              Vídeos
+            </button>
+            <button (click)="sortEvents('approval')" 
+                    [class.bg-white]="currentSort === 'approval'"
+                    [class.shadow-md]="currentSort === 'approval'"
+                    [class.text-blue-600]="currentSort === 'approval'"
+                    class="px-5 py-2.5 rounded-xl text-[11px] font-black transition-all hover:text-blue-600 uppercase tracking-wider">
+              Aprovação
+            </button>
+            <button (click)="sortEvents('disapproval')" 
+                    [class.bg-white]="currentSort === 'disapproval'"
+                    [class.shadow-md]="currentSort === 'disapproval'"
+                    [class.text-blue-600]="currentSort === 'disapproval'"
+                    class="px-5 py-2.5 rounded-xl text-[11px] font-black transition-all hover:text-blue-600 uppercase tracking-wider">
+              Desaprovação
+            </button>
+          </div>
         </div>
       </div>
 
@@ -237,31 +261,35 @@
         </div>
       </div>
 
-      <!-- Paginação no Rodapé -->
-      <div class="mt-12 flex items-center justify-center gap-6" *ngIf="totalPages > 1">
+      <!-- Paginação no Rodapé - Mais Compacta no Mobile -->
+      <div class="mt-12 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8" *ngIf="totalPages > 1">
         <button (click)="prevPage()" 
                 [disabled]="currentPage === 1"
-                class="flex items-center gap-2 px-6 py-3 rounded-2xl border border-slate-200 bg-white text-sm font-black text-slate-600 hover:bg-slate-50 disabled:opacity-30 disabled:hover:bg-white transition-all shadow-sm active:scale-95">
+                class="w-full sm:w-auto flex items-center justify-center gap-3 px-8 py-4 rounded-2xl border-2 border-slate-100 bg-white text-sm font-black text-slate-600 hover:bg-slate-50 hover:border-blue-500/20 disabled:opacity-30 disabled:hover:bg-white transition-all shadow-lg shadow-slate-200/50 active:scale-95">
           <i class="bi bi-arrow-left"></i> Anterior
         </button>
         
-        <div class="flex items-center gap-2">
-          <span class="w-8 h-8 flex items-center justify-center rounded-lg bg-blue-500 text-white text-xs font-black shadow-lg shadow-blue-500/30">
+        <div class="flex items-center gap-4 bg-slate-50 px-6 py-3 rounded-2xl border border-slate-200/50">
+          <span class="w-10 h-10 flex items-center justify-center rounded-xl bg-blue-600 text-white text-sm font-black shadow-lg shadow-blue-600/30">
             {{ currentPage }}
           </span>
-          <span class="text-slate-300">/</span>
-          <span class="text-xs font-black text-slate-400">{{ totalPages }} páginas</span>
+          <span class="text-slate-300 font-black text-xl">/</span>
+          <div class="flex flex-col">
+            <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Total</span>
+            <span class="text-sm font-black text-slate-700 leading-none mt-1">{{ totalPages }} páginas</span>
+          </div>
         </div>
 
         <button (click)="nextPage()" 
                 [disabled]="currentPage === totalPages"
-                class="flex items-center gap-2 px-6 py-3 rounded-2xl border border-slate-200 bg-white text-sm font-black text-slate-600 hover:bg-slate-50 disabled:opacity-30 disabled:hover:bg-white transition-all shadow-sm active:scale-95">
+                class="w-full sm:w-auto flex items-center justify-center gap-3 px-8 py-4 rounded-2xl border-2 border-slate-100 bg-white text-sm font-black text-slate-600 hover:bg-slate-50 hover:border-blue-500/20 disabled:opacity-30 disabled:hover:bg-white transition-all shadow-lg shadow-slate-200/50 active:scale-95">
           Próximo <i class="bi bi-arrow-right"></i>
         </button>
       </div>
     </div>
 
-    <div class="mt-16">
+    <!-- Amostra de Comentários com Breakout Mobile -->
+    <div class="mt-16 -mx-6 md:mx-0">
       <app-comments-sample-card [comments]="sampleComments"></app-comments-sample-card>
     </div>
 

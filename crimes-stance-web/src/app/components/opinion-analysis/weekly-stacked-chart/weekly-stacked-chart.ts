@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ChartModule } from 'primeng/chart';
@@ -17,13 +17,20 @@ type ClassName = 'Aprovação' | 'Desaprovação' | 'Neutro';
   }
 })
 export class WeeklyStackedChartComponent implements OnChanges {
+  @ViewChild('scrollContainer') scrollContainer!: ElementRef<HTMLDivElement>;
+
+  private dragCenterIndex: number | null = null;
+  private readonly MAX_TOTAL_WIDTH = 30000; // Limite de segurança para evitar "clumping" no Canvas
+
   // Inputs: Recebe os comentários e os dados do bootstrap
   @Input() comments: any[] = [];
   @Input() bootstrapData: any[] = [];
-
+ 
   // Propriedades para o gráfico principal
   startDate: string = '';
   endDate: string = '';
+  barWidth: number = 20; // Valor padrão e mínimo de "Zoom" ajustado para 20px (máxima densidade)
+  chartHeight: number = 400; // Altura padrão do gráfico
   chartData: any;
   chartOptions: any;
   hasData: boolean = true;
@@ -177,15 +184,15 @@ export class WeeklyStackedChartComponent implements OnChanges {
     this.chartData = {
       labels: weeks,
       datasets: [
-        { label: 'Aprovação',    data: yA, backgroundColor: bgA, borderRadius: 0, borderSkipped: false },
-        { label: 'Desaprovação', data: yD, backgroundColor: bgD, borderRadius: 0, borderSkipped: false },
-        { label: 'Neutro',       data: yN, backgroundColor: bgN, borderRadius: 0, borderSkipped: false },
+        { label: 'Aprovação',    data: yA, backgroundColor: bgA, borderRadius: 0, borderSkipped: false, barPercentage: 0.8, categoryPercentage: 0.9 },
+        { label: 'Desaprovação', data: yD, backgroundColor: bgD, borderRadius: 0, borderSkipped: false, barPercentage: 0.8, categoryPercentage: 0.9 },
+        { label: 'Neutro',       data: yN, backgroundColor: bgN, borderRadius: 0, borderSkipped: false, barPercentage: 0.8, categoryPercentage: 0.9 },
       ],
     };
 
     const fmtTick = (iso: string) => {
       const d = new Date(`${iso}T00:00:00Z`);
-      return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', timeZone: 'UTC' }).replace('.', '');
+      return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: '2-digit', timeZone: 'UTC' }).replace('.', '');
     };
     const fmtRange = (iso: string) => this.formatWeekRange(iso);
 
@@ -210,7 +217,7 @@ export class WeeklyStackedChartComponent implements OnChanges {
       },
 
       plugins: {
-        legend: { position: 'top' },
+        legend: { display: false }, // Legenda nativa desativada (usaremos a customizada fixa)
         tooltip: {
           displayColors: true,
           titleFont: { weight: '700' },
@@ -235,24 +242,40 @@ export class WeeklyStackedChartComponent implements OnChanges {
       scales: {
         x: {
           stacked: true,
-          title: { display: true, text: 'Início da Semana' },
+          title: { display: false },
           ticks: {
-            autoSkip: true, maxRotation: 0, minRotation: 0,
+            autoSkip: false,
+            maxRotation: 45,
+            minRotation: 45,
+            font: { size: 10, weight: '500' },
+            color: '#64748b',
+            padding: 8,
             callback: (_: any, idx: number) => fmtTick(this.chartData.labels[idx]),
           },
           grid: { display: false }
         },
         y: {
           stacked: true,
-          title: { display: true, text: 'Nº de Comentários' },
-          ticks: { precision: 0 },
-          grid: { color: 'rgba(148,163,184,0.2)' }
+          beginAtZero: true,
+          title: { display: true, text: 'Comentários', font: { size: 12, weight: '600' } },
+          ticks: { 
+            color: '#64748b',
+            font: { size: 11 },
+            callback: (val: any) => val.toLocaleString('pt-BR')
+          },
+          grid: { color: 'rgba(148,163,184,0.1)', drawTicks: false },
+          border: { display: false }
         },
       },
 
       elements: { bar: { borderWidth: 0, borderSkipped: false } },
       animation: { duration: 250 }
     };
+
+    // Auto-scroll para os dados mais recentes após a renderização inicial
+    setTimeout(() => {
+      this.scrollToEnd();
+    }, 50);
   }
 
   handleBarClick(weekIso: string): void {
@@ -512,5 +535,74 @@ export class WeeklyStackedChartComponent implements OnChanges {
 
   private toISODate(d: Date): string {
     return d.toISOString().slice(0, 10);
+  }
+
+  getChartWidth(): number {
+    if (!this.chartData || !this.chartData.labels) return 0;
+    const numLabels = this.chartData.labels.length;
+    let width = numLabels * this.barWidth;
+    
+    // Aplica o CAP de segurança
+    if (width > this.MAX_TOTAL_WIDTH) {
+      width = this.MAX_TOTAL_WIDTH;
+    }
+    
+    return Math.max(0, width);
+  }
+
+  scrollToEnd() {
+    if (this.scrollContainer?.nativeElement) {
+      const el = this.scrollContainer.nativeElement;
+      el.scrollLeft = el.scrollWidth;
+    }
+  }
+
+  onZoomInput(event: any) {
+    // Método mantido temporariamente por compatibilidade se necessário, 
+    // mas os botões agora são a forma oficial.
+    this.updateZoom(Number(event.target.value));
+  }
+
+  zoomIn() {
+    this.updateZoom(this.barWidth + 10);
+  }
+
+  zoomOut() {
+    this.updateZoom(Math.max(20, this.barWidth - 10));
+  }
+
+  private updateZoom(newBarWidth: number) {
+    if (!this.scrollContainer?.nativeElement || !this.chartData?.labels?.length) {
+      this.barWidth = newBarWidth;
+      return;
+    }
+
+    const numLabels = this.chartData.labels.length;
+    // Calcula o limite real de barWidth para não estourar o MAX_TOTAL_WIDTH
+    const maxAllowedBarWidth = Math.floor(this.MAX_TOTAL_WIDTH / numLabels);
+    const finalBarWidth = Math.min(newBarWidth, maxAllowedBarWidth);
+
+    const container = this.scrollContainer.nativeElement;
+    
+    // 1. Pega o centro atual antes de mudar a largura
+    const centerPixelX = container.scrollLeft + container.clientWidth / 2;
+    const centerRatio = centerPixelX / this.getChartWidth();
+
+    // 2. Aplica a nova largura e altura proporcionalmente
+    // Cada degrau de 10px na largura adiciona 50px na altura (para "esticar" verticalmente)
+    const zoomSteps = (finalBarWidth - 20) / 10;
+    this.barWidth = finalBarWidth;
+    this.chartHeight = 400 + (zoomSteps * 50);
+    
+    // 3. Reposiciona o scroll para manter o mesmo centro proporcional
+    setTimeout(() => {
+      const newTotalWidth = this.getChartWidth();
+      container.scrollLeft = Math.max(0, (centerRatio * newTotalWidth) - (container.clientWidth / 2));
+    }, 0);
+  }
+
+  private lockCenterIndex() {
+    // Não é mais estritamente necessário com a lógica de updateZoom direta, 
+    // mas mantido para referência.
   }
 }

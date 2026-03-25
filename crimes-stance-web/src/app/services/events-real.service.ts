@@ -11,6 +11,7 @@ import { DATA_CONFIG } from '../data-config';
 @Injectable({ providedIn: 'root' })
 export class EventsRealService {
   private base: string;
+  private readonly CACHE_TTL = 24 * 60 * 60 * 1000; // 1 dia em milissegundos
 
   constructor() {
     if (DATA_CONFIG.BASE_DATA_URL) {
@@ -26,7 +27,10 @@ export class EventsRealService {
 
   private async fetchJson<T=any>(path: string): Promise<T> {
     try {
-      const resp = await fetch(path);
+      const t = Date.now();
+      const separator = path.includes('?') ? '&' : '?';
+      const finalUrl = `${path}${separator}t=${t}`;
+      const resp = await fetch(finalUrl);
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       return resp.json();
     } catch (e) {
@@ -53,22 +57,23 @@ export class EventsRealService {
    * - Usa operation_ner como id de operação (fallback: operation)
    * - Gera séries por ano e por dia
    */
-  async loadDataset(datasetId: string): Promise<{
-    meta: {
-      id: string;
-      label: string;
-      description?: string;
-      period: string;
-      totalVideos: number;
-      totalOperations: number;
-    };
-    videos: any[];
-    series: {
-      byYear: { labels: string[]; values: number[] };
-      byDay: { labels: string[]; values: number[] };
-    };
-  }> {
+  async loadDataset(datasetId: string): Promise<any> {
     const all = await this.getDatasets();
+    const fingerprint = JSON.stringify(all);
+
+    // Tenta carregar do cache primeiro (IndexedDB)
+    const cacheKey = datasetId || 'consolidado';
+    const cached = await this.getFromCache(cacheKey);
+
+    if (cached && cached.fingerprint === fingerprint) {
+      const isExpired = Date.now() - cached.timestamp > this.CACHE_TTL;
+      if (!isExpired) {
+        console.log(`[EventsRealService] Carregado do cache (IndexedDB) - ${cacheKey}`);
+        return cached.data;
+      }
+      console.log(`[EventsRealService] Cache expirou para ${cacheKey}. Recarregando...`);
+    }
+
     let config = all[datasetId];
     const isAll = !datasetId || !config || (config && config.file === '__ALL__');
     if (isAll && !config) {
@@ -78,7 +83,6 @@ export class EventsRealService {
     let raw: any[] = [];
 
     if (isAll) {
-      // compila todos os arquivos listados em datasets.json (exceto entradas __ALL__)
       const files = Object.values(all)
         .map((c: any) => c.file)
         .filter((f: any) => f && f !== '__ALL__');
@@ -92,17 +96,14 @@ export class EventsRealService {
       raw = results.filter(r => Array.isArray(r)).flat();
       if (!raw.length) throw new Error('Nenhum arquivo disponível para compilar datasets.');
     } else {
-      // o "file" em datasets.json já é relativo à pasta assets/data/events/...
       const fileUrl = this.resolveAssetUrl(config.file);
       raw = await this.fetchJson(fileUrl);
     }
 
     const videos = this.normalizeVideos(raw);
-
-    // agrega
     const { byYear, byDay, period, opCount } = this.aggregate(videos);
 
-    return {
+    const result = {
       meta: {
         id: datasetId,
         label: config.label,
@@ -114,6 +115,76 @@ export class EventsRealService {
       videos,
       series: { byYear, byDay }
     };
+
+    // Salva no cache
+    this.saveToCache(cacheKey, result, fingerprint).catch(e => console.warn('Falha ao salvar cache de eventos:', e));
+
+    return result;
+  }
+
+  /** Limpa o cache para forçar recarregamento */
+  async clearCache(key: string = 'consolidado'): Promise<void> {
+    return new Promise((resolve) => {
+      try {
+        const request = indexedDB.open('CrimesMonitorDB', 2);
+        request.onupgradeneeded = (e: any) => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains('eventsCache')) db.createObjectStore('eventsCache');
+          if (!db.objectStoreNames.contains('sentimentCache')) db.createObjectStore('sentimentCache');
+        };
+        request.onsuccess = (e: any) => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains('eventsCache')) { resolve(); return; }
+          const tx = db.transaction('eventsCache', 'readwrite');
+          const store = tx.objectStore('eventsCache');
+          if (key === '__ALL__') store.clear();
+          else store.delete(key);
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => resolve();
+        };
+        request.onerror = () => resolve();
+      } catch { resolve(); }
+    });
+  }
+
+  private async getFromCache(key: string): Promise<any> {
+    return new Promise((resolve) => {
+      try {
+        const request = indexedDB.open('CrimesMonitorDB', 2);
+        request.onupgradeneeded = (e: any) => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains('eventsCache')) db.createObjectStore('eventsCache');
+          if (!db.objectStoreNames.contains('sentimentCache')) db.createObjectStore('sentimentCache');
+        };
+        request.onsuccess = (e: any) => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains('eventsCache')) { resolve(null); return; }
+          const tx = db.transaction('eventsCache', 'readonly');
+          const store = tx.objectStore('eventsCache');
+          const getReq = store.get(key);
+          getReq.onsuccess = () => resolve(getReq.result || null);
+          getReq.onerror = () => resolve(null);
+        };
+        request.onerror = () => resolve(null);
+      } catch { resolve(null); }
+    });
+  }
+
+  private async saveToCache(key: string, data: any, fingerprint: string): Promise<void> {
+    return new Promise((resolve) => {
+      try {
+        const request = indexedDB.open('CrimesMonitorDB', 2);
+        request.onsuccess = (e: any) => {
+          const db = e.target.result;
+          const tx = db.transaction('eventsCache', 'readwrite');
+          const store = tx.objectStore('eventsCache');
+          store.put({ data, fingerprint, timestamp: Date.now() }, key);
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => resolve();
+        };
+        request.onerror = () => resolve();
+      } catch { resolve(); }
+    });
   }
 
   private resolveAssetUrl(fileField: string): string {
