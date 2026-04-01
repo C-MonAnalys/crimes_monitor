@@ -16,6 +16,17 @@ type ClassName = 'Aprovação' | 'Desaprovação' | 'Neutro';
   imports: [CommonModule, FormsModule, ChartModule, EventosTimelineChartComponent],
   templateUrl: './eventos-real.component.html',
   styles: [`
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fadeIn { animation: fadeIn 0.3s ease-out forwards; }
+    .animate-slideUp { animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
     :host {
       display: block;
       color: #334155;
@@ -35,64 +46,6 @@ type ClassName = 'Aprovação' | 'Desaprovação' | 'Neutro';
       margin-bottom: 2rem;
       position: relative;
       overflow: hidden;
-    }
-
-    .page-header::after {
-      content: '';
-      position: absolute;
-      top: -50%;
-      right: -10%;
-      width: 300px;
-      height: 300px;
-      background: radial-gradient(circle, rgba(59, 130, 246, 0.2) 0%, transparent 70%);
-      pointer-events: none;
-    }
-
-    .stat-card {
-      background: rgba(255, 255, 255, 0.9);
-      backdrop-filter: blur(8px);
-      border: 1px border-slate-100;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-    }
-
-    .stat-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.08);
-      border-color: #3b82f6;
-    }
-
-    .chart-container {
-      background: white;
-      border-radius: 1.5rem;
-      border: 1px solid #f1f5f9;
-      padding: 2rem;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-    }
-
-    .event-card {
-      background: white;
-      border-radius: 1.25rem;
-      border: 1px solid #f1f5f9;
-      transition: all 0.2s ease;
-      overflow: hidden;
-    }
-
-    .event-card:hover {
-      border-color: #3b82f644;
-      background: #f8fafc;
-    }
-
-    .sentiment-badge {
-      padding: 0.5rem 0.75rem;
-      border-radius: 0.75rem;
-      font-size: 0.875rem;
-      font-weight: 600;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-width: 80px;
     }
 
     .pagination-btn {
@@ -126,35 +79,6 @@ type ClassName = 'Aprovação' | 'Desaprovação' | 'Neutro';
     .pagination-btn:disabled {
       opacity: 0.4;
       cursor: not-allowed;
-    }
-
-    .btn-show-videos {
-      background: transparent;
-      border: none;
-      color: #3b82f6;
-      font-weight: 500;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      cursor: pointer;
-      padding: 0.5rem 0;
-      transition: color 0.2s;
-    }
-
-    .btn-show-videos:hover {
-      color: #2563eb;
-    }
-
-    .significance-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.5rem 1rem;
-      border-radius: 9999px;
-      font-size: 0.75rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.025em;
     }
 
     .video-item {
@@ -231,6 +155,8 @@ export class EventosRealComponent implements OnInit {
   endDate: string = '';
   sortBy: 'relevance' | 'newest' | 'date' = 'relevance';
   filteredVideos: any[] = [];
+  totalVideosGlobal = 0;
+  totalEventsGlobal = 0;
   // dados de sentiment (comentários)
   comments: any[] = [];
   bootstrapStats: any[] = [];
@@ -251,6 +177,8 @@ export class EventosRealComponent implements OnInit {
   topOperations: Array<{ operation: string; count: number }> = [];
   filteredTotalOperations = 0;
   expandedEvents: Set<string> = new Set();
+  videoPages: Record<string, number> = {};
+  videoPageSize = 10;
 
   // Modal de detalhes
   isModalVisible: boolean = false;
@@ -379,6 +307,9 @@ export class EventosRealComponent implements OnInit {
   private apply(payload: any) {
     this.meta = payload.meta;
     this.videos = payload.videos;
+    this.totalVideosGlobal = this.videos.length;
+    this.totalEventsGlobal = new Set(this.videos.map(v => (v.operation_ner || v.operation || 'unknown').toString().trim()).filter(Boolean)).size;
+    
     this.filteredVideos = this.videos;
     this.filteredVideos.sort((a, b) => {
       const da = a.data_postagem || a.date || a.day || '';
@@ -982,6 +913,39 @@ export class EventosRealComponent implements OnInit {
       this.expandedEvents.delete(operation_id);
     } else {
       this.expandedEvents.add(operation_id);
+      // Inicia na página 1 ao abrir
+      this.videoPages[operation_id] = 1;
+    }
+  }
+
+  getVideoPage(opId: string): number {
+    return this.videoPages[opId] || 1;
+  }
+
+  getTotalVideoPages(event: any): number {
+    if (!event?.videos?.length) return 0;
+    return Math.ceil(event.videos.length / this.videoPageSize);
+  }
+
+  getPaginatedVideos(event: any): any[] {
+    if (!event?.videos?.length) return [];
+    const page = this.getVideoPage(event.operation_id);
+    const start = (page - 1) * this.videoPageSize;
+    return event.videos.slice(start, start + this.videoPageSize);
+  }
+
+  nextVideoPage(event: any) {
+    const total = this.getTotalVideoPages(event);
+    const current = this.getVideoPage(event.operation_id);
+    if (current < total) {
+      this.videoPages[event.operation_id] = current + 1;
+    }
+  }
+
+  prevVideoPage(event: any) {
+    const current = this.getVideoPage(event.operation_id);
+    if (current > 1) {
+      this.videoPages[event.operation_id] = current - 1;
     }
   }
 
