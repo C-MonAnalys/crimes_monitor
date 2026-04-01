@@ -50,3 +50,6 @@ src/assets/data/sentiment/cenario-real/comentarios_2020_inferido_events.json
 
 # Angular specific
 /crimes-stance-web/src/app/environments/environment.prod.ts
+/crimes-stance-web/src/app/environments/environment.development.ts
+/crimes-stance-web/src/app/environments/environment.ts
+/crimes-stance-web/src/app/environments/*.ts
