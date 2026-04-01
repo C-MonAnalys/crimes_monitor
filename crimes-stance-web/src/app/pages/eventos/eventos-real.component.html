@@ -3,7 +3,7 @@
   <div class="chart-container flex items-center justify-center min-h-[400px]" *ngIf="isLoading">
     <div class="flex flex-col items-center gap-4">
       <div class="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-      <p class="text-slate-500 font-medium">Sincronizando dados do Cloudflare...</p>
+      <p class="text-slate-500 font-medium">Sincronizando dados...</p>
     </div>
   </div>
 
@@ -53,29 +53,29 @@
 
     <!-- STATS GRID -->
     <section class="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <div class="stat-card rounded-2xl p-6 flex items-start gap-4">
+      <div class="stat-card rounded-2xl p-6 flex items-start gap-4" style="background: white; border-radius: 1.5rem; border: 1px solid #f1f5f9; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
         <div class="bg-blue-100/50 p-3 rounded-xl text-blue-600">
           <i class="bi bi-camera-video text-2xl"></i>
         </div>
         <div>
           <div class="text-slate-500 text-sm font-medium uppercase tracking-wide">Total de Vídeos</div>
-          <div class="text-3xl font-black text-slate-900 mt-1">{{ filteredVideos.length | number }}</div>
-          <div class="text-xs text-blue-600 font-semibold mt-1">Registrados no R2</div>
+          <div class="text-3xl font-black text-slate-900 mt-1">{{ totalVideosGlobal | number }}</div>
+          <div class="text-xs text-blue-600 font-semibold mt-1">Registrados no sistema</div>
         </div>
       </div>
 
-      <div class="stat-card rounded-2xl p-6 flex items-start gap-4">
+      <div class="stat-card rounded-2xl p-6 flex items-start gap-4" style="background: white; border-radius: 1.5rem; border: 1px solid #f1f5f9; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
         <div class="bg-indigo-100/50 p-3 rounded-xl text-indigo-600">
           <i class="bi bi-lightning-charge text-2xl"></i>
         </div>
         <div>
           <div class="text-slate-500 text-sm font-medium uppercase tracking-wide">Eventos Detectados</div>
-          <div class="text-3xl font-black text-slate-900 mt-1">{{ filteredTotalOperations | number }}</div>
-          <div class="text-xs text-indigo-600 font-semibold mt-1">Filtro aplicado</div>
+          <div class="text-3xl font-black text-slate-900 mt-1">{{ totalEventsGlobal | number }}</div>
+          <div class="text-xs text-indigo-600 font-semibold mt-1">Base completa</div>
         </div>
       </div>
 
-      <div class="stat-card rounded-2xl p-6 flex items-start gap-4">
+      <div class="stat-card rounded-2xl p-6 flex items-start gap-4" style="background: white; border-radius: 1.5rem; border: 1px solid #f1f5f9; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
         <div class="bg-slate-100/50 p-3 rounded-xl text-slate-600">
           <i class="bi bi-calendar3 text-2xl"></i>
         </div>
@@ -84,32 +84,20 @@
           <div class="text-lg font-bold text-slate-900 mt-1 leading-tight">
             {{ currentPeriod }}
           </div>
-          <div class="text-xs text-slate-500 font-medium mt-1">Total de dados processados</div>
+          <div class="text-xs text-slate-500 font-medium mt-1">Dados processados</div>
         </div>
       </div>
     </section>
 
     <!-- CHART SECTION -->
-    <section class="chart-container">
-      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-        <div>
-          <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
-            <i class="bi bi-graph-up text-blue-500"></i>
-            Evolução Temporal de Eventos
-          </h2>
-          <p class="text-slate-500 text-sm mt-1">Selecione um intervalo no gráfico para filtrar a lista abaixo.</p>
-        </div>
-      </div>
-      
-      <div class="min-h-[350px]">
-        <app-eventos-timeline-chart
-          [videos]="videos"
-          [datasetId]="meta?.id"
-          [initialStartDate]="chartStartDate"
-          [initialEndDate]="chartEndDate"
-          (rangeChanged)="onRangeChanged($event)">
-        </app-eventos-timeline-chart>
-      </div>
+    <section class="py-4">
+      <app-eventos-timeline-chart
+        [videos]="videos"
+        [datasetId]="meta?.id"
+        [initialStartDate]="chartStartDate"
+        [initialEndDate]="chartEndDate"
+        (rangeChanged)="onRangeChanged($event)">
+      </app-eventos-timeline-chart>
     </section>
 
     <!-- LIST SECTION -->
@@ -148,184 +136,183 @@
       </div>
 
       <ng-container *ngIf="paginatedEvents.length; else noEvents">
-        <div class="grid grid-cols-1 gap-6">
-          <article *ngFor="let event of paginatedEvents" class="event-card group">
-            <div class="p-6 md:p-8">
-              <div class="flex flex-col lg:flex-row gap-6 justify-between">
-                
-                <!-- Info do Evento -->
+        <div class="space-y-3 pb-20">
+          <div *ngFor="let event of paginatedEvents" 
+               class="bg-white rounded-2xl border border-slate-100 hover:border-blue-100 hover:shadow-xl hover:shadow-blue-500/5 transition-all overflow-hidden group">
+            
+            <!-- Linha de Cabeçalho (Sempre Visível) -->
+            <div class="p-4 md:p-5 flex items-center gap-4 cursor-pointer" (click)="toggleEventExpansion(event.operation_id)">
+              
+              <!-- Info Esquerda -->
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="text-[10px] font-black text-blue-600 uppercase tracking-widest bg-blue-50 px-1.5 py-0.5 rounded">Operação</span>
+                  <span class="text-slate-400 text-xs hidden sm:inline">•</span>
+                  <span class="text-slate-400 text-[11px] font-medium hidden sm:inline">
+                    {{ formatDate(event.minDateStr) }} — {{ formatDate(event.maxDateStr) }}
+                  </span>
+                </div>
+                <h4 class="text-lg font-black text-slate-900 truncate group-hover:text-blue-600 transition-colors">
+                  {{ event.operation_id }}
+                </h4>
+              </div>
+
+              <!-- Badges de Quantidade (Meio) -->
+              <div class="hidden lg:flex items-center gap-2">
+                <div class="bg-slate-50 border border-slate-100 px-3 py-1.5 rounded-xl flex items-center gap-2">
+                  <i class="bi bi-play-circle-fill text-blue-500 text-sm"></i>
+                  <span class="text-xs font-bold text-slate-700">{{ event.videos.length }}</span>
+                </div>
+                <div class="bg-slate-50 border border-slate-100 px-3 py-1.5 rounded-xl flex items-center gap-2" *ngIf="event.totalComments > 0">
+                  <i class="bi bi-chat-dots-fill text-indigo-500 text-sm"></i>
+                  <span class="text-xs font-bold text-slate-700">{{ event.totalComments }}</span>
+                </div>
+              </div>
+
+              <!-- Barra de Sentimento Stacked (Meio) -->
+              <div class="w-32 md:w-48 flex flex-col gap-1" *ngIf="event.totalComments > 0">
+                <div class="flex justify-between items-center px-0.5">
+                  <span class="text-[9px] font-black uppercase text-slate-400 tracking-tighter">Opinião Pública</span>
+                  <span class="text-[10px] font-bold text-emerald-500" *ngIf="event.approvalCount > 0">
+                    {{ ((event.approvalCount / event.totalComments) * 100).toFixed(0) }}%
+                  </span>
+                </div>
+                <div class="h-1.5 w-full bg-slate-100 rounded-full flex overflow-hidden shadow-inner">
+                  <div class="h-full bg-emerald-500 transition-all duration-700" [style.width.%]="(event.approvalCount / event.totalComments) * 100"></div>
+                  <div class="h-full bg-slate-400 transition-all duration-700" [style.width.%]="(event.neutralityCount / event.totalComments) * 100"></div>
+                  <div class="h-full bg-rose-500 transition-all duration-700" [style.width.%]="(event.disapprovalCount / event.totalComments) * 100"></div>
+                </div>
+              </div>
+
+              <!-- Status e Toggle (Direita) -->
+              <div class="flex items-center gap-3 ml-2">
+                <div *ngIf="event.isSignificant && event.totalComments > 0" 
+                     class="hidden md:flex w-8 h-8 items-center justify-center bg-blue-50 text-blue-600 rounded-full border border-blue-100"
+                     title="Diferença Significativa">
+                  <i class="bi bi-check-circle-fill text-sm"></i>
+                </div>
+                <div class="w-8 h-8 flex items-center justify-center rounded-xl bg-slate-50 text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-600 transition-all">
+                  <i class="bi font-bold" [ngClass]="expandedEvents.has(event.operation_id) ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+                </div>
+              </div>
+            </div>
+
+            <!-- Conteúdo Expandido (Accordion) -->
+            <div *ngIf="expandedEvents.has(event.operation_id)" 
+                 class="px-5 pb-6 border-t border-slate-50 bg-slate-50/30 animate-fadeIn">
+              
+              <div class="flex flex-col lg:flex-row gap-6 mt-6">
+                <!-- Ações e Período -->
                 <div class="flex-1">
-                  <div class="flex items-center gap-2 mb-3">
-                    <span class="bg-slate-100 text-slate-600 text-xs font-black px-2 py-1 rounded uppercase">Operação</span>
-                    <span class="text-slate-400 text-sm">•</span>
-                    <span class="text-slate-500 text-sm font-medium">
-                      <i class="bi bi-calendar-event mr-1"></i>
-                      {{ formatDate(event.minDateStr) }} a {{ formatDate(event.maxDateStr) }}
+                  <div class="flex flex-wrap items-center gap-4 mb-6">
+                    <button *ngIf="event.totalComments > 0"
+                            (click)="openEventMetrics(event)" 
+                            class="bg-slate-900 hover:bg-black text-white text-xs font-bold px-6 py-3 rounded-xl transition-all flex items-center gap-2 shadow-lg hover:translate-y-[-2px]">
+                      <i class="bi bi-graph-up-arrow"></i>
+                      Ver Análise Completa
+                    </button>
+                    <span class="text-slate-400 text-xs font-medium bg-white px-3 py-3 rounded-xl border border-slate-100">
+                      <i class="bi bi-calendar-range mr-2 text-blue-500"></i>
+                      Período de Monitoramento: {{ formatDate(event.minDateStr) }} a {{ formatDate(event.maxDateStr) }}
                     </span>
                   </div>
 
-                  <h4 class="text-2xl font-black text-slate-900 group-hover:text-blue-600 transition-colors">
-                    {{ event.operation_id }}
-                  </h4>
-
-                  <div class="flex flex-wrap gap-4 mt-6">
-                    <div class="bg-white border border-slate-100 shadow-sm px-4 py-2 rounded-xl flex items-center gap-3">
-                      <div class="text-blue-500"><i class="bi bi-play-circle-fill text-lg"></i></div>
-                      <div>
-                        <div class="text-[10px] uppercase font-bold text-slate-400 leading-none">Vídeos</div>
-                        <div class="text-lg font-black text-slate-800">{{ event.videos.length }}</div>
-                      </div>
-                    </div>
-
-                    <div class="bg-white border border-slate-100 shadow-sm px-4 py-2 rounded-xl flex items-center gap-3" *ngIf="event.totalComments > 0">
-                      <div class="text-indigo-500"><i class="bi bi-chat-dots-fill text-lg"></i></div>
-                      <div>
-                        <div class="text-[10px] uppercase font-bold text-slate-400 leading-none">Comentários</div>
-                        <div class="text-lg font-black text-slate-800">{{ event.totalComments }}</div>
-                      </div>
-                    </div>
-
-                    <div *ngIf="event.totalComments > 0" 
-                         [ngClass]="event.isSignificant ? 'bg-blue-50 text-blue-700 border-blue-100' : 'bg-slate-50 text-slate-500 border-slate-100'"
-                         class="border px-4 py-2 rounded-xl flex items-center gap-2 text-xs font-bold uppercase tracking-tight">
-                      <i class="bi" [ngClass]="event.isSignificant ? 'bi-check-circle-fill' : 'bi-dash-circle'"></i>
-                      {{ event.isSignificant ? 'Diferença Significativa' : 'Sem Diferença' }}
-                    </div>
-                  </div>
-
-                  <div class="mt-6">
-                    <button class="btn-show-videos" (click)="toggleEventExpansion(event.operation_id)">
-                      <i class="bi" [ngClass]="expandedEvents.has(event.operation_id) ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
-                      {{ expandedEvents.has(event.operation_id) ? 'Recolher vídeos da operação' : 'Explorar '+event.videos.length+' vídeos' }}
-                    </button>
-                  </div>
-                </div>
-
-                <!-- Painel de Sentimento -->
-                <div class="lg:w-80 flex-shrink-0" *ngIf="event.totalComments > 0">
-                  <div class="bg-slate-900 rounded-2xl p-5 text-white shadow-lg overflow-hidden relative">
-                    <div class="absolute top-0 right-0 p-4 opacity-10">
-                      <i class="bi bi-pie-chart-fill text-6xl"></i>
-                    </div>
-                    
-                    <h5 class="text-xs font-bold uppercase text-slate-400 mb-4 tracking-widest">Distribuição de Opinião</h5>
-                    
-                    <div class="flex justify-between items-end gap-3 h-24 mb-6">
-                      <!-- Aprova -->
-                      <div class="flex-1 flex flex-col items-center">
-                        <div class="text-xs font-bold text-emerald-400 mb-2">{{ ((event.approvalCount / event.totalComments) * 100).toFixed(0) }}%</div>
-                        <div class="w-full bg-emerald-500 rounded-t-lg transition-all duration-500" [style.height.%]="(event.approvalCount / event.totalComments) * 100"></div>
-                        <div class="text-[10px] mt-2 uppercase text-slate-400">Aprova</div>
-                      </div>
-                      <!-- Neutro -->
-                      <div class="flex-1 flex flex-col items-center">
-                        <div class="text-xs font-bold text-slate-300 mb-2">{{ ((event.neutralityCount / event.totalComments) * 100).toFixed(0) }}%</div>
-                        <div class="w-full bg-slate-500 rounded-t-lg transition-all duration-500" [style.height.%]="(event.neutralityCount / event.totalComments) * 100"></div>
-                        <div class="text-[10px] mt-2 uppercase text-slate-400">Neutro</div>
-                      </div>
-                      <!-- Desaprova -->
-                      <div class="flex-1 flex flex-col items-center">
-                        <div class="text-xs font-bold text-rose-400 mb-2">{{ ((event.disapprovalCount / event.totalComments) * 100).toFixed(0) }}%</div>
-                        <div class="w-full bg-rose-500 rounded-t-lg transition-all duration-500" [style.height.%]="(event.disapprovalCount / event.totalComments) * 100"></div>
-                        <div class="text-[10px] mt-2 uppercase text-slate-400">Desaprova</div>
-                      </div>
-                    </div>
-
-                    <button (click)="openEventMetrics(event)" 
-                            class="w-full bg-white/10 hover:bg-white/20 border border-white/10 text-white text-xs font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2">
-                      <i class="bi bi-zoom-in"></i>
-                      Ver Análise Detalhada
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Expansão de Vídeos -->
-              <div *ngIf="expandedEvents.has(event.operation_id)" class="mt-8 pt-8 border-t border-slate-100 animate-fadeIn">
-                <h5 class="text-sm font-bold text-slate-400 uppercase tracking-widest mb-6">Lista de vídeos associados</h5>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div *ngFor="let video of event.videos" class="video-item group/v">
-                    <div class="flex justify-between items-start gap-4">
+                  <!-- Grid de Vídeos Otimizado -->
+                  <h5 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] mb-4">Principais Vídeos do Evento ({{ event.videos.length }})</h5>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div *ngFor="let video of getPaginatedVideos(event)" 
+                         class="bg-white p-3 rounded-xl border border-slate-100 flex items-center justify-between gap-3 group/v hover:border-blue-200 transition-all shadow-sm">
                       <div class="flex-1 min-w-0">
-                        <div class="font-bold text-slate-900 group-hover/v:text-blue-600 transition-colors truncate">{{ video.titulo || 'Sem título' }}</div>
-                        <p class="text-slate-500 text-xs mt-1 line-clamp-2 h-8 leading-relaxed">{{ video.descricao || 'Sem descrição' }}</p>
+                        <div class="text-[13px] font-bold text-slate-800 truncate leading-tight mb-1">{{ video.titulo || 'Sem título' }}</div>
+                        <div class="text-[10px] text-slate-400 flex items-center gap-2">
+                          <i class="bi bi-clock"></i> {{ formatDate(video.data_postagem || video.date || video.day) }}
+                        </div>
                       </div>
                       <a [href]="video.link || video.url" target="_blank" 
-                         class="bg-white p-2 rounded-lg border border-slate-200 text-blue-600 hover:bg-blue-600 hover:text-white transition-all shadow-sm">
-                        <i class="bi bi-box-arrow-up-right"></i>
+                         class="w-8 h-8 flex items-center justify-center rounded-lg bg-blue-50 text-blue-600 opacity-0 group-hover/v:opacity-100 transition-all hover:bg-blue-600 hover:text-white">
+                        <i class="bi bi-arrow-up-right text-xs"></i>
                       </a>
                     </div>
                   </div>
+
+                  <!-- Paginação Interna de Vídeos -->
+                  <div class="mt-6 flex items-center justify-center gap-4" *ngIf="getTotalVideoPages(event) > 1">
+                    <button (click)="prevVideoPage(event)" 
+                            [disabled]="getVideoPage(event.operation_id) === 1"
+                            class="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-400 hover:text-blue-600 hover:border-blue-200 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-sm">
+                      <i class="bi bi-chevron-left"></i>
+                    </button>
+                    
+                    <span class="text-[11px] font-bold text-slate-500 uppercase tracking-widest">
+                      Página {{ getVideoPage(event.operation_id) }} de {{ getTotalVideoPages(event) }}
+                    </span>
+
+                    <button (click)="nextVideoPage(event)" 
+                            [disabled]="getVideoPage(event.operation_id) === getTotalVideoPages(event)"
+                            class="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-400 hover:text-blue-600 hover:border-blue-200 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-sm">
+                      <i class="bi bi-chevron-right"></i>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Resumo Lateral de Sentimento no Expandido (Opcional) -->
+                <div class="lg:w-64 space-y-4" *ngIf="event.totalComments > 0">
+                  <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+                    <h6 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Engajamento</h6>
+                    <div class="space-y-3">
+                      <div class="flex justify-between items-center">
+                        <span class="text-xs font-bold text-slate-500">Aprovação</span>
+                        <span class="text-xs font-black text-emerald-500">{{ ((event.approvalCount / event.totalComments) * 100).toFixed(1) }}%</span>
+                      </div>
+                      <div class="flex justify-between items-center">
+                        <span class="text-xs font-bold text-slate-500">Desaprovação</span>
+                        <span class="text-xs font-black text-rose-500">{{ ((event.disapprovalCount / event.totalComments) * 100).toFixed(1) }}%</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-          </article>
+          </div>
         </div>
 
-        <!-- PAGINAÇÃO MODERNA -->
+        <!-- PAGINAÇÃO -->
         <div class="flex flex-col md:flex-row justify-between items-center gap-8 py-8" *ngIf="totalPages > 1">
-          <div class="text-slate-500 font-medium">
-            Exibindo <span class="text-slate-900 font-bold">{{ (currentPage - 1) * pageSize + 1 }}–{{ getMin(currentPage * pageSize, groupedEvents.length) }}</span> 
-            de <span class="text-slate-900 font-bold">{{ groupedEvents.length }}</span> eventos
+          <div class="text-slate-500 font-medium text-sm">
+            Exibindo {{ (currentPage - 1) * pageSize + 1 }}–{{ getMin(currentPage * pageSize, groupedEvents.length) }} de {{ groupedEvents.length }} eventos
           </div>
-          
           <nav class="flex items-center gap-1.5">
-            <button (click)="firstPage()" [disabled]="currentPage === 1" class="pagination-btn" title="Primeira"><i class="bi bi-chevron-double-left"></i></button>
-            <button (click)="prevPage()" [disabled]="currentPage === 1" class="pagination-btn" title="Anterior"><i class="bi bi-chevron-left"></i></button>
-            
-            <div class="hidden sm:flex items-center gap-1.5">
-              <button *ngFor="let page of visiblePages" 
-                      (click)="goToPage(page)" 
-                      [class.active]="page === currentPage" 
-                      class="pagination-btn">
-                {{ page }}
-              </button>
-            </div>
-
-            <button (click)="nextPage()" [disabled]="currentPage === totalPages" class="pagination-btn" title="Próxima"><i class="bi bi-chevron-right"></i></button>
-            <button (click)="lastPage()" [disabled]="currentPage === totalPages" class="pagination-btn" title="Última"><i class="bi bi-chevron-double-right"></i></button>
+            <button (click)="goToPage(currentPage - 1)" [disabled]="currentPage === 1" class="pagination-btn"><i class="bi bi-chevron-left"></i></button>
+            <button *ngFor="let page of visiblePages" (click)="goToPage(page)" [class.active]="page === currentPage" class="pagination-btn">{{ page }}</button>
+            <button (click)="goToPage(currentPage + 1)" [disabled]="currentPage === totalPages" class="pagination-btn"><i class="bi bi-chevron-right"></i></button>
           </nav>
         </div>
       </ng-container>
 
       <ng-template #noEvents>
         <div class="chart-container flex flex-col items-center justify-center py-20 text-center">
-          <div class="bg-slate-50 p-6 rounded-full text-slate-300 mb-4">
-            <i class="bi bi-search text-6xl"></i>
-          </div>
+          <i class="bi bi-search text-6xl text-slate-200 mb-4"></i>
           <h3 class="text-xl font-bold text-slate-800">Nenhum evento encontrado</h3>
-          <p class="text-slate-500 mt-2">Tente ajustar seus filtros ou selecionar um período diferente no gráfico.</p>
+          <p class="text-slate-500 mt-2">Tente ajustar seus filtros ou o período do gráfico.</p>
         </div>
       </ng-template>
     </section>
 
     <!-- MODAL DE DETALHES -->
-    <div *ngIf="isModalVisible" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-[100] p-4 sm:p-6 animate-fadeIn">
+    <div *ngIf="isModalVisible" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-[100] p-4 sm:p-6">
       <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-5xl overflow-hidden animate-slideUp">
-        
-        <!-- Modal Header -->
-        <div class="bg-slate-900 p-8 text-white flex justify-between items-start relative overflow-hidden">
-          <div class="absolute top-0 right-0 p-8 opacity-5">
-             <i class="bi bi-bar-chart-fill text-9xl"></i>
-          </div>
-          <div class="relative z-10">
-            <div class="flex items-center gap-2 mb-3">
-              <span class="bg-blue-500 text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-widest">Análise Estatística</span>
-            </div>
+        <div class="bg-slate-900 p-8 text-white flex justify-between items-start">
+          <div>
+            <span class="bg-blue-500 text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-widest mb-3 inline-block">Análise Estatística</span>
             <h3 class="text-3xl font-black">{{ selectedEvent?.operation_id }}</h3>
-            <p class="text-slate-400 mt-2 font-medium flex items-center gap-2">
-              <i class="bi bi-calendar3"></i>
-              {{ selectedEvent?.minDateStr }} a {{ selectedEvent?.maxDateStr }}
-            </p>
           </div>
-          <button (click)="isModalVisible = false" class="relative z-10 bg-white/10 hover:bg-white/20 p-2 rounded-full text-white transition-all">
+          <button (click)="isModalVisible = false" class="bg-white/10 hover:bg-white/20 p-2 rounded-full transition-all">
             <i class="bi bi-x-lg text-xl"></i>
           </button>
         </div>
 
         <div class="p-8">
           <div class="flex flex-col lg:flex-row gap-8">
-            <!-- Controles e Contexto -->
             <div class="lg:w-64 space-y-6">
               <div>
                 <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block">Métrica exibida</label>
@@ -335,37 +322,16 @@
                           [class.bg-blue-600]="selectedMetric === m.id"
                           [class.text-white]="selectedMetric === m.id"
                           [class.bg-slate-100]="selectedMetric !== m.id"
-                          class="w-full text-left px-4 py-3 rounded-xl text-sm font-bold transition-all">
+                          class="w-full text-left px-4 py-3 rounded-xl text-sm font-bold">
                     {{ m.l }}
                   </button>
                 </div>
               </div>
-
-              <div class="bg-slate-50 p-6 rounded-2xl border border-slate-100">
-                <i class="bi bi-info-circle text-blue-500 mb-3 block text-xl"></i>
-                <p class="text-xs text-slate-500 leading-relaxed font-medium">
-                  Este gráfico mostra a proporção de cada classe de sentimento no evento, incluindo o **Intervalo de Confiança (IC 95%)** do modelo.
-                </p>
-              </div>
             </div>
-
-            <!-- Gráfico principal -->
-            <div class="flex-1">
-              <div class="h-[450px] relative">
-                <p-chart
-                  type="bar"
-                  [data]="drillDownChartData"
-                  [options]="drillDownChartOptions"
-                  [plugins]="[errorBarPlugin]"
-                  height="100%">
-                </p-chart>
-              </div>
+            <div class="flex-1 h-[450px]">
+              <p-chart type="bar" [data]="drillDownChartData" [options]="drillDownChartOptions" [plugins]="[errorBarPlugin]" height="100%"></p-chart>
             </div>
           </div>
-        </div>
-        
-        <div class="bg-slate-50 p-4 text-center border-t border-slate-100">
-           <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Metodologia: Bootstrap Resampling com α=0.05</p>
         </div>
       </div>
     </div>

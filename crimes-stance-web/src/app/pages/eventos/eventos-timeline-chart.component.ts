@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges, ViewChild } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges, ViewChild, ElementRef, inject, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ChartModule, UIChart } from 'primeng/chart';
@@ -12,145 +12,166 @@ type Grouping = 'day' | 'week' | 'month';
   standalone: true,
   imports: [CommonModule, FormsModule, ChartModule],
   template: `
-    <div class="space-y-6">
-      <!-- CABEÇALHO -->
-      <div class="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between border-b border-slate-100 pb-6">
-        <div>
-          <h3 class="text-sm font-black text-slate-400 uppercase tracking-widest mb-1">Visualização de Dados</h3>
-          <h2 class="text-2xl font-black text-slate-900 leading-tight">Timeline de Eventos</h2>
+    <div class="bg-white !mx-[-1.5rem] md:!mx-0 !rounded-none md:!rounded-[2.5rem] shadow-none md:shadow-xl border-y border-x-0 md:border border-slate-100 overflow-hidden transition-all hover:shadow-2xl flex flex-col h-full">
+      <!-- CABEÇALHO COM TÍTULO E FILTROS -->
+      <div class="p-4 sm:p-6 lg:p-8 flex flex-col gap-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Visualização de Dados</h3>
+            <h2 class="text-3xl font-black text-slate-900 tracking-tighter">Timeline de Eventos</h2>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <!-- Controles de Zoom Premium -->
+            <div class="flex items-center bg-slate-50 p-1.5 rounded-2xl border border-slate-100 shadow-inner">
+              <button (click)="zoomOut()" 
+                      class="w-10 h-10 flex items-center justify-center rounded-xl bg-white text-slate-600 shadow-sm border border-slate-100 hover:text-blue-600 hover:border-blue-200 transition-all active:scale-90"
+                      title="Diminuir Zoom">
+                <i class="bi bi-dash-lg"></i>
+              </button>
+              <div class="px-3 flex flex-col items-center">
+                <span class="text-[10px] font-black text-slate-400 uppercase leading-none">Zoom</span>
+                <span class="text-xs font-black text-blue-600 mt-0.5">{{ barWidth }}px</span>
+              </div>
+              <button (click)="zoomIn()" 
+                      class="w-10 h-10 flex items-center justify-center rounded-xl bg-white text-slate-600 shadow-sm border border-slate-100 hover:text-blue-600 hover:border-blue-200 transition-all active:scale-90"
+                      title="Aumentar Zoom">
+                <i class="bi bi-plus-lg"></i>
+              </button>
+            </div>
+
+            <div class="h-8 w-px bg-slate-100 mx-2 hidden sm:block"></div>
+
+            <div class="flex items-center gap-2">
+              <button (click)="downloadPng()" class="w-11 h-11 flex items-center justify-center rounded-2xl bg-slate-50 text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-all shadow-sm border border-slate-100" title="Baixar PNG">
+                <i class="bi bi-image"></i>
+              </button>
+              <button (click)="downloadPdf()" class="w-11 h-11 flex items-center justify-center rounded-2xl bg-slate-50 text-slate-400 hover:text-red-600 hover:bg-red-50 transition-all shadow-sm border border-slate-100" title="Baixar PDF">
+                <i class="bi bi-file-earmark-pdf"></i>
+              </button>
+            </div>
+          </div>
         </div>
 
-        <div class="flex flex-wrap items-center gap-3">
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
           <!-- Agrupamento -->
-          <div class="flex items-center bg-slate-100 p-1 rounded-xl">
+          <div class="flex items-center bg-slate-100/50 p-1.5 rounded-2xl border border-slate-200/50 flex-1 sm:flex-none">
             <button
               *ngFor="let g of [{id:'day', l:'Dia'}, {id:'week', l:'Semana'}, {id:'month', l:'Mês'}]"
               type="button"
-              class="px-4 py-2 text-xs font-bold rounded-lg transition-all"
+              class="flex-1 sm:px-6 py-2.5 text-[11px] font-black rounded-xl transition-all uppercase tracking-wider"
               [ngClass]="selectedGrouping === g.id
-                ? 'bg-white text-blue-600 shadow-sm'
-                : 'text-slate-500 hover:text-slate-700'"
+                ? 'bg-white text-blue-600 shadow-md'
+                : 'text-slate-400 hover:text-slate-600'"
               (click)="setGrouping($any(g.id))"
             >
               {{ g.l }}
             </button>
           </div>
 
-          <div class="h-6 w-px bg-slate-200 hidden md:block mx-1"></div>
-
-          <!-- Ações de Exportação -->
-          <div class="flex items-center gap-2">
-            <button (click)="downloadPng()" class="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-blue-200 transition-all flex items-center gap-2 text-xs font-bold" title="Baixar PNG">
-              <i class="bi bi-download"></i>
-              <span>PNG</span>
-            </button>
-            <button (click)="downloadPdf()" class="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-blue-200 transition-all flex items-center gap-2 text-xs font-bold" title="Baixar PDF">
-              <i class="bi bi-file-earmark-pdf"></i>
-              <span>PDF</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div class="flex flex-wrap items-center gap-4 bg-slate-50/50 p-4 rounded-2xl border border-slate-100">
-        <div class="flex items-center gap-3">
-          <div class="relative group">
-            <input
-              #startInput
-              type="date"
-              [(ngModel)]="startDate"
-              class="pl-4 pr-10 py-2 bg-white border border-slate-200 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all w-full"
-              placeholder="Início"
-            />
-            <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors pointer-events-none z-10">
-              <i class="bi bi-calendar3"></i>
-            </span>
+          <!-- Range de Datas -->
+          <div class="flex sm:flex-none items-center gap-2 bg-slate-100/50 p-1.5 rounded-2xl border border-slate-200/50 sm:max-w-[320px]">
+            <div class="flex-1 relative flex items-center">
+              <i class="bi bi-calendar-event absolute left-3 text-slate-400 text-xs"></i>
+              <input type="date" [(ngModel)]="startDate" (change)="applyRange()"
+                     class="w-full pl-9 pr-2 py-2 bg-transparent text-xs font-black text-slate-700 focus:outline-none uppercase tracking-tighter">
+            </div>
+            <span class="text-slate-300 font-black text-sm">/</span>
+            <div class="flex-1 relative flex items-center">
+              <i class="bi bi-calendar-check absolute left-3 text-slate-400 text-xs"></i>
+              <input type="date" [(ngModel)]="endDate" (change)="applyRange()"
+                     class="w-full pl-9 pr-2 py-2 bg-transparent text-xs font-black text-slate-700 focus:outline-none uppercase tracking-tighter">
+            </div>
           </div>
 
-          <div class="text-slate-300 font-light text-sm">até</div>
-
-          <div class="relative group">
-            <input
-              #endInput
-              type="date"
-              [(ngModel)]="endDate"
-              class="pl-4 pr-10 py-2 bg-white border border-slate-200 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all w-full"
-              placeholder="Fim"
-            />
-            <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors pointer-events-none z-10">
-              <i class="bi bi-calendar3"></i>
-            </span>
-          </div>
-        </div>
-
-        <div class="flex items-center gap-2">
-          <button (click)="applyRange()" class="px-6 py-2 bg-slate-900 text-white rounded-xl text-sm font-bold hover:bg-blue-600 transition-all shadow-lg shadow-slate-900/10">
-            Aplicar Filtro
-          </button>
-          <button (click)="clearRange()" class="px-4 py-2 text-slate-500 text-sm font-bold hover:text-red-500 transition-all">
+          <button (click)="clearRange()" class="px-5 py-3 text-[11px] font-black text-slate-400 hover:text-red-500 transition-all uppercase tracking-widest">
             Limpar
           </button>
         </div>
       </div>
 
-      <!-- ÁREA DO GRÁFICO -->
-      <div class="h-96 w-full relative">
-        <ng-container *ngIf="chartData?.labels?.length; else noData">
-          <p-chart
-            #chartRef
-            type="line"
-            [data]="chartData"
-            [options]="chartOpts"
-            height="100%"
-          ></p-chart>
-        </ng-container>
+      <!-- ÁREA DO GRÁFICO COM SCROLL E ZOOM 2D -->
+      <div class="relative flex-1 bg-slate-50/30 border-t border-slate-100">
+        <div #scrollContainer class="overflow-x-auto overflow-y-auto premium-scrollbar scroll-smooth" 
+             [style.height.px]="450">
+          <div [style.width.px]="getChartWidth()" 
+               [style.height.px]="chartHeight" 
+               class="min-w-full transition-all duration-300 ease-out">
+            <ng-container *ngIf="chartData?.labels?.length; else noData">
+              <p-chart
+                #chartRef
+                type="line"
+                [data]="chartData"
+                [options]="chartOpts"
+                width="100%"
+                height="100%"
+              ></p-chart>
+            </ng-container>
+          </div>
+        </div>
+
         <ng-template #noData>
-          <div class="h-full flex flex-col items-center justify-center text-slate-400 bg-slate-50/30 rounded-3xl border-2 border-dashed border-slate-100">
-            <i class="bi bi-bar-chart text-4xl mb-2 opacity-20"></i>
-            <p class="font-medium">Sem dados para este período</p>
+          <div class="absolute inset-0 flex flex-col items-center justify-center text-slate-400">
+            <div class="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mb-4">
+              <i class="bi bi-bar-chart text-2xl opacity-20"></i>
+            </div>
+            <p class="font-black text-[10px] uppercase tracking-[0.2em]">Sem dados para este período</p>
           </div>
         </ng-template>
+        
+        <!-- Gradiente de Scroll Indicador -->
+        <div class="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-white/10 to-transparent pointer-events-none"></div>
       </div>
     </div>
   `,
   styles: [`
-    :host { display: block; }
+    :host { display: block; height: 100%; }
+    
+    .premium-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .premium-scrollbar::-webkit-scrollbar-track {
+      background: rgba(241, 245, 249, 0.5);
+      border-radius: 10px;
+    }
+    .premium-scrollbar::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 10px;
+      transition: all 0.2s;
+    }
+    .premium-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
     
     button, input[type="date"] {
       cursor: pointer !important;
     }
 
-    input[type="date"] {
-      min-width: 150px;
-      position: relative;
-    }
-
     input[type="date"]::-webkit-calendar-picker-indicator {
       position: absolute;
-      right: 0;
-      top: 0;
-      width: 40px;
-      height: 100%;
-      margin: 0;
-      padding: 0;
-      cursor: pointer;
-      opacity: 0;
-      z-index: 20;
+      left: 0; top: 0; width: 100%; height: 100%;
+      margin: 0; padding: 0; cursor: pointer; opacity: 0;
     }
-    
-    input[type="date"]:hover::-webkit-calendar-picker-indicator {
-      opacity: 1;
+
+    ::ng-deep .p-chart canvas {
+      /* Estilo removido para permitir o cursor pointer dinâmico */
     }
   `]
 })
 export class EventosTimelineChartComponent implements OnChanges {
+  private ngZone = inject(NgZone);
   @Input() videos: any[] = [];
-  @Input() datasetId = '';           // <<< para montar o nome do arquivo
+  @Input() datasetId = '';
   @Input() initialStartDate = '';
   @Input() initialEndDate = '';
   @Output() rangeChanged = new EventEmitter<{start: string, end: string}>();
+  selectedLabel: string | null = null;
 
   @ViewChild('chartRef') chartComp?: UIChart;
+  @ViewChild('scrollContainer') scrollContainer!: ElementRef<HTMLDivElement>;
+
+  private readonly MAX_TOTAL_WIDTH = 30000;
 
   // séries base por agrupamento
   private baseSeries: Record<Grouping, { labels: string[]; values: number[] }> = {
@@ -167,11 +188,15 @@ export class EventosTimelineChartComponent implements OnChanges {
   startDate = '';
   endDate = '';
 
+  barWidth: number = 30; // Diferente do semanal, começamos com 30px pois é linha
+  chartHeight: number = 400;
+
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['videos']) {
       this.buildBaseSeries();
       this.buildChartOptions();
       this.applyRange();
+      setTimeout(() => this.scrollToEnd(), 50);
     }
     if (changes['initialStartDate'] || changes['initialEndDate']) {
       this.startDate = this.initialStartDate;
@@ -239,80 +264,117 @@ export class EventosTimelineChartComponent implements OnChanges {
     this.chartOpts = {
       responsive: true,
       maintainAspectRatio: false,
+      onHover: (event: any, elements: any[]) => {
+        const target = event.native ? event.native.target : (event.target || (event.chart && event.chart.canvas));
+        if (target) {
+          target.style.cursor = (elements && elements.length > 0) ? 'pointer' : 'default';
+        }
+      },
       plugins: {
         legend: { display: false },
         tooltip: {
-          backgroundColor: 'rgba(15,23,42,0.9)',
-          titleFont: { size: 12, weight: '600' },
-          bodyFont: { size: 12 },
-          padding: 8,
-          cornerRadius: 6,
+          backgroundColor: 'rgba(15,23,42,0.95)',
+          titleFont: { size: 13, weight: '700' },
+          bodyFont: { size: 12, weight: '500' },
+          padding: 12,
+          cornerRadius: 12,
+          displayColors: false,
           callbacks: {
             title: (items: any[]) => {
               if (!items?.length) return '';
               const lbl = items[0].label as string;
               return this.formatTooltipTitle(lbl);
             },
-            label: (ctx: any) => `Eventos distintos: ${ctx.parsed.y}`
+            label: (ctx: any) => `Eventos distintos: ${ctx.parsed.y}`,
+            footer: () => '\nClique para filtrar este período →'
           }
         }
       },
       scales: {
         x: {
           title: {
-            display: true,
-            text: baseXAxisTitle,
-            color: '#64748b',
-            font: { size: 12 }
+            display: false
           },
           ticks: {
-            color: '#64748b',
+            color: '#94a3b8',
+            font: { size: 10, weight: '600' },
             callback: (_val: any, idx: number) => {
               const lbl = this.chartData?.labels?.[idx] as string;
               return this.formatTickLabel(lbl);
             },
-            maxRotation: 0,
-            autoSkip: true,
-            maxTicksLimit: 10
+            maxRotation: 45,
+            minRotation: 45,
+            autoSkip: false
           },
           grid: { display: false }
         },
         y: {
           beginAtZero: true,
+          position: 'right',
           title: {
-            display: true,
-            text: 'Nº de eventos distintos',
-            color: '#64748b',
-            font: { size: 12 }
+            display: false
           },
           ticks: {
-            color: '#64748b',
-            precision: 0
+            color: '#94a3b8',
+            font: { size: 10, weight: '700' },
+            precision: 0,
+            padding: 10
           },
           grid: {
-            color: 'rgba(148,163,184,0.3)',
-            drawBorder: false
-          }
+            color: 'rgba(226,232,240,0.4)',
+            drawTicks: false
+          },
+          border: { display: false }
         }
       },
       elements: {
         line: {
-          tension: 0.35,
-          borderWidth: 2,
-          borderCapStyle: 'round'
+          tension: 0.4,
+          borderWidth: 3,
+          borderColor: '#3b82f6',
+          fill: true,
+          backgroundColor: (ctx: any) => {
+            const canvas = ctx.chart.ctx;
+            const gradient = canvas.createLinearGradient(0, 0, 0, 400);
+            gradient.addColorStop(0, 'rgba(59, 130, 246, 0.2)');
+            gradient.addColorStop(1, 'rgba(59, 130, 246, 0)');
+            return gradient;
+          }
         },
         point: {
-          radius: 2,
-          hoverRadius: 5,
-          hitRadius: 6
+          radius: (ctx: any) => {
+            const lbl = this.chartData?.labels?.[ctx.dataIndex];
+            return lbl === this.selectedLabel ? 8 : 4;
+          },
+          hoverRadius: (ctx: any) => {
+            const lbl = this.chartData?.labels?.[ctx.dataIndex];
+            return lbl === this.selectedLabel ? 10 : 8;
+          },
+          hitRadius: 10,
+          backgroundColor: (ctx: any) => {
+            const lbl = this.chartData?.labels?.[ctx.dataIndex];
+            return lbl === this.selectedLabel ? '#3b82f6' : '#ffffff';
+          },
+          borderColor: (ctx: any) => {
+            const lbl = this.chartData?.labels?.[ctx.dataIndex];
+            return lbl === this.selectedLabel ? '#2563eb' : '#3b82f6';
+          },
+          borderWidth: (ctx: any) => {
+            const lbl = this.chartData?.labels?.[ctx.dataIndex];
+            return lbl === this.selectedLabel ? 4 : 2;
+          },
+          hoverBorderWidth: 4
         }
       },
       onClick: (event: any, elements: any[]) => {
-        if (elements.length > 0) {
-          const index = elements[0].index;
-          const label = this.chartData.labels[index];
-          this.setPeriodFromLabel(label);
-        }
+        this.ngZone.run(() => {
+          if (elements.length > 0) {
+            const index = elements[0].index;
+            const label = this.chartData.labels[index];
+            this.selectedLabel = label;
+            this.setPeriodFromLabel(label, true); // true indica que veio de um clique
+          }
+        });
       }
     };
   }
@@ -326,7 +388,10 @@ export class EventosTimelineChartComponent implements OnChanges {
   }
 
   // ========= aplicação do range, considerando o agrupamento =========
-  applyRange() {
+  applyRange(skipChartFilter: boolean = false) {
+    if (!skipChartFilter) {
+      this.selectedLabel = null; // Limpa destaque se for filtro manual
+    }
     const series = this.baseSeries[this.selectedGrouping];
     const baseLabels = series.labels;
     const baseValues = series.values;
@@ -364,13 +429,20 @@ export class EventosTimelineChartComponent implements OnChanges {
           ? 'Eventos por semana'
           : 'Eventos por mês';
 
+    if (skipChartFilter) {
+      // Se for apenas clique/seleção, emitimos o evento mas não alteramos os dados do gráfico
+      this.rangeChanged.emit({ start: this.startDate, end: this.endDate });
+      if (this.chartComp) this.chartComp.reinit(); // Força atualização dos pontos para mostrar o destaque
+      return;
+    }
+
     this.chartData = {
       labels,
       datasets: [{
         label: datasetLabel,
         data: values,
         borderColor: '#3b82f6',
-        backgroundColor: 'rgba(59,130,246,0.12)',
+        // backgroundColor: 'rgba(59,130,246,0.12)', // Deixamos o gradiente do elements.line agir
         fill: true
       }]
     };
@@ -386,7 +458,7 @@ export class EventosTimelineChartComponent implements OnChanges {
   }
 
   // ===== definir período ao clicar no gráfico =====
-  setPeriodFromLabel(label: string) {
+  setPeriodFromLabel(label: string, isClick: boolean = false) {
     let start: string;
     let end: string;
 
@@ -408,7 +480,7 @@ export class EventosTimelineChartComponent implements OnChanges {
 
     this.startDate = start;
     this.endDate = end;
-    this.applyRange();
+    this.applyRange(isClick);
   }
 
   // ===== botão do calendário =====
@@ -445,9 +517,9 @@ export class EventosTimelineChartComponent implements OnChanges {
 
     const baseOpts: any = this.chartOpts || {};
 
-    const axisTitleSize = 30;
-    const axisTickSize  = 25;
-    const legendSize    = 30;
+    const axisTitleSize = 18;
+    const axisTickSize = 14;
+    const legendSize = 16;
 
     const baseXTicks = baseOpts.scales?.x?.ticks || {};
     const baseYTicks = baseOpts.scales?.y?.ticks || {};
@@ -457,6 +529,14 @@ export class EventosTimelineChartComponent implements OnChanges {
       responsive: false,
       maintainAspectRatio: false,
       animation: false,
+      layout: {
+        padding: {
+          top: 40,
+          bottom: 40,
+          left: 40,
+          right: 40
+        }
+      },
       plugins: {
         ...(baseOpts.plugins || {}),
         legend: {
@@ -465,20 +545,9 @@ export class EventosTimelineChartComponent implements OnChanges {
             ...(baseOpts.plugins?.legend?.labels || {}),
             font: {
               ...(baseOpts.plugins?.legend?.labels?.font || {}),
-              size: legendSize
+              size: legendSize,
+              weight: 'bold'
             }
-          }
-        },
-        tooltip: {
-          ...(baseOpts.plugins?.tooltip || {}),
-          titleFont: {
-            ...(baseOpts.plugins?.tooltip?.titleFont || {}),
-            size: 16,
-            weight: '600'
-          },
-          bodyFont: {
-            ...(baseOpts.plugins?.tooltip?.bodyFont || {}),
-            size: 16
           }
         }
       },
@@ -489,11 +558,15 @@ export class EventosTimelineChartComponent implements OnChanges {
             ...(baseOpts.scales?.x?.title || {}),
             font: {
               ...(baseOpts.scales?.x?.title?.font || {}),
-              size: axisTitleSize
+              size: axisTitleSize,
+              weight: 'bold'
             }
           },
           ticks: {
             ...baseXTicks,
+            autoSkip: true,
+            maxTicksLimit: 15,
+            padding: 10,
             font: {
               ...(baseXTicks.font || {}),
               size: axisTickSize
@@ -508,7 +581,8 @@ export class EventosTimelineChartComponent implements OnChanges {
             ...(baseOpts.scales?.y?.title || {}),
             font: {
               ...(baseOpts.scales?.y?.title?.font || {}),
-              size: axisTitleSize
+              size: axisTitleSize,
+              weight: 'bold'
             }
           },
           ticks: {
@@ -641,5 +715,55 @@ export class EventosTimelineChartComponent implements OnChanges {
       return `Início da semana: ${formatted}`;
     }
     return `Mês: ${formatted}`;
+  }
+
+  // ===== ZOOM LOGIC (NEW) =====
+  getChartWidth(): number {
+    if (!this.chartData || !this.chartData.labels) return 0;
+    const numLabels = this.chartData.labels.length;
+    let width = numLabels * this.barWidth;
+    if (width > this.MAX_TOTAL_WIDTH) width = this.MAX_TOTAL_WIDTH;
+    return Math.max(0, width);
+  }
+
+  scrollToEnd() {
+    if (this.scrollContainer?.nativeElement) {
+      const el = this.scrollContainer.nativeElement;
+      el.scrollLeft = el.scrollWidth;
+    }
+  }
+
+  zoomIn() {
+    this.updateZoom(this.barWidth + 10);
+  }
+
+  zoomOut() {
+    this.updateZoom(Math.max(20, this.barWidth - 10));
+  }
+
+  private updateZoom(newBarWidth: number) {
+    if (!this.scrollContainer?.nativeElement || !this.chartData?.labels?.length) {
+      this.barWidth = newBarWidth;
+      return;
+    }
+
+    const numLabels = this.chartData.labels.length;
+    const maxAllowedBarWidth = Math.floor(this.MAX_TOTAL_WIDTH / numLabels);
+    const finalBarWidth = Math.min(newBarWidth, maxAllowedBarWidth);
+
+    const container = this.scrollContainer.nativeElement;
+    
+    // Maintain center ratio
+    const centerPixelX = container.scrollLeft + container.clientWidth / 2;
+    const centerRatio = centerPixelX / this.getChartWidth();
+
+    const zoomSteps = (finalBarWidth - 30) / 10;
+    this.barWidth = finalBarWidth;
+    this.chartHeight = 400 + (zoomSteps * 50);
+    
+    setTimeout(() => {
+      const newTotalWidth = this.getChartWidth();
+      container.scrollLeft = Math.max(0, (centerRatio * newTotalWidth) - (container.clientWidth / 2));
+    }, 0);
   }
 }
