@@ -1,0 +1,37 @@
+<header [class]="'relative overflow-hidden -mx-6 md:mx-0 rounded-none md:rounded-[3rem] bg-slate-900 px-8 py-16 sm:px-12 sm:py-20 shadow-2xl border-y md:border mb-10 ' + borderClass">
+  <!-- Efeitos Visuais de Fundo -->
+  <div [class]="'absolute -right-20 -top-20 h-64 w-64 rounded-full blur-[100px] ' + bgCircle1Class"></div>
+  <div [class]="'absolute -left-20 -bottom-20 h-64 w-64 rounded-full blur-[100px] ' + bgCircle2Class"></div>
+
+  <div class="relative z-10">
+    <!-- Breadcrumb / Tags (Tamanho Fixo: text-[10px]) -->
+    <div class="flex flex-wrap items-center gap-3 mb-6" *ngIf="tagText || breadcrumbPath">
+      <span *ngIf="tagText" 
+            [class]="'px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border ' + tagColorClass">
+        {{ tagText }}
+      </span>
+      <span class="text-slate-700 font-bold hidden sm:inline" *ngIf="tagText && breadcrumbPath">/</span>
+      <span class="text-slate-400 text-[10px] font-bold uppercase tracking-widest" *ngIf="breadcrumbPath">
+        {{ breadcrumbPath }}
+      </span>
+    </div>
+
+    <!-- Título Principal (Tamanho Fixo: text-4xl / sm:text-6xl) -->
+    <h1 class="text-4xl sm:text-6xl font-black text-white tracking-tighter leading-[1.1] mb-6">
+      {{ titleNormal }} <br class="sm:hidden" *ngIf="titleNormal && titleHighlight">
+      <span [class]="'text-transparent bg-clip-text bg-gradient-to-r ' + gradientClass">
+        {{ titleHighlight }}
+      </span>
+    </h1>
+
+    <!-- Descrição (Tamanho Fixo: text-base / sm:text-lg) -->
+    <p class="text-slate-400 max-w-2xl text-base sm:text-lg font-medium leading-relaxed" *ngIf="description">
+      {{ description }}
+    </p>
+
+    <!-- Slot para Ações / Botões -->
+    <div class="mt-8 flex flex-wrap gap-4">
+      <ng-content></ng-content>
+    </div>
+  </div>
+</header>

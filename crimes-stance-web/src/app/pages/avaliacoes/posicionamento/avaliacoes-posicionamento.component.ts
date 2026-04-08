@@ -7,63 +7,15 @@ import { FormsModule } from '@angular/forms';
 import { SentimentService } from '../../../services/sentiment.service';
 import { withTimeout } from '../../../services/promise-timeout.util';
 
-// Reaproveitado
+// Componentes Reutilizáveis
 import { BootstrapResultsCardComponent } from '../../../components/opinion-analysis/bootstrap-results-card/bootstrap-results-card';
+import { PageHeroComponent } from '../../../components/shared/page-hero/page-hero.component';
 
 // Chart.js + plugin de barras de erro (whiskers)
 import Chart from 'chart.js/auto';
 import type { Plugin } from 'chart.js';
 
-// --- Plugin leve para desenhar as barras de erro (IC95%) --- //
-const ErrorBarsPlugin: Plugin = {
-  id: 'errorBars',
-  afterDatasetsDraw(chart) {
-    const yScale = chart.scales['y'] as any;
-    if (!yScale) return;
-
-    const ctx = chart.ctx;
-    chart.data.datasets.forEach((ds: any, datasetIndex: number) => {
-      if (!ds?.errorBars || !Array.isArray(ds.errorBars)) return;
-
-      const meta = chart.getDatasetMeta(datasetIndex);
-      ds.errorBars.forEach((eb: any, i: number) => {
-        const el: any = meta.data?.[i];
-        if (!el) return;
-
-        const x = el.x;
-        const yUpper = yScale.getPixelForValue(eb.upper);
-        const yLower = yScale.getPixelForValue(eb.lower);
-
-        ctx.save();
-        ctx.strokeStyle = (ds.borderColor ?? 'rgba(0,0,0,0.6)');
-        ctx.globalAlpha = 0.9;
-        ctx.lineWidth = 2;
-
-        // haste vertical
-        ctx.beginPath();
-        ctx.moveTo(x, yUpper);
-        ctx.lineTo(x, yLower);
-        ctx.stroke();
-
-        // chapéus
-        const cap = 6;
-        ctx.beginPath();
-        ctx.moveTo(x - cap, yUpper);
-        ctx.lineTo(x + cap, yUpper);
-        ctx.moveTo(x - cap, yLower);
-        ctx.lineTo(x + cap, yLower);
-        ctx.stroke();
-
-        ctx.restore();
-      });
-    });
-  }
-};
-
-Chart.register(ErrorBarsPlugin);
-
-
-// === Plugin leve para desenhar whiskers (IC95%) nos pontos ===
+// --- Plugin leve para desenhar whiskers (IC95%) nos pontos ---
 const ErrorWhiskersPlugin: Plugin = {
   id: 'errorWhiskers',
   afterDatasetsDraw(chart) {
@@ -71,17 +23,17 @@ const ErrorWhiskersPlugin: Plugin = {
     const yScale = scales['y'];
 
     chart.data.datasets.forEach((ds: any, di: number) => {
-      // Só desenha em datasets de pontos (line com showLine=false) que carregam errorBars
       if (ds.type !== 'line' || ds.showLine !== false || !Array.isArray(ds.errorBars)) return;
 
       const meta = chart.getDatasetMeta(di);
-      const color = ds.pointBackgroundColor || ds.borderColor || '#334155';
-      const cap = 6;        // largura do chapéu
-      const lineW = 2;      // espessura da linha
+      const color = ds.borderColor || '#334155';
+      const cap = 4;        // menor para visual refinado
+      const lineW = 1.5;    // mais fino
 
       ctx.save();
       ctx.strokeStyle = color;
       ctx.lineWidth = lineW;
+      ctx.globalAlpha = 0.6; // sutil
 
       meta.data.forEach((elem: any, i: number) => {
         const bar = ds.errorBars[i];
@@ -91,18 +43,16 @@ const ErrorWhiskersPlugin: Plugin = {
         const yLow  = yScale.getPixelForValue(bar.low);
         const yHigh = yScale.getPixelForValue(bar.high);
 
-        // haste vertical
         ctx.beginPath();
         ctx.moveTo(x, yLow);
         ctx.lineTo(x, yHigh);
         ctx.stroke();
 
-        // chapéus
         ctx.beginPath();
-        ctx.moveTo(x - cap / 2, yLow);
-        ctx.lineTo(x + cap / 2, yLow);
-        ctx.moveTo(x - cap / 2, yHigh);
-        ctx.lineTo(x + cap / 2, yHigh);
+        ctx.moveTo(x - cap, yLow);
+        ctx.lineTo(x + cap, yLow);
+        ctx.moveTo(x - cap, yHigh);
+        ctx.lineTo(x + cap, yHigh);
         ctx.stroke();
       });
 
@@ -111,7 +61,6 @@ const ErrorWhiskersPlugin: Plugin = {
   }
 };
 
-// registre o plugin
 Chart.register(ErrorWhiskersPlugin);
 
 @Component({
@@ -121,6 +70,7 @@ Chart.register(ErrorWhiskersPlugin);
     CommonModule,
     ChartModule,
     BootstrapResultsCardComponent,
+    PageHeroComponent,
     FormsModule
   ],
   templateUrl: './avaliacoes-posicionamento.component.html'
@@ -244,37 +194,48 @@ export class AvaliacoesPosicionamentoComponent implements OnInit {
       datasets: [
         {
           data: [neg, neu, pos],
-          backgroundColor: ['#ef4444', '#6b7280', '#10b981'],
-          borderWidth: 0
+          backgroundColor: [
+            '#f43f5e', // Rose 500
+            '#64748b', // Slate 500
+            '#10b981'  // Emerald 500
+          ],
+          hoverBackgroundColor: [
+            '#fb7185',
+            '#94a3b8',
+            '#34d399'
+          ],
+          borderWidth: 0,
+          borderRadius: 8,
+          spacing: 4
         }
       ]
     };
     this.distOpts = {
       responsive: true,
       maintainAspectRatio: false,
-      layout: { padding: { top: 8, right: 8, bottom: 16, left: 8 } },
+      cutout: '75%', // Estilo Donut moderno "Ring"
+      layout: { padding: 30 },
       plugins: {
         legend: {
           display: true,
           position: 'bottom',
-          align: 'center',
           labels: {
             usePointStyle: true,
             pointStyle: 'circle',
-            boxWidth: 10,
-            boxHeight: 10,
-            padding: 12,
-            font: { size: 11 },
-            color: '#334155'
+            font: { size: 12, weight: '600' },
+            padding: 20,
+            color: '#64748b'
           }
         },
         tooltip: {
+          backgroundColor: 'rgba(15, 23, 42, 0.9)',
+          padding: 12,
+          bodyFont: { size: 14, weight: '600' },
           callbacks: {
-            label: (ctx: any) => `${ctx.label}: ${ctx.parsed} comentários`
+            label: (ctx: any) => ` ${ctx.label}: ${ctx.parsed} amostras`
           }
         }
-      },
-      animation: { duration: 0 }
+      }
     };
   }
 
@@ -353,14 +314,16 @@ export class AvaliacoesPosicionamentoComponent implements OnInit {
         label: `${m.model}`,
         data: means,
         showLine: false,
+        backgroundColor: palette[i % palette.length],
+        borderColor: palette[i % palette.length],
         pointBackgroundColor: palette[i % palette.length],
-        pointBorderColor: palette[i % palette.length],
-        pointRadius: 6,         // maior para melhor leitura
-        pointHoverRadius: 8,
-        hitRadius: 12,
-        borderWidth: 0,
+        pointBorderColor: '#ffffff',
+        pointBorderWidth: 2,
+        pointRadius: 8,
+        pointHoverRadius: 10,
+        pointHoverBorderWidth: 3,
+        hitRadius: 15,
         order: 1,
-        // usado pelo plugin para desenhar os whiskers
         errorBars: [0,1,2].map(idx => ({ low: lowers[idx], high: uppers[idx] }))
       });
     });
@@ -375,41 +338,51 @@ export class AvaliacoesPosicionamentoComponent implements OnInit {
     this.compChartOpts = {
       responsive: true,
       maintainAspectRatio: false,
-      layout: { padding: { left: 8, right: 8 } },
+      layout: { padding: { top: 20, bottom: 20, left: 10, right: 10 } },
       plugins: {
         legend: {
           position: 'bottom',
-          labels: { usePointStyle: true, boxWidth: 10, boxHeight: 10, font: { size: 11 } }
+          labels: { 
+            usePointStyle: true, 
+            boxWidth: 8, 
+            boxHeight: 8, 
+            font: { size: 12, weight: '600' },
+            padding: 20,
+            color: '#64748b'
+          }
         },
         tooltip: {
+          backgroundColor: 'rgba(15, 23, 42, 0.9)',
+          padding: 12,
+          bodyFont: { size: 13 },
           callbacks: {
             label: (ctx: any) => {
-              if (Array.isArray(ctx.raw)) return ''; // não usamos mais barras
               const ds = ctx.dataset as any;
               const eb = ds.errorBars?.[ctx.dataIndex];
+              const val = (ctx.parsed.y * 100).toFixed(1);
               if (eb) {
-                return `${ds.label}: média ${(ctx.parsed.y*100).toFixed(1)}% — ` +
-                      `IC95% [${(eb.low*100).toFixed(1)}%; ${(eb.high*100).toFixed(1)}%]`;
+                return `${ds.label}: ${val}% (IC95% [${(eb.low*100).toFixed(1)}% - ${(eb.high*100).toFixed(1)}%])`;
               }
-              return `${ds.label}: média ${(ctx.parsed.y*100).toFixed(1)}%`;
+              return `${ds.label}: ${val}%`;
             }
           }
         }
       },
       scales: {
         x: {
-          offset: true,              // afasta as classes das bordas
-          ticks: { padding: 8 }
+          offset: true,
+          grid: { display: false },
+          ticks: { color: '#64748b', font: { weight: 'bold' }, padding: 10 }
         },
         y: {
           suggestedMin,
           suggestedMax,
-          ticks: { callback: (v: any) => (Number(v) * 100) + '%' },
-          title: {
-            display: true,
-            text: metric === 'precision' ? 'Precisão'
-                : metric === 'recall'    ? 'Revocação'
-                : 'F1-Score'
+          grid: { color: 'rgba(148, 163, 184, 0.1)', drawTicks: false },
+          border: { display: false },
+          ticks: { 
+            color: '#64748b',
+            callback: (v: any) => (Number(v) * 100) + '%',
+            padding: 10
           }
         }
       }

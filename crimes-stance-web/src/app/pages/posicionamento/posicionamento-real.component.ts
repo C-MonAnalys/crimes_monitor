@@ -14,6 +14,7 @@ import { AnalysisStatCardComponent } from '../../components/opinion-analysis/ana
 import { PositioningDistributionComponent } from '../../components/opinion-analysis/positioning-distribution/positioning-distribution';
 import { CommentsSampleCardComponent } from '../../components/opinion-analysis/comments-sample-card/comments-sample-card';
 import { WeeklyStackedChartComponent } from '../../components/opinion-analysis/weekly-stacked-chart/weekly-stacked-chart';
+import { PageHeroComponent } from '../../components/shared/page-hero/page-hero.component';
 
 @Component({
   selector: 'app-posicionamento-real',
@@ -22,7 +23,8 @@ import { WeeklyStackedChartComponent } from '../../components/opinion-analysis/w
     CommonModule, ChartModule,
     AnalysisStatCardComponent, PositioningDistributionComponent,
     CommentsSampleCardComponent, WeeklyStackedChartComponent,
-    FormsModule
+    FormsModule,
+    PageHeroComponent
   ],
   templateUrl: './posicionamento-real.component.html'
 })
@@ -38,6 +40,11 @@ export class PosicionamentoRealComponent implements OnInit {
   isRefreshing = false;
   error = '';
   datasetId = '';
+  
+  // UX de Carregamento
+  loadingMessage = 'Iniciando conexão segura com a base de dados...';
+  loadingProgress = 10;
+  private loadingTimer: any;
 
   // dados
   comments: any[] = [];
@@ -68,6 +75,7 @@ export class PosicionamentoRealComponent implements OnInit {
   async loadData() {
     this.isLoading = true;
     this.error = '';
+    this.startLoadingSequence();
     this.cdr.markForCheck();
 
     let loadPromise: Promise<{ meta: any; comments: any[]; bootstrap: any[] }>;
@@ -80,14 +88,49 @@ export class PosicionamentoRealComponent implements OnInit {
 
     try {
       const data = await loadPromise;
+      this.stopLoadingSequence();
       this.zone.run(() => this.applyAll(data));
     } catch (e: any) {
+      this.stopLoadingSequence();
       this.zone.run(() => {
         this.error = 'Não foi possível carregar o dataset.';
         this.isLoading = false;
         this.cdr.markForCheck();
       });
     }
+  }
+
+  private startLoadingSequence() {
+    this.loadingProgress = 10;
+    this.loadingMessage = 'Iniciando conexão segura com a base de dados...';
+    
+    const sequence = [
+      { p: 25, m: 'Solicitando transferência de grandes volumes de dados...' },
+      { p: 45, m: 'O download do dataset está sendo feito (isso pode levar alguns segundos)...' },
+      { p: 65, m: 'Download concluído. Iniciando processamento de inteligência artificial...' },
+      { p: 85, m: 'Organizando as métricas de posicionamento e sentimentos da audiência...' },
+      { p: 95, m: 'Finalizando renderização do painel técnico...' }
+    ];
+
+    let step = 0;
+    this.loadingTimer = setInterval(() => {
+      if (step < sequence.length) {
+        this.loadingProgress = sequence[step].p;
+        this.loadingMessage = sequence[step].m;
+        step++;
+        this.cdr.markForCheck();
+      } else {
+        clearInterval(this.loadingTimer);
+      }
+    }, 2500); // Muda a cada 2.5s para dar tempo de leitura
+  }
+
+  private stopLoadingSequence() {
+    if (this.loadingTimer) {
+      clearInterval(this.loadingTimer);
+    }
+    this.loadingProgress = 100;
+    this.cdr.markForCheck();
   }
 
   async refreshData() {

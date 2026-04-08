@@ -21,7 +21,10 @@ export class SentimentService {
 
   private async fetchJson(fileName: string): Promise<any> {
     try {
-      const url = fileName.startsWith('http') ? fileName : `${this.base}/${fileName}`;
+      let url = fileName;
+      if (!fileName.startsWith('http') && !fileName.startsWith('/') && !fileName.startsWith('assets/')) {
+        url = `${this.base}/${fileName}`;
+      }
       const resp = await fetch(url);
       if (!resp.ok) return null;
       return resp.json();
@@ -31,15 +34,23 @@ export class SentimentService {
     }
   }
 
-  /** Lista os datasets (id -> { title, commentsFile, bootstrapFile }) */
   async getDatasets(): Promise<Record<string, { title: string; commentsFile: string; bootstrapFile: string }>> {
+    return this.fetchDatasetsByPath('datasets.json');
+  }
+
+  /** Lista os datasets de cenário real specifically */
+  async getRealScenarioDatasets(): Promise<Record<string, { title: string; commentsFile: string; bootstrapFile: string }>> {
+    return this.fetchDatasetsByPath('cenario-real/datasets.json');
+  }
+
+  private async fetchDatasetsByPath(path: string): Promise<Record<string, { title: string; commentsFile: string; bootstrapFile: string }>> {
     // Busca base local para fallback
     const baseTag = document.getElementsByTagName('base')[0];
     const baseHref = (baseTag && baseTag.getAttribute('href')) || '/';
     const root = baseHref.endsWith('/') ? baseHref : baseHref + '/';
-    const localUrl = `${root}assets/data/sentiment/datasets.json`;
+    const localUrl = `${root}assets/data/sentiment/${path}`;
 
-    const remoteUrl = DATA_CONFIG.BASE_DATA_URL ? `${this.base}/datasets.json` : null;
+    const remoteUrl = DATA_CONFIG.BASE_DATA_URL ? `${this.base}/${path}` : null;
 
     try {
       const [localData, remoteData] = await Promise.all([
@@ -49,7 +60,7 @@ export class SentimentService {
 
       return { ...localData, ...remoteData };
     } catch (e) {
-      console.error('[SentimentService] Error merging datasets:', e);
+      console.error(`[SentimentService] Error merging datasets from ${path}:`, e);
       return {};
     }
   }

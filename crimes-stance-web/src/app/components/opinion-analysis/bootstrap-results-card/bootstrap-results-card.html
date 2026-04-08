@@ -1,22 +1,36 @@
-<div class="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
-  <h3 class="text-lg font-semibold text-slate-900 mb-4">Resultados Bootstrap (Intervalos de Confiança)</h3>
+<div class="bg-white -mx-4 md:mx-0 rounded-none md:rounded-[2rem] border-y md:border border-slate-100 p-6 md:p-8 shadow-sm">
+  <div class="flex items-center justify-between mb-8">
+    <div>
+      <h3 class="text-2xl font-black text-slate-900 tracking-tight">Intervalos de Confiança</h3>
+      <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Simulação Técnica Bootstrap (IC 95%)</p>
+    </div>
+    <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+      <i class="bi bi-shield-shaded text-xl"></i>
+    </div>
+  </div>
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-    <div *ngFor="let group of groups" class="border border-slate-200 rounded-lg p-4">
-      <h4 class="font-semibold text-slate-900 mb-3 capitalize">{{ group.metric }}</h4>
-      <div class="space-y-3">
+    <div *ngFor="let group of groups" class="border border-slate-100/70 rounded-lg p-5">
+      <h4 class="font-bold text-slate-800 mb-4 uppercase tracking-tight">
+        {{ group.metric.startsWith('precision') ? 'Precisão' : (group.metric.startsWith('recall') ? 'Revocação' : 'F1-Score') }}
+      </h4>
+      <div class="space-y-6">
         <div *ngFor="let item of group.items" class="space-y-2">
-          <div class="text-sm text-slate-600">Classe {{ item.class }}</div>
+          <div class="text-[10px] font-black uppercase text-slate-400 tracking-widest">
+            {{ item.class.includes('0') ? 'Neutro' : (item.class.includes('1') ? 'Aprovação' : 'Desaprovação') }}
+          </div>
+          
           <div class="relative bg-slate-100 h-4 rounded-full">
             <div class="absolute h-full bg-blue-200 rounded-full"
                  [style.left.%]="item.lower_ci * 100"
                  [style.width.%]="(item.upper_ci - item.lower_ci) * 100">
             </div>
-            <div class="absolute w-0.5 h-full bg-blue-600"
+            <div class="absolute w-[2px] h-full bg-blue-600 cursor-default"
                  [style.left.%]="item.mean * 100"></div>
           </div>
-          <div class="flex justify-between text-xs text-slate-500">
+          
+          <div class="flex justify-between text-[11px] text-slate-400">
             <span>{{ (item.lower_ci * 100).toFixed(1) }}%</span>
-            <strong class="text-slate-700">{{ (item.mean * 100).toFixed(1) }}%</strong>
+            <strong class="text-slate-800">{{ (item.mean * 100).toFixed(1) }}%</strong>
             <span>{{ (item.upper_ci * 100).toFixed(1) }}%</span>
           </div>
         </div>
