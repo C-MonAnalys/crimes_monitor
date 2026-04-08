@@ -7,13 +7,20 @@ import { EventsRealService } from '../../services/events-real.service';
 import { DATA_CONFIG } from '../../data-config';
 import { withTimeout } from '../../services/promise-timeout.util';
 import { EventosTimelineChartComponent } from './eventos-timeline-chart.component';
+import { PageHeroComponent } from '../../components/shared/page-hero/page-hero.component';
 
 type ClassName = 'Aprovação' | 'Desaprovação' | 'Neutro';
 
 @Component({
   selector: 'app-eventos-real',
   standalone: true,
-  imports: [CommonModule, FormsModule, ChartModule, EventosTimelineChartComponent],
+  imports: [
+    CommonModule, 
+    FormsModule, 
+    ChartModule, 
+    EventosTimelineChartComponent,
+    PageHeroComponent
+  ],
   templateUrl: './eventos-real.component.html',
   styles: [`
     @keyframes fadeIn {

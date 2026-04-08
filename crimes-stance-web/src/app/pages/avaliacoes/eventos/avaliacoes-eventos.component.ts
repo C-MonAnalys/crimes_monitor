@@ -8,11 +8,17 @@ import { Router } from '@angular/router';
 import { EventsService } from '../../../services/events.service';
 import { EventsRealService } from '../../../services/events-real.service';
 import { withTimeout } from '../../../services/promise-timeout.util';
+import { PageHeroComponent } from '../../../components/shared/page-hero/page-hero.component';
 
 @Component({
   selector: 'app-avaliacoes-eventos',
   standalone: true,
-  imports: [CommonModule, FormsModule, ChartModule],
+  imports: [
+    CommonModule, 
+    FormsModule, 
+    ChartModule,
+    PageHeroComponent
+  ],
   templateUrl: './avaliacoes-eventos.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -275,27 +281,49 @@ export class AvaliacoesEventosComponent implements OnInit {
     });
     const labelMap: Record<string, string> = { acu: 'Acurácia', pre: 'Precisão', rev: 'Revocação', f1: 'F1-Score' } as any;
     const colorMap: Record<string, string> = { acu: '#3b82f6', pre: '#10b981', rev: '#f59e0b', f1: '#8b5cf6' } as any;
+    const chartColors = techniques.map(t => this.getTechniqueColor(t));
+    
     this.perfChartData = {
       labels: techniques.map(t => this.getTechniqueName(t)),
       datasets: [{
         label: labelMap[metricKey],
         data: values,
-        borderColor: colorMap[metricKey],
-        backgroundColor: colorMap[metricKey] + '33',
-        pointBackgroundColor: colorMap[metricKey],
-        pointBorderColor: '#ffffff',
-        pointRadius: 3,
-        pointHoverRadius: 6,
-        tension: 0.35,
-        fill: true
+        backgroundColor: chartColors.map(c => c + 'CC'), // 80% opacidade
+        borderColor: chartColors,
+        borderWidth: 2,
+        borderRadius: 12,
+        borderSkipped: false,
+        barPercentage: 0.5,
+        categoryPercentage: 0.5
       }]
     };
+
     this.perfChartOpts = {
       responsive: true,
       maintainAspectRatio: false,
-      plugins: { legend: { position: 'top' } },
-      scales: { y: { beginAtZero: true, max: 1, ticks: { callback: (v: any) => (v * 100) + '%' } } },
-      elements: { point: { radius: 3, hoverRadius: 6 } }
+      plugins: { 
+        legend: { display: false }, // Oculta legenda redundante já que cada barra tem sua cor e label
+        tooltip: {
+          backgroundColor: 'rgba(15, 23, 42, 0.9)',
+          padding: 12,
+          bodyFont: { size: 14, weight: 'bold' },
+          callbacks: {
+            label: (ctx: any) => ` ${labelMap[metricKey]}: ${(ctx.parsed.y * 100).toFixed(1)}%`
+          }
+        }
+      },
+      scales: { 
+        y: { 
+          beginAtZero: true, 
+          max: 1, 
+          grid: { color: 'rgba(148, 163, 184, 0.1)' },
+          ticks: { color: '#64748b', callback: (v: any) => (v * 100) + '%' } 
+        },
+        x: {
+          grid: { display: false },
+          ticks: { color: '#475569', font: { weight: 'bold' } }
+        }
+      }
     };
     this.hasPerfData = techniques.length > 0;
   }

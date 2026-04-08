@@ -1,193 +1,258 @@
-<div class="space-y-6">
-  <!-- HERO -->
-  <section class="hero">
-    <div>
-      <h1>Crimes Stance</h1>
-      <p>
-        Plataforma para <b>monitorar operações policiais</b> em vídeos e
-        <b>analisar o posicionamento da audiência</b>. Aqui você encontra:
-      </p>
-      <ul class="hero-points">
-        <li><i class="bi bi-clipboard-data"></i> Avaliações de desempenho de heurísticas e do modelo de opinião</li>
-        <li><i class="bi bi-broadcast"></i> Aplicações em <b>cenários reais</b> com datasets prontos para exploração</li>
-        <li><i class="bi bi-database"></i> Séries, métricas e amostras para entender o contexto por operação</li>
-      </ul>
-
-      <div class="actions" *ngIf="latestEvent() || latestSent()">
-        <a
-          class="btn primary"
-          routerLink="/eventos"
-          >Abrir Painel de Eventos</a
-        >
-        <a
-          *ngIf="latestSent()"
-          class="btn ghost"
-          [routerLink]="['/posicionamento', latestSent()!.id]"
-          >Abrir último dataset de Posicionamento</a
-        >
-      </div>
+<div class="space-y-10 pb-12">
+  
+  <!-- HERO SECTION - Usando Componente Universal -->
+  <app-page-hero 
+    tagText="Monitoramento de Crimes"
+    breadcrumbPath="Inteligência de Segurança"
+    titleNormal="Crimes"
+    titleHighlight="Stance"
+    description="Análise automatizada de operações policiais em vídeos e monitoramento do posicionamento da audiência através de modelos de inteligência artificial."
+    gradientClass="from-blue-400 to-indigo-300"
+    bgCircle1Class="bg-blue-600/20"
+    bgCircle2Class="bg-indigo-600/10"
+    borderClass="border-slate-800">
+    
+    <div class="flex flex-wrap gap-4">
+      <a routerLink="/eventos" class="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-black text-sm uppercase tracking-widest rounded-2xl transition-all shadow-lg shadow-blue-900/20 active:scale-95">
+        Ver Cenários Reais
+      </a>
+      <a routerLink="/avaliacoes/posicionamento" class="px-8 py-4 bg-slate-800 hover:bg-slate-700 text-white font-black text-sm uppercase tracking-widest rounded-2xl transition-all border border-slate-700 active:scale-95">
+        Explorar Métricas
+      </a>
     </div>
-  </section>
+  </app-page-hero>
 
-  <!-- LOADING / ERRO -->
-  <div class="card" *ngIf="isLoading()">Carregando…</div>
-  <div class="card error" *ngIf="!isLoading() && error()">{{ error() }}</div>
+  <!-- LOADING / ERROR STATES -->
+  <div *ngIf="isLoading()" class="flex flex-col items-center justify-center py-20 space-y-4">
+    <div class="w-12 h-12 border-4 border-blue-600/20 border-t-blue-600 rounded-full animate-spin"></div>
+    <p class="text-slate-400 font-black text-[10px] uppercase tracking-widest">Sincronizando dados…</p>
+  </div>
 
-  <ng-container *ngIf="!isLoading() && !error()">
-    <!-- STATUS RÁPIDO -->
-    <section class="grid grid-4">
-      <div class="stat">
-        <div class="stat-label">Vídeos coletados</div>
-        <div class="stat-value">{{ totalVideos() | number }}</div>
-        <div class="stat-hint">Período: {{ videosPeriodLabel() }}</div>
+  <div *ngIf="!isLoading() && error()" class="bg-red-50 border border-red-100 p-8 rounded-3xl text-center">
+    <i class="bi bi-exclamation-triangle text-red-500 text-3xl mb-4"></i>
+    <p class="text-red-900 font-bold">{{ error() }}</p>
+  </div>
+
+  <div *ngIf="!isLoading() && !error()" class="animate-in fade-in slide-in-from-bottom-4 duration-700">
+    
+    <!-- QUICK STATS GRID (Badges mantêm padding natural) -->
+    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
+      <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+        <div class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Vídeos Coletados</div>
+        <div class="text-3xl font-black text-slate-900 tracking-tighter">{{ totalVideos() | number }}</div>
+        <div class="text-[10px] font-bold text-slate-400 mt-2">{{ videosPeriodLabel() }}</div>
       </div>
 
-      <div class="stat">
-        <div class="stat-label">Operações únicas</div>
-        <div class="stat-value">{{ uniqOperations() | number }}</div>
-        <div class="stat-hint">Média vídeos/op: {{ avgPerOp() | number:'1.0-1' }}</div>
+      <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+        <div class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Operações Monitoradas</div>
+        <div class="text-3xl font-black text-slate-900 tracking-tighter">{{ uniqOperations() | number }}</div>
+        <div class="text-[10px] font-bold text-slate-400 mt-2">Média: {{ avgPerOp() }} vídeos/op</div>
       </div>
 
-      <div class="stat">
-        <div class="stat-label">Comentários rotulados</div>
-        <div class="stat-value">{{ trainTotal() | number }}</div>
-        <div class="stat-hint">Base de treino do modelo</div>
+      <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+        <div class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Base de Treino (Modelos)</div>
+        <div class="text-3xl font-black text-slate-900 tracking-tighter">{{ trainTotal() | number }}</div>
+        <div class="text-[10px] font-bold text-slate-400 mt-2">Comentários rotulados</div>
       </div>
 
-      <div class="stat">
-        <div class="stat-label">Distribuição de rótulos</div>
-        <div class="mt-1 text-sm text-slate-700 space-y-1">
-          <div>
-            <span class="inline-block w-2 h-2 rounded-sm mr-2" style="background:#ef4444"></span>
-            Desaprova: <b>{{ pct(treinoNeg()) }}%</b>
-          </div>
-          <div>
-            <span class="inline-block w-2 h-2 rounded-sm mr-2" style="background:#6b7280"></span>
-            Neutro: <b>{{ pct(treinoNeu()) }}%</b>
-          </div>
-          <div>
-            <span class="inline-block w-2 h-2 rounded-sm mr-2" style="background:#10b981"></span>
-            Aprova: <b>{{ pct(treinoPos()) }}%</b>
-          </div>
-        </div>
+      <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+        <div class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Confiabilidade</div>
+        <div class="text-3xl font-black text-blue-600 tracking-tighter">95%</div>
+        <div class="text-[10px] font-bold text-slate-400 mt-2">Intervalo de Confiança</div>
       </div>
     </section>
 
-    <!-- INSIGHT: Sparkline de vídeos por mês -->
-    <!-- <section class="grid grid-2">
-      <div class="card">
-        <div class="flex items-center justify-between">
-          <h3>Vídeos por mês</h3>
-          <span class="muted text-xs">tendência</span>
-        </div>
-        <div style="height:80px;">
-          <p-chart type="line" [data]="videosSparkData" [options]="videosSparkOpts" height="80"></p-chart>
-        </div>
-      </div>
-    </section> -->
-
-    <!-- ATALHOS PRINCIPAIS -->
-    <section class="tiles-grid">
-      <a routerLink="/avaliacoes/eventos" class="tile">
-        <div class="tile-icon"><i class="bi bi-bar-chart"></i></div>
-        <div class="tile-body">
-          <h3>Avaliações — Eventos</h3>
-          <p>Métricas e séries dos datasets (heurísticas).</p>
-        </div>
-        <i class="bi bi-arrow-right"></i>
-      </a>
-
-      <a routerLink="/avaliacoes/posicionamento" class="tile">
-        <div class="tile-icon"><i class="bi bi-chat-left-quote"></i></div>
-        <div class="tile-body">
-          <h3>Avaliações — Posicionamento</h3>
-          <p>Bootstrap e métricas do modelo BERT.</p>
-        </div>
-        <i class="bi bi-arrow-right"></i>
-      </a>
-
-      <a routerLink="/eventos" class="tile">
-        <div class="tile-icon"><i class="bi bi-collection-play"></i></div>
-        <div class="tile-body">
-          <h3>Cenário Real — Eventos</h3>
-          <p>Heurística aplicada em todos os anos.</p>
-        </div>
-        <i class="bi bi-arrow-right"></i>
-      </a>
-
-      <a routerLink="/posicionamento" class="tile">
-        <div class="tile-icon"><i class="bi bi-chat-square-text"></i></div>
-        <div class="tile-body">
-          <h3>Cenário Real — Posicionamento</h3>
-          <p>Distribuição por classe e amostras.</p>
-        </div>
-        <i class="bi bi-arrow-right"></i>
-      </a>
-    </section>
-
-    <!-- ÚLTIMOS ADICIONADOS -->
-    <section class="grid grid-2">
-      <!-- Último dataset de eventos (cenário real) -->
-      <div class="card">
-        <div class="flex items-start justify-between">
+    <!-- MAIN MODULES (SPOILERS) -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      
+      <!-- SPOILER: CENÁRIO REAL EVENTOS - Breakout Mobile (Anula pl-6 do shell) -->
+      <div class="group relative bg-white -mx-6 md:mx-0 rounded-none md:rounded-[2.5rem] border-y md:border border-slate-100 shadow-sm hover:shadow-xl transition-all overflow-hidden flex flex-col p-6 sm:p-8">
+        <div class="flex items-center justify-between mb-8">
           <div>
-            <h3 class="mb-1">Cenário Real (Eventos)</h3>
-            <div class="text-slate-600 text-sm">Visão Consolidada (Geral)</div>
-            <p class="muted mt-2">Exibindo eventos detectados em todos os anos disponíveis no Cloudflare.</p>
+            <h3 class="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] mb-1">Módulo 01</h3>
+            <h4 class="text-2xl font-black text-slate-900 tracking-tight">Timeline de Eventos</h4>
           </div>
-          <i class="bi bi-collection-play text-xl text-slate-400"></i>
+          <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center">
+            <i class="bi bi-collection-play text-xl"></i>
+          </div>
         </div>
-        <div class="mt-4">
-          <a class="btn link" routerLink="/eventos">Abrir Visão Geral →</a>
-        </div>
-      </div>
-      <ng-template #noLastEvent>
-        <div class="card">
-          <h3 class="mb-1">Último — Cenário Real (Eventos)</h3>
-          <p class="muted">Nenhum dataset encontrado.</p>
-        </div>
-      </ng-template>
 
-      <!-- Último dataset de posicionamento (cenário real) -->
-      <div class="card" *ngIf="latestSent(); else noLastSent">
-        <div class="flex items-start justify-between">
+        <div class="flex-1">
+          <p class="text-sm text-slate-500 font-medium leading-relaxed mb-6">
+            Foi usada a Heurística com melhor desempenho para agrupar os eventos (Heurística Temporal).
+          </p>
+          
+          <!-- Sparkline de tendência -->
+          <div class="h-[100px] w-full mb-6">
+            <p-chart type="line" [data]="videosSparkData" [options]="videosSparkOpts" height="100"></p-chart>
+          </div>
+        </div>
+
+        <a routerLink="/eventos" class="w-fit flex items-center gap-3 text-[10px] font-black text-slate-900 uppercase tracking-widest hover:text-blue-600 transition-colors">
+          Abrir Painel Completo <i class="bi bi-arrow-right"></i>
+        </a>
+      </div>
+
+      <!-- SPOILER: CENÁRIO REAL POSICIONAMENTO - Breakout Mobile (Anula pl-6 do shell) -->
+      <div class="group relative bg-white -mx-6 md:mx-0 rounded-none md:rounded-[2.5rem] border-y md:border border-slate-100 shadow-sm hover:shadow-xl transition-all overflow-hidden flex flex-col p-6 sm:p-8">
+        <div class="flex items-center justify-between mb-8">
           <div>
-            <h3 class="mb-1">Último — Cenário Real (Posicionamento)</h3>
-            <div class="text-slate-600 text-sm">{{ latestSent()?.label }}</div>
+            <h3 class="text-[10px] font-black text-indigo-600 uppercase tracking-[0.2em] mb-1">Módulo 02</h3>
+            <h4 class="text-2xl font-black text-slate-900 tracking-tight">Opinião Pública</h4>
           </div>
-          <i class="bi bi-chat-square-text text-xl text-slate-400"></i>
+          <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center">
+            <i class="bi bi-chat-square-text text-xl"></i>
+          </div>
         </div>
-        <div class="mt-4">
-          <a class="btn link" [routerLink]="['/posicionamento', latestSent()?.id]">Abrir dataset →</a>
-        </div>
-      </div>
-      <ng-template #noLastSent>
-        <div class="card">
-          <h3 class="mb-1">Último — Cenário Real (Posicionamento)</h3>
-          <p class="muted">Nenhum dataset encontrado.</p>
-        </div>
-      </ng-template>
-    </section>
 
-    <!-- HIGHLIGHTS -->
-    <section class="grid-2">
-      <div class="card">
-        <h3>Como ler as métricas</h3>
-        <p class="muted">
-          As métricas incluem intervalos de confiança (IC 95%). Na página
-          Avaliações você pode comparar modelos e ver a incerteza por classe.
-        </p>
-        <a routerLink="/avaliacoes/posicionamento" class="btn link">Abrir Avaliações de Posicionamento →</a>
+        <div class="flex-1">
+          <p class="text-sm text-slate-500 font-medium leading-relaxed mb-6">
+            Foi usado o modelo com o melhor desempenho para o cenário para inferir o posicionamento nos comentários do Youtube, que foi o modelo treinado a partir do BERTimbau large.
+          </p>
+
+          <!-- Listagem de Cobertura de Dados (Spoiler leve para o cenário real) -->
+          <div class="space-y-3 mb-8">
+            <div class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Cobertura de Dados (Datasets Ativos)</div>
+            <div class="flex flex-wrap gap-2">
+              <span *ngFor="let ds of availableDatasets()" class="px-4 py-2 bg-indigo-50 border border-indigo-100 rounded-xl text-xs font-black text-indigo-700 shadow-sm">
+                <i class="bi bi-calendar-event mr-2"></i> {{ ds.label }}
+              </span>
+              <span *ngIf="!availableDatasets().length" class="text-[10px] text-slate-400 italic">Carregando catálogo...</span>
+            </div>
+            <div class="mt-4 pt-4 border-t border-dashed border-slate-100">
+              <div class="text-[10px] font-black text-indigo-600 uppercase">Status do Processamento</div>
+              <div class="text-xs font-bold text-slate-700 mt-1 italic">BERTimbau Large aplicado a 100% da rede.</div>
+            </div>
+          </div>
+        </div>
+
+        <a routerLink="/posicionamento" class="w-fit flex items-center gap-3 text-[10px] font-black text-slate-900 uppercase tracking-widest hover:text-indigo-600 transition-colors">
+          Explorar Cenário Real <i class="bi bi-arrow-right"></i>
+        </a>
       </div>
 
-      <div class="card">
-        <h3>Sobre os datasets de eventos</h3>
-        <p class="muted">
-          Os eventos são detectados por heurísticas e agregados por operação.
-          Explore a evolução por mês/ano e detalhes por operação.
-        </p>
-        <a routerLink="/avaliacoes/eventos" class="btn link">Abrir Avaliações de Eventos →</a>
+      <!-- SPOILER: AVALIAÇÕES EVENTOS - Breakout Mobile (Anula pl-6 do shell) -->
+      <div class="group relative bg-white -mx-6 md:mx-0 rounded-none md:rounded-[2.5rem] border-y md:border border-slate-100 shadow-sm hover:shadow-xl transition-all overflow-hidden flex flex-col p-6 sm:p-8">
+        <div class="flex items-center justify-between mb-8">
+          <div>
+            <h3 class="text-[10px] font-black text-emerald-600 uppercase tracking-[0.2em] mb-1">Módulo 03</h3>
+            <h4 class="text-2xl font-black text-slate-900 tracking-tight">Avaliações (Eventos)</h4>
+          </div>
+          <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center">
+            <i class="bi bi-bar-chart text-xl"></i>
+          </div>
+        </div>
+
+        <div class="flex-1">
+          <div class="flex justify-between items-start mb-6">
+            <p class="text-sm text-slate-500 font-medium leading-relaxed max-w-[70%]">
+              Dados usados para avaliar o desempenho de Heurísticas comparadas ao GPT-4.
+            </p>
+            <div class="text-right">
+              <div class="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Base Ground-Truth</div>
+              <div class="text-xl font-black text-slate-900 leading-none mt-1">{{ evalTotal() | number }} amostras</div>
+            </div>
+          </div>
+
+          <!-- Ranking de Heurísticas (Inspirado no visual premium) -->
+          <div class="space-y-5 mb-8">
+            <div *ngFor="let h of topHeuristics()" class="animate-in fade-in slide-in-from-left duration-500">
+              <div class="flex justify-between items-end mb-1.5">
+                <span class="text-[10px] font-black text-slate-700 uppercase tracking-tight">{{ h.label }}</span>
+                <span class="text-[11px] font-black" [style.color]="h.color">{{ (h.accuracy * 100).toFixed(1) }}%</span>
+              </div>
+              <div class="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden shadow-inner">
+                <div class="h-full rounded-full transition-all duration-1000 shadow-sm" 
+                     [style.width.%]="h.accuracy * 100"
+                     [style.backgroundColor]="h.color"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <a routerLink="/avaliacoes/eventos" class="w-fit flex items-center gap-3 text-[10px] font-black text-slate-900 uppercase tracking-widest hover:text-emerald-600 transition-colors">
+          Ver Avaliações Técnicas <i class="bi bi-arrow-right"></i>
+        </a>
       </div>
-    </section>
-  </ng-container>
+
+      <!-- SPOILER: AVALIAÇÕES POSICIONAMENTO - Breakout Mobile (Anula pl-6 do shell) -->
+      <div class="group relative bg-white -mx-6 md:mx-0 rounded-none md:rounded-[2.5rem] border-y md:border border-slate-100 shadow-sm hover:shadow-xl transition-all overflow-hidden flex flex-col p-6 sm:p-8">
+        <div class="flex items-center justify-between mb-8">
+          <div>
+            <h3 class="text-[10px] font-black text-rose-600 uppercase tracking-[0.2em] mb-1">Módulo 04</h3>
+            <h4 class="text-2xl font-black text-slate-900 tracking-tight">Métricas (Modelos)</h4>
+          </div>
+          <div class="w-12 h-12 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center">
+            <i class="bi bi-patch-check text-xl"></i>
+          </div>
+        </div>
+
+        <div class="flex-1">
+          <p class="text-sm text-slate-500 font-medium leading-relaxed mb-6">
+            Foram rotulados comentários manualmente nas 3 classes e treinados diferentes modelos (BERTimbau, RF e SVM) e comparado o desempenho dos mesmos para o cenário.
+          </p>
+
+          <!-- Barra de Sentimento Preview (Baseada no Treino - EXPOSTA AQUI NO Módulo de Avaliações) -->
+          <div class="space-y-4 mb-8">
+            <div class="flex justify-between items-end mb-1">
+              <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Equilíbrio da Base de Treino</span>
+              <span class="text-[10px] font-black text-rose-600 uppercase tracking-widest">{{ trainTotal() | number }} amostras</span>
+            </div>
+            <div class="h-2.5 w-full flex rounded-full overflow-hidden bg-slate-100 shadow-inner">
+              <div class="h-full bg-emerald-500 transition-all duration-1000" [style.width.%]="wPos()"></div>
+              <div class="h-full bg-slate-300 transition-all duration-1000" [style.width.%]="wNeu()"></div>
+              <div class="h-full bg-rose-500 transition-all duration-1000" [style.width.%]="wNeg()"></div>
+            </div>
+            <div class="flex gap-4">
+              <div class="flex items-center gap-1.5">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                <span class="text-[9px] font-bold text-slate-500">{{ wPos() }}% Aprova</span>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <span class="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
+                <span class="text-[9px] font-bold text-slate-500">{{ wNeu() }}% Neutro</span>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                <span class="text-[9px] font-bold text-slate-500">{{ wNeg() }}% Desap.</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-slate-900 p-4 rounded-2xl flex items-center justify-between mb-4 shadow-inner shadow-black/20">
+            <div class="flex items-center gap-4">
+              <div class="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center text-white text-xs">
+                <i class="bi bi-cpu"></i>
+              </div>
+              <div>
+                <div class="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-0.5">Arquitetura</div>
+                <div class="text-[10px] font-black text-white">BERTimbau Base</div>
+              </div>
+            </div>
+            <div class="text-right">
+              <div class="text-[8px] font-black text-rose-400 uppercase tracking-widest mb-0.5">Confidence</div>
+              <div class="text-[10px] font-black text-white">Bootstrap 95%</div>
+            </div>
+          </div>
+        </div>
+
+        <a routerLink="/avaliacoes/posicionamento" class="w-fit flex items-center gap-3 text-[10px] font-black text-slate-900 uppercase tracking-widest hover:text-rose-600 transition-colors">
+          Ver Performance de IA <i class="bi bi-arrow-right"></i>
+        </a>
+      </div>
+
+    </div>
+
+    <!-- FOOTER INFO (Mantém padding no mobile) -->
+    <footer class="mt-20 pt-10 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-6 px-4 sm:px-0">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center text-white text-xs font-black">CS</div>
+        <span class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Crimes Stance Monitoring</span>
+      </div>
+      <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+        Versão 1.0 <span class="text-blue-500 font-black ml-1">(Sentinel)</span>
+      </div>
+    </footer>
+
+  </div>
 </div>

@@ -1,13 +1,13 @@
-<div class="dashboard-container space-y-8 p-4 sm:p-6 lg:p-8">
+<div class="space-y-10 pb-12">
   <!-- LOADING / ERRO -->
-  <div class="chart-container flex items-center justify-center min-h-[400px]" *ngIf="isLoading">
+  <div class="flex items-center justify-center min-h-[400px]" *ngIf="isLoading">
     <div class="flex flex-col items-center gap-4">
       <div class="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
       <p class="text-slate-500 font-medium">Sincronizando dados...</p>
     </div>
   </div>
 
-  <div class="bg-red-50 border border-red-200 rounded-2xl p-6 text-red-600 flex items-center gap-4" *ngIf="!isLoading && error">
+  <div class="p-6 bg-red-50 border border-red-200 rounded-2xl text-red-600 flex items-center gap-4" *ngIf="!isLoading && error">
     <i class="bi bi-exclamation-octagon-fill text-2xl"></i>
     <div>
       <h3 class="font-bold">Erro ao carregar dados</h3>
@@ -15,41 +15,30 @@
     </div>
   </div>
 
-  <div *ngIf="timedOut && !error" class="bg-amber-50 border border-amber-200 text-amber-700 rounded-2xl p-4 flex items-center gap-3">
+  <div *ngIf="timedOut && !error" class="p-4 mx-6 md:mx-0 bg-amber-50 border border-amber-200 text-amber-700 rounded-2xl flex items-center gap-3">
     <i class="bi bi-hourglass-split"></i>
     <span>A conexão está um pouco lenta, mas já estamos exibindo os dados carregados.</span>
   </div>
 
   <ng-container *ngIf="!isLoading && !error">
-    <!-- PAGE HEADER -->
-    <header class="page-header">
-      <div class="relative z-10">
-        <div class="flex items-center gap-3 mb-2">
-          <span class="bg-blue-500/20 text-blue-300 text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">Cenário Real</span>
-          <span class="text-slate-400">/</span>
-          <span class="text-slate-300 text-sm">Heurística Temporal</span>
-        </div>
-        <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
-          <div class="flex-1">
-            <h1 class="text-4xl md:text-5xl font-black mb-4 tracking-tight">
-              Painel de <span class="text-blue-400">Eventos</span>
-            </h1>
-            <p class="text-slate-300 max-w-2xl text-lg leading-relaxed">
-              Explore as operações policiais detectadas automaticamente. Compare volumes, períodos e analise o engajamento da audiência por evento.
-            </p>
-          </div>
-
-          <div class="flex-shrink-0">
-            <button (click)="refreshData()" 
-                    [disabled]="isRefreshing"
-                    class="bg-blue-600 hover:bg-blue-700 disabled:bg-slate-700 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-3 transition-all shadow-lg shadow-blue-900/20 active:scale-95">
-              <i class="bi" [ngClass]="isRefreshing ? 'bi-arrow-repeat animate-spin' : 'bi-cloud-arrow-down-fill'"></i>
-              {{ isRefreshing ? 'Sincronizando...' : 'Sincronizar Dados' }}
-            </button>
-          </div>
-        </div>
-      </div>
-    </header>
+    <!-- PAGE HEADER - Usando Componente Universal -->
+    <app-page-hero 
+      tagText="Cenário Real"
+      breadcrumbPath="Heurística Temporal"
+      titleNormal="Painel de"
+      titleHighlight="Eventos"
+      description="Explore as operações policiais detectadas automaticamente. Compare volumes, períodos e analise o engajamento da audiência por evento."
+      gradientClass="from-blue-400 to-blue-200"
+      bgCircle1Class="bg-blue-600/20"
+      bgCircle2Class="bg-indigo-600/10">
+      
+      <button (click)="refreshData()" 
+              [disabled]="isRefreshing"
+              class="bg-blue-600 hover:bg-blue-700 disabled:bg-slate-700 text-white px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center gap-3 transition-all shadow-lg shadow-blue-900/20 active:scale-95">
+        <i class="bi" [ngClass]="isRefreshing ? 'bi-arrow-repeat animate-spin' : 'bi-cloud-arrow-down-fill'"></i>
+        {{ isRefreshing ? 'Sincronizando...' : 'Sincronizar Dados' }}
+      </button>
+    </app-page-hero>
 
     <!-- STATS GRID -->
     <section class="grid grid-cols-1 md:grid-cols-3 gap-6">
