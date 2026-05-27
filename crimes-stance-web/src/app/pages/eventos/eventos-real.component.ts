@@ -1,13 +1,17 @@
-import { Component, OnInit, inject, ChangeDetectorRef, NgZone } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, ChangeDetectorRef, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { ChartModule } from 'primeng/chart';
 import { EventsRealService } from '../../services/events-real.service';
+import { OrquestratorService } from '../../services/orquestrator.service';
+import { SentimentRealService } from '../../services/posicionamento-real.service';
 import { DATA_CONFIG } from '../../data-config';
 import { withTimeout } from '../../services/promise-timeout.util';
 import { EventosTimelineChartComponent } from './eventos-timeline-chart.component';
 import { PageHeroComponent } from '../../components/shared/page-hero/page-hero.component';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 type ClassName = 'Aprovação' | 'Desaprovação' | 'Neutro';
 
@@ -129,17 +133,23 @@ type ClassName = 'Aprovação' | 'Desaprovação' | 'Neutro';
     }
   `]
 })
-export class EventosRealComponent implements OnInit {
+export class EventosRealComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private real = inject(EventsRealService);
   private cdr = inject(ChangeDetectorRef);
   private zone = inject(NgZone);
+  private orquestrator = inject(OrquestratorService);
+  private sentimentRealService = inject(SentimentRealService);
+  private destroy$ = new Subject<void>();
 
   isLoading = true;
   isRefreshing = false;
   timedOut = false;
   error = '';
 
+  regionId = '';
+  regionPath = '.';
+  regionName = '';
   datasetId = '';
   meta: any = null;
   videos: any[] = [];
@@ -267,13 +277,43 @@ export class EventosRealComponent implements OnInit {
   };
 
   async ngOnInit() {
-    this.datasetId = this.route.snapshot.paramMap.get('id') || '';
-    await this.loadInitialData();
+    this.route.paramMap.pipe(takeUntil(this.destroy$)).subscribe(async params => {
+      this.regionId = params.get('id') || 'geral';
+      this.datasetId = this.regionId;
+      
+      // Reseta estados para evitar que dados da região anterior fiquem visíveis durante o loading
+      this.isLoading = true;
+      this.timedOut = false;
+      this.error = '';
+      this.videos = [];
+      this.groupedEvents = [];
+      this.comments = [];
+      this.bootstrapStats = [];
+      this.cdr.markForCheck();
+
+      // Obter o caminho correto da região a partir do orquestrador
+      const regiao = await this.orquestrator.getRegiao('events', this.regionId);
+      if (regiao) {
+        this.regionPath = regiao.caminho;
+        this.regionName = regiao.nome;
+      } else {
+        this.regionPath = this.regionId === 'geral' ? '.' : this.regionId;
+        this.regionName = this.regionId === 'geral' ? 'Geral' : this.regionId.charAt(0).toUpperCase() + this.regionId.slice(1);
+      }
+
+      await this.loadInitialData();
+    });
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   async loadInitialData() {
     this.isLoading = true;
-    const load = this.real.loadDataset(this.datasetId);
+    // Sempre consolidamos os datasets para a região
+    const load = this.real.loadDataset('__ALL__', this.regionPath);
     try {
       const data = await withTimeout(load, 5000);
       this.zone.run(() => this.apply(data));
@@ -299,8 +339,11 @@ export class EventosRealComponent implements OnInit {
     if (this.isRefreshing) return;
     this.isRefreshing = true;
     try {
-      // Limpa cache no IndexedDB
-      await this.real.clearCache(this.datasetId || 'consolidado');
+      // Limpa cache no IndexedDB baseado na região
+      const regionPrefix = (this.regionPath && this.regionPath !== '.') ? `events_${this.regionPath}_` : 'events_geral_';
+      const cacheKey = `${regionPrefix}consolidado`;
+      await this.real.clearCache(cacheKey);
+      
       // Recarrega
       await this.loadInitialData();
     } catch (e) {
@@ -835,83 +878,25 @@ export class EventosRealComponent implements OnInit {
   }
 
   private async loadComments(): Promise<void> {
-    const baseTag = document.getElementsByTagName('base')[0];
-    const baseHref = (baseTag && baseTag.getAttribute('href')) || '/';
-    const root = baseHref.endsWith('/') ? baseHref : baseHref + '/';
-    
-    // Mapeia dataset IDs para possíveis arquivos de comentários
-    const commentFilesMap: Record<string, string> = {
-      'brasil_all': 'sentiment/cenario-real/comentarios_2021_inferido_events.json',
-      'brasil_19': 'sentiment/cenario-real/comentarios_2021_inferido_events.json',
-      'brasil_20': 'sentiment/cenario-real/comentarios_2021_inferido_events.json',
-      'brasil_21': 'sentiment/cenario-real/comentarios_2021_inferido_events.json',
-      'brasil_22': 'sentiment/cenario-real/comentarios_2021_inferido_events.json',
-      'brasil_23': 'sentiment/cenario-real/comentarios_2021_inferido_events.json',
-      'brasil_24': 'sentiment/cenario-real/comentarios_2021_inferido_events.json',
-      'brasil_25': 'sentiment/cenario-real/comentarios_2021_inferido_events.json',
-    };
-
-    const bootstrapFilesMap: Record<string, string> = {
-      'brasil_all': 'sentiment/cenario-real/bootstrap_results_211124.json',
-      'brasil_19': 'sentiment/cenario-real/bootstrap_results_211124.json',
-      'brasil_20': 'sentiment/cenario-real/bootstrap_results_211124.json',
-      'brasil_21': 'sentiment/cenario-real/bootstrap_results_211124.json',
-      'brasil_22': 'sentiment/cenario-real/bootstrap_results_211124.json',
-      'brasil_23': 'sentiment/cenario-real/bootstrap_results_211124.json',
-      'brasil_24': 'sentiment/cenario-real/bootstrap_results_211124.json',
-      'brasil_25': 'sentiment/cenario-real/bootstrap_results_211124.json',
-    };
-
-    // Na visão consolidada (/eventos), não carregamos sentimentos/comentários 
-    // pois não há um arquivo unificado e os arquivos individuais são pesados.
-    if (!this.datasetId) {
+    // Para a região geral (Brasil), não carregamos sentimentos/comentários
+    // pois os arquivos são muito pesados e causam travamento no navegador.
+    if (!this.regionPath || this.regionPath === '.') {
+      console.log('[EventosRealComponent] Pulando carregamento de comentários na região geral por motivos de performance.');
       return;
     }
 
-    const commentsFile = commentFilesMap[this.datasetId];
-    const bootstrapFile = bootstrapFilesMap[this.datasetId];
-
-    if (!commentsFile && !bootstrapFile) {
-      return; // Sem arquivos para este dataset
-    }
-
-    // Função auxiliar para resolver a URL final (Cloudflare vs Local)
-    const resolve = (path: string) => {
-      if (DATA_CONFIG.BASE_DATA_URL) {
-        return `${DATA_CONFIG.BASE_DATA_URL}/${path}`;
-      }
-      return `${root}assets/data/${path}`;
-    };
-
     try {
-      const promises = [];
+      // Carrega os sentimentos consolidados para a mesma região
+      const data = await this.sentimentRealService.loadConsolidated(this.regionPath);
       
-      if (commentsFile) {
-        promises.push(
-          fetch(resolve(commentsFile)).then(r => r.ok ? r.json() : []).catch(() => [])
-        );
-      } else {
-        promises.push(Promise.resolve([]));
-      }
-
-      if (bootstrapFile) {
-        promises.push(
-          fetch(resolve(bootstrapFile)).then(r => r.ok ? r.json() : []).catch(() => [])
-        );
-      } else {
-        promises.push(Promise.resolve([]));
-      }
-
-      const [comments, bootstrap] = await Promise.all(promises);
-      
-      this.comments = Array.isArray(comments) ? comments : [];
-      this.bootstrapStats = Array.isArray(bootstrap) ? bootstrap : [];
+      this.comments = Array.isArray(data.comments) ? data.comments : [];
+      this.bootstrapStats = Array.isArray(data.bootstrap) ? data.bootstrap : [];
 
       if (this.comments && this.comments.length > 0) {
         this.aggregateSentimentToEvents();
       }
     } catch (error) {
-      console.log(`Dados não disponíveis para dataset ${this.datasetId}`);
+      console.log(`Dados de sentimentos não disponíveis para a região ${this.regionId}`, error);
     }
   }
 

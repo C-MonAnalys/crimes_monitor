@@ -24,10 +24,10 @@
     <!-- PAGE HEADER - Usando Componente Universal -->
     <app-page-hero 
       tagText="Cenário Real"
-      breadcrumbPath="Heurística Temporal"
+      [breadcrumbPath]="'Heurística Temporal — ' + regionName"
       titleNormal="Painel de"
-      titleHighlight="Eventos"
-      description="Explore as operações policiais detectadas automaticamente. Compare volumes, períodos e analise o engajamento da audiência por evento."
+      [titleHighlight]="'Eventos — ' + regionName"
+      [description]="'Explore as operações policiais detectadas automaticamente em ' + (regionName === 'Geral' ? 'todo o Brasil' : regionName) + '. Compare volumes, períodos e analise o engajamento da audiência por evento.'"
       gradientClass="from-blue-400 to-blue-200"
       bgCircle1Class="bg-blue-600/20"
       bgCircle2Class="bg-indigo-600/10">

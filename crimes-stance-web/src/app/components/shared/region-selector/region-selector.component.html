@@ -1,0 +1,89 @@
+<div class="space-y-10 pb-12">
+  <!-- HERO -->
+  <app-page-hero 
+    [tagText]="heroTag"
+    [breadcrumbPath]="heroBreadcrumb"
+    titleNormal="Selecione a"
+    [titleHighlight]="titulo === 'Eventos' ? 'Região — Eventos' : 'Região — Posicionamento'"
+    [description]="descricao"
+    [gradientClass]="heroGradient"
+    bgCircle1Class="bg-blue-600/20"
+    bgCircle2Class="bg-indigo-600/10">
+  </app-page-hero>
+
+  <!-- LOADING -->
+  <div class="flex items-center justify-center min-h-[300px]" *ngIf="isLoading">
+    <div class="flex flex-col items-center gap-4">
+      <div class="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+      <p class="text-slate-500 font-medium">Carregando regiões disponíveis...</p>
+    </div>
+  </div>
+
+  <!-- ERROR -->
+  <div class="p-6 bg-red-50 border border-red-200 rounded-2xl text-red-600 flex items-center gap-4" *ngIf="!isLoading && error">
+    <i class="bi bi-exclamation-octagon-fill text-2xl"></i>
+    <div>
+      <h3 class="font-bold">Erro</h3>
+      <p>{{ error }}</p>
+    </div>
+  </div>
+
+  <!-- GRID DE REGIÕES -->
+  <ng-container *ngIf="!isLoading && !error && regioes.length > 0">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <a *ngFor="let regiao of regioes; let i = index"
+         [routerLink]="getRouterLink(regiao)"
+         class="animate-fadeInUp block no-underline group"
+         [ngClass]="getAnimationDelay(i)">
+        
+        <div class="bg-white rounded-[2rem] border border-slate-100 overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-300 h-full flex flex-col"
+             [ngClass]="'hover:' + getAccentColor(i).border">
+          
+          <!-- Header do Card com Gradiente -->
+          <div class="relative p-8 pb-6 overflow-hidden">
+            <!-- Círculos decorativos de fundo -->
+            <div class="absolute -top-8 -right-8 w-32 h-32 rounded-full opacity-30 transition-opacity duration-300 group-hover:opacity-60"
+                 [ngClass]="getAccentColor(i).bg"></div>
+            <div class="absolute -bottom-4 -left-4 w-20 h-20 rounded-full opacity-20"
+                 [ngClass]="getAccentColor(i).bg"></div>
+            
+            <!-- Ícone -->
+            <div class="relative z-10 w-16 h-16 rounded-2xl flex items-center justify-center mb-6 transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg"
+                 [ngClass]="[getAccentColor(i).bg, getAccentColor(i).shadow]">
+              <i class="bi text-3xl" [ngClass]="[getIconClass(regiao), getAccentColor(i).text]"></i>
+            </div>
+            
+            <!-- Título -->
+            <h3 class="relative z-10 text-2xl font-black text-slate-900 tracking-tight mb-2 group-hover:text-blue-600 transition-colors">
+              {{ regiao.nome }}
+            </h3>
+            
+            <!-- Descrição -->
+            <p class="relative z-10 text-sm text-slate-500 font-medium leading-relaxed" *ngIf="regiao.descricao">
+              {{ regiao.descricao }}
+            </p>
+          </div>
+          
+          <!-- Footer do Card -->
+          <div class="mt-auto px-8 pb-8">
+            <div class="flex items-center justify-between pt-6 border-t border-slate-50">
+              <span class="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em]">
+                {{ regiao.caminho === '.' ? 'Dados Nacionais' : 'Dados Regionais' }}
+              </span>
+              <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-slate-50 text-slate-400 group-hover:bg-blue-600 group-hover:text-white transition-all duration-300 shadow-sm">
+                <i class="bi bi-arrow-right font-bold"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </a>
+    </div>
+  </ng-container>
+
+  <!-- EMPTY STATE -->
+  <div class="flex flex-col items-center justify-center py-20 text-center" *ngIf="!isLoading && !error && regioes.length === 0">
+    <i class="bi bi-inbox text-6xl text-slate-200 mb-4"></i>
+    <h3 class="text-xl font-bold text-slate-800">Nenhuma região disponível</h3>
+    <p class="text-slate-500 mt-2">O arquivo orquestrator.json não contém regiões configuradas.</p>
+  </div>
+</div>
