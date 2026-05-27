@@ -10,26 +10,71 @@ import { DATA_CONFIG } from '../data-config';
  */
 @Injectable({ providedIn: 'root' })
 export class EventsRealService {
-  private base: string;
   private readonly CACHE_TTL = 24 * 60 * 60 * 1000; // 1 dia em milissegundos
+  private dbPromise?: Promise<IDBDatabase>;
 
-  constructor() {
+  /**
+   * Retorna a conexão aberta do IndexedDB (Singleton).
+   */
+  private getDB(): Promise<IDBDatabase> {
+    if (this.dbPromise) {
+      return this.dbPromise;
+    }
+
+    this.dbPromise = new Promise((resolve, reject) => {
+      try {
+        const request = indexedDB.open('CrimesMonitorDB', 2);
+        request.onupgradeneeded = (e: any) => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains('eventsCache')) db.createObjectStore('eventsCache');
+          if (!db.objectStoreNames.contains('sentimentCache')) db.createObjectStore('sentimentCache');
+        };
+        request.onsuccess = (e: any) => {
+          resolve(e.target.result);
+        };
+        request.onerror = (e: any) => {
+          this.dbPromise = undefined; // Reseta para tentar de novo na próxima chamada
+          reject(e.target.error);
+        };
+      } catch (err) {
+        this.dbPromise = undefined;
+        reject(err);
+      }
+    });
+
+    return this.dbPromise;
+  }
+
+  /**
+   * Retorna a URL base para o módulo de eventos.
+   * @param regionPath - Caminho da região (ex: "piaui", "." para geral). Se vazio/undefined, usa a raiz.
+   */
+  private getBase(regionPath?: string): string {
+    let base: string;
     if (DATA_CONFIG.BASE_DATA_URL) {
-      this.base = `${DATA_CONFIG.BASE_DATA_URL}/events/cenario-real`;
+      base = `${DATA_CONFIG.BASE_DATA_URL}/events/cenario-real`;
     } else {
-      // monta base respeitando <base href> (GitHub Pages)
       const baseTag = document.getElementsByTagName('base')[0];
       const baseHref = (baseTag && baseTag.getAttribute('href')) || '/';
       const root = baseHref.endsWith('/') ? baseHref : baseHref + '/';
-      this.base = `${root}assets/data/events/cenario-real`;
+      base = `${root}assets/data/events/cenario-real`;
     }
+    if (regionPath && regionPath !== '.') {
+      base = `${base}/${regionPath}`;
+    }
+    return base;
   }
 
-  private async fetchJson<T=any>(path: string): Promise<T> {
+  /**
+   * Realiza requisição HTTP de dados.
+   * @param path - URL/Caminho do arquivo
+   * @param bypassCache - Se true, aplica query-string de cache-busting para evitar cache HTTP
+   */
+  private async fetchJson<T=any>(path: string, bypassCache = false): Promise<T> {
     try {
-      const t = Date.now();
-      const separator = path.includes('?') ? '&' : '?';
-      const finalUrl = `${path}${separator}t=${t}`;
+      const finalUrl = bypassCache 
+        ? `${path}${path.includes('?') ? '&' : '?'}t=${Date.now()}`
+        : path;
       const resp = await fetch(finalUrl);
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       return resp.json();
@@ -40,10 +85,12 @@ export class EventsRealService {
   }
 
   /** Lista datasets disponíveis (id -> {label, description, file}) */
-  async getDatasets(): Promise<Record<string, { label: string; description?: string; file: string }>> {
-    const url = `${this.base}/datasets.json`;
+  async getDatasets(regionPath?: string): Promise<Record<string, { label: string; description?: string; file: string }>> {
+    const base = this.getBase(regionPath);
+    const url = `${base}/datasets.json`;
     try {
-      const data = await this.fetchJson(url);
+      // datasets.json muda com frequência, então desativamos o cache HTTP do navegador
+      const data = await this.fetchJson(url, true);
       return data || {};
     } catch (e) {
       console.error('[EventsRealService] Error fetching datasets from Cloudflare:', e);
@@ -57,12 +104,14 @@ export class EventsRealService {
    * - Usa operation_ner como id de operação (fallback: operation)
    * - Gera séries por ano e por dia
    */
-  async loadDataset(datasetId: string): Promise<any> {
-    const all = await this.getDatasets();
+  async loadDataset(datasetId: string, regionPath?: string): Promise<any> {
+    const base = this.getBase(regionPath);
+    const all = await this.getDatasets(regionPath);
     const fingerprint = JSON.stringify(all);
 
-    // Tenta carregar do cache primeiro (IndexedDB)
-    const cacheKey = datasetId || 'consolidado';
+    // Prefixo de cache com a região para evitar colisões
+    const regionPrefix = (regionPath && regionPath !== '.') ? `events_${regionPath}_` : 'events_geral_';
+    const cacheKey = `${regionPrefix}${datasetId || 'consolidado'}`;
     const cached = await this.getFromCache(cacheKey);
 
     if (cached && cached.fingerprint === fingerprint) {
@@ -87,7 +136,8 @@ export class EventsRealService {
         .map((c: any) => c.file)
         .filter((f: any) => f && f !== '__ALL__');
 
-      const fetches = files.map(f => this.fetchJson(this.resolveAssetUrl(f)).catch(e => {
+      // Arquivos de dados individuais grandes usam cache HTTP (bypassCache = false)
+      const fetches = files.map(f => this.fetchJson(this.resolveAssetUrl(f, base), false).catch(e => {
         console.error('[EventsRealService] erro ao buscar arquivo', f, e);
         return null;
       }));
@@ -96,8 +146,8 @@ export class EventsRealService {
       raw = results.filter(r => Array.isArray(r)).flat();
       if (!raw.length) throw new Error('Nenhum arquivo disponível para compilar datasets.');
     } else {
-      const fileUrl = this.resolveAssetUrl(config.file);
-      raw = await this.fetchJson(fileUrl);
+      const fileUrl = this.resolveAssetUrl(config.file, base);
+      raw = await this.fetchJson(fileUrl, false);
     }
 
     const videos = this.normalizeVideos(raw);
@@ -124,88 +174,73 @@ export class EventsRealService {
 
   /** Limpa o cache para forçar recarregamento */
   async clearCache(key: string = 'consolidado'): Promise<void> {
-    return new Promise((resolve) => {
-      try {
-        const request = indexedDB.open('CrimesMonitorDB', 2);
-        request.onupgradeneeded = (e: any) => {
-          const db = e.target.result;
-          if (!db.objectStoreNames.contains('eventsCache')) db.createObjectStore('eventsCache');
-          if (!db.objectStoreNames.contains('sentimentCache')) db.createObjectStore('sentimentCache');
-        };
-        request.onsuccess = (e: any) => {
-          const db = e.target.result;
-          if (!db.objectStoreNames.contains('eventsCache')) { resolve(); return; }
-          const tx = db.transaction('eventsCache', 'readwrite');
-          const store = tx.objectStore('eventsCache');
-          if (key === '__ALL__') store.clear();
-          else store.delete(key);
-          tx.oncomplete = () => resolve();
-          tx.onerror = () => resolve();
-        };
-        request.onerror = () => resolve();
-      } catch { resolve(); }
-    });
+    try {
+      const db = await this.getDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction('eventsCache', 'readwrite');
+        const store = tx.objectStore('eventsCache');
+        let request;
+        if (key === '__ALL__') {
+          request = store.clear();
+        } else {
+          request = store.delete(key);
+        }
+        request.onsuccess = () => resolve();
+        request.onerror = () => reject(request.error);
+      });
+    } catch (e) {
+      console.warn('[EventsRealService] Falha ao limpar cache:', e);
+    }
   }
 
   private async getFromCache(key: string): Promise<any> {
-    return new Promise((resolve) => {
-      try {
-        const request = indexedDB.open('CrimesMonitorDB', 2);
-        request.onupgradeneeded = (e: any) => {
-          const db = e.target.result;
-          if (!db.objectStoreNames.contains('eventsCache')) db.createObjectStore('eventsCache');
-          if (!db.objectStoreNames.contains('sentimentCache')) db.createObjectStore('sentimentCache');
-        };
-        request.onsuccess = (e: any) => {
-          const db = e.target.result;
-          if (!db.objectStoreNames.contains('eventsCache')) { resolve(null); return; }
-          const tx = db.transaction('eventsCache', 'readonly');
-          const store = tx.objectStore('eventsCache');
-          const getReq = store.get(key);
-          getReq.onsuccess = () => resolve(getReq.result || null);
-          getReq.onerror = () => resolve(null);
-        };
+    try {
+      const db = await this.getDB();
+      return new Promise((resolve) => {
+        const tx = db.transaction('eventsCache', 'readonly');
+        const store = tx.objectStore('eventsCache');
+        const request = store.get(key);
+        request.onsuccess = () => resolve(request.result || null);
         request.onerror = () => resolve(null);
-      } catch { resolve(null); }
-    });
+      });
+    } catch (e) {
+      console.warn('[EventsRealService] Falha ao ler cache:', e);
+      return null;
+    }
   }
 
   private async saveToCache(key: string, data: any, fingerprint: string): Promise<void> {
-    return new Promise((resolve) => {
-      try {
-        const request = indexedDB.open('CrimesMonitorDB', 2);
-        request.onsuccess = (e: any) => {
-          const db = e.target.result;
-          const tx = db.transaction('eventsCache', 'readwrite');
-          const store = tx.objectStore('eventsCache');
-          store.put({ data, fingerprint, timestamp: Date.now() }, key);
-          tx.oncomplete = () => resolve();
-          tx.onerror = () => resolve();
-        };
-        request.onerror = () => resolve();
-      } catch { resolve(); }
-    });
+    try {
+      const db = await this.getDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction('eventsCache', 'readwrite');
+        const store = tx.objectStore('eventsCache');
+        const request = store.put({ data, fingerprint, timestamp: Date.now() }, key);
+        request.onsuccess = () => resolve();
+        request.onerror = () => reject(request.error);
+      });
+    } catch (e) {
+      console.warn('[EventsRealService] Falha ao salvar no cache:', e);
+    }
   }
 
-  private resolveAssetUrl(fileField: string): string {
+  private resolveAssetUrl(fileField: string, base?: string): string {
+    const effectiveBase = base || this.getBase();
     if (DATA_CONFIG.BASE_DATA_URL) {
       // No R2, mantemos a estrutura /events/...
       if (fileField.startsWith('events/')) {
         return `${DATA_CONFIG.BASE_DATA_URL}/${fileField}`;
       }
-      return `${this.base}/${fileField}`;
+      return `${effectiveBase}/${fileField}`;
     }
 
     // Comportamento original para local assets
     if (fileField.startsWith('events/')) {
-      // base já é .../events/cenario-real
-      // mas o arquivo do exemplo está em "events/cenario-real/…"
-      // se vier "events/cenario-real/..." mantemos relativo à raiz assets
-      const prefix = this.base.replace('/cenario-real', ''); // .../assets/data/events
+      const prefix = effectiveBase.replace(/\/cenario-real.*/, ''); // .../assets/data/events
       return `${prefix}/${fileField.replace(/^events\//,'')}`;
     }
-    // caminho relativo à pasta “cenario-real”
-    return `${this.base}/${fileField}`;
+    // caminho relativo à pasta base (cenario-real ou cenario-real/piaui)
+    return `${effectiveBase}/${fileField}`;
   }
 
   private normalizeVideos(raw: any[]): any[] {

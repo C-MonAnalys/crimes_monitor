@@ -28,6 +28,10 @@ const EventosList = () =>
   import('./pages/eventos/eventos-list.component')
     .then(m => m.EventosListComponent);
 
+const EventosRegion = () =>
+  import('./pages/eventos/eventos-region.component')
+    .then(m => m.EventosRegionComponent);
+
 const EventosReal = () =>
   import('./pages/eventos/eventos-real.component')
     .then(m => m.EventosRealComponent);
@@ -35,6 +39,10 @@ const EventosReal = () =>
 const PosicionamentoList = () =>
   import('./pages/posicionamento/posicionamento-list.component')
     .then(m => m.PosicionamentoListComponent);
+
+const PosicionamentoRegion = () =>
+  import('./pages/posicionamento/posicionamento-region.component')
+    .then(m => m.PosicionamentoRegionComponent);
 
 const PosicionamentoReal = () =>
   import('./pages/posicionamento/posicionamento-real.component')
@@ -48,10 +56,10 @@ const Home = () =>
 export const routes: Routes = [
   { path: 'home', loadComponent: Home },
   // Eventos
-  { path: 'eventos', loadComponent: EventosReal },
+  { path: 'eventos', loadComponent: EventosRegion },
   { path: 'eventos/:id', loadComponent: EventosReal },
   // Posicionamento
-  { path: 'posicionamento', loadComponent: PosicionamentoReal },
+  { path: 'posicionamento', loadComponent: PosicionamentoRegion },
   { path: 'posicionamento/:id', loadComponent: PosicionamentoReal },
   {
     path: 'avaliacoes',
