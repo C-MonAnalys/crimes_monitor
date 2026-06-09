@@ -44,23 +44,12 @@ export class SentimentService {
   }
 
   private async fetchDatasetsByPath(path: string): Promise<Record<string, { title: string; commentsFile: string; bootstrapFile: string }>> {
-    // Busca base local para fallback
-    const baseTag = document.getElementsByTagName('base')[0];
-    const baseHref = (baseTag && baseTag.getAttribute('href')) || '/';
-    const root = baseHref.endsWith('/') ? baseHref : baseHref + '/';
-    const localUrl = `${root}assets/data/sentiment/${path}`;
-
-    const remoteUrl = DATA_CONFIG.BASE_DATA_URL ? `${this.base}/${path}` : null;
-
+    const url = `${this.base}/${path}`;
     try {
-      const [localData, remoteData] = await Promise.all([
-        this.fetchJson(localUrl).catch(() => ({})),
-        remoteUrl ? this.fetchJson(remoteUrl).catch(() => ({})) : Promise.resolve({})
-      ]);
-
-      return { ...localData, ...remoteData };
+      const data = await this.fetchJson(url);
+      return data || {};
     } catch (e) {
-      console.error(`[SentimentService] Error merging datasets from ${path}:`, e);
+      console.error(`[SentimentService] Error loading datasets from ${url}:`, e);
       return {};
     }
   }

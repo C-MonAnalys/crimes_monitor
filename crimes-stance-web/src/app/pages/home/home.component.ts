@@ -7,6 +7,7 @@ import { lastValueFrom } from 'rxjs';
 import { EventsService } from '../../services/events.service';
 import { EventsRealService } from '../../services/events-real.service';
 import { SentimentService } from '../../services/sentiment.service';
+import { OrquestratorService } from '../../services/orquestrator.service';
 import { DATA_CONFIG } from '../../data-config';
 
 // Componentes Compartilhados
@@ -50,10 +51,21 @@ export class HomeComponent implements OnInit {
   private eventsSvc = inject(EventsService);
   private eventsRealSvc = inject(EventsRealService);
   private sentiSvc  = inject(SentimentService);
+  private orquestrator = inject(OrquestratorService);
 
   isLoading = signal(true);
   timedOut  = signal(false);
   error     = signal<string>('');
+  activeHelp  = signal<number | null>(null);
+  showHelp    = signal(false); // Mantém compatibilidade se necessário, mas mudamos a lógica no HTML
+
+  toggleHelp(moduleNumber: number) {
+    if (this.activeHelp() === moduleNumber) {
+      this.activeHelp.set(null);
+    } else {
+      this.activeHelp.set(moduleNumber);
+    }
+  }
 
   // Status Rápido
   totalVideos       = signal<number>(0);
@@ -171,27 +183,102 @@ export class HomeComponent implements OnInit {
   }
 
   async ngOnInit() {
+    console.log('[HomeComponent] Iniciando ngOnInit...');
     try {
-      const load: Promise<[EventsOverview, TrainingStats, any, any, any]> = Promise.all([
-        this.eventsSvc.getEvaluationsOverview() as any,
-        this.sentiSvc.getTrainingStats()        as any,
-        this.eventsRealSvc.loadDataset('').catch(() => null),
-        this.eventsSvc.getMetrics().catch(() => []),
-        this.eventsSvc.listAll().catch(() => ({ videos: [] }))
+      // 1. Obter todas as regiões do orquestrador
+      console.log('[HomeComponent] Buscando regiões disponíveis...');
+      const regioes = await this.orquestrator.getRegioes('events');
+      console.log('[HomeComponent] Regiões encontradas:', regioes.map(r => r.id));
+
+      console.log('[HomeComponent] Disparando Promise.all com timeout de 30s...');
+      const load: Promise<[EventsOverview, TrainingStats, any[], any, any]> = Promise.all([
+        this.eventsSvc.getEvaluationsOverview().catch(e => {
+          console.error('[HomeComponent] Erro em getEvaluationsOverview:', e);
+          return null;
+        }) as any,
+        this.sentiSvc.getTrainingStats().catch(e => {
+          console.error('[HomeComponent] Erro em getTrainingStats:', e);
+          return null;
+        }) as any,
+        Promise.all(regioes.map(r => 
+          this.eventsRealSvc.loadDataset('', r.caminho)
+            .then(res => {
+              console.log(`[HomeComponent] Região carregada com sucesso: ${r.id}`);
+              return res;
+            })
+            .catch(e => {
+              console.error(`[HomeComponent] Erro ao carregar dataset da região ${r.id}:`, e);
+              return null;
+            })
+        )),
+        this.eventsSvc.getMetrics().catch(e => {
+          console.error('[HomeComponent] Erro em getMetrics:', e);
+          return [];
+        }),
+        this.eventsSvc.listAll().catch(e => {
+          console.error('[HomeComponent] Erro em listAll:', e);
+          return { videos: [] };
+        })
       ]);
 
-      const [eventsOverview, train, realConsolidated, rawMetrics, allEvents] = await this.timeout(load, 15000);
+      const [eventsOverview, train, regionResults, rawMetrics, allEvents] = await this.timeout(load, 30000);
+      console.log('[HomeComponent] Todas as promessas de dados resolvidas com sucesso.');
 
-      // 1. Destaques de Eventos (AGORA DO CENÁRIO REAL CONSOLIDADO)
-      if (realConsolidated?.meta) {
-        this.totalVideos.set(realConsolidated.meta.totalVideos ?? 0);
-        this.uniqOperations.set(realConsolidated.meta.totalOperations ?? 0);
-        this.videosPeriodLabel.set(realConsolidated.meta.period ?? '—');
+      // 1. Destaques de Eventos Consolidados (Dados Gerais + Dados Regionais)
+      const allVideos: any[] = [];
+      let totalOpsCount = 0;
+      regionResults.forEach((r, idx) => {
+        if (r) {
+          if (Array.isArray(r.videos)) {
+            allVideos.push(...r.videos);
+          }
+          if (r.meta && typeof r.meta.totalOperations === 'number') {
+            totalOpsCount += r.meta.totalOperations;
+          }
+        } else {
+          console.warn(`[HomeComponent] Região no índice ${idx} retornou dados vazios ou inválidos.`);
+        }
+      });
+      console.log(`[HomeComponent] Total de vídeos consolidados de todas as regiões: ${allVideos.length}`);
+      console.log(`[HomeComponent] Total de operações consolidadas (soma das regiões): ${totalOpsCount}`);
+
+      let totalVideosCount = 0;
+      let periodStr = '—';
+      const byDaySeries = { labels: [] as string[], values: [] as number[] };
+
+      if (allVideos.length > 0) {
+        totalVideosCount = allVideos.length;
         
-        const total = realConsolidated.meta.totalVideos || 0;
-        const ops = realConsolidated.meta.totalOperations || 1;
-        this.avgPerOp.set(+(total / ops).toFixed(1));
+        // Agregar datas unificadas
+        const byDayCount: Record<string, number> = {};
+        let minDate: Date | null = null;
+        let maxDate: Date | null = null;
+
+        for (const v of allVideos) {
+          const d: Date = v.parsedDate;
+          if (d && d.getFullYear() > 1900) {
+            if (!minDate || d < minDate) minDate = d;
+            if (!maxDate || d > maxDate) maxDate = d;
+
+            const day = d.toISOString().slice(0, 10);
+            byDayCount[day] = (byDayCount[day] || 0) + 1;
+          }
+        }
+
+        if (minDate && maxDate) {
+          periodStr = `${minDate.toISOString().slice(0, 10)} – ${maxDate.toISOString().slice(0, 10)}`;
+        }
+
+        byDaySeries.labels = Object.keys(byDayCount).sort();
+        byDaySeries.values = byDaySeries.labels.map(k => byDayCount[k]);
       }
+
+      this.totalVideos.set(totalVideosCount);
+      this.uniqOperations.set(totalOpsCount);
+      this.videosPeriodLabel.set(periodStr);
+      
+      const ops = totalOpsCount || 1;
+      this.avgPerOp.set(+(totalVideosCount / ops).toFixed(1));
 
       // 1.1 Volume de Avaliação (Ground Truth)
       if (allEvents?.videos) {
@@ -238,12 +325,12 @@ export class HomeComponent implements OnInit {
         this.wNeg.set(Math.max(0, 100 - (p1 + p2)));
       }
 
-      // 4. Sparkline de Tendência (AGORA DO CENÁRIO REAL)
-      if (realConsolidated?.series?.byDay) {
-        this.buildSparklinesFromRealSeries(realConsolidated.series.byDay);
+      // 4. Sparkline de Tendência Consolidado (Dados Gerais + Regionais)
+      if (byDaySeries.labels.length > 0) {
+        this.buildSparklinesFromRealSeries(byDaySeries);
       }
 
-      // 5. Carregar Datasets para o Spoiler do Módulo 02 (Caminho Correcto via Service)
+      // 5. Carregar Datasets para o Spoiler do Módulo 02
       this.sentiSvc.getRealScenarioDatasets().then(ds => {
         if (ds) {
           const entries = Object.entries(ds);
@@ -268,10 +355,14 @@ export class HomeComponent implements OnInit {
             this.availableDatasets.set(list);
           }
         }
+      }).catch(e => {
+        console.error('[HomeComponent] Erro em getRealScenarioDatasets:', e);
       });
 
       this.isLoading.set(false);
+      console.log('[HomeComponent] Carregamento completo com sucesso.');
     } catch (e: any) {
+      console.error('[HomeComponent] Erro fatal durante a inicialização da Home:', e);
       this.isLoading.set(false);
       if (e?.message === 'TIMEOUT') {
         this.timedOut.set(true);
