@@ -5,13 +5,12 @@
 
   <div class="relative z-10">
     <!-- Breadcrumb / Tags (Tamanho Fixo: text-[10px]) -->
-    <div class="flex flex-wrap items-center gap-3 mb-6" *ngIf="tagText || breadcrumbPath">
-      <span *ngIf="tagText" 
-            [class]="'px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border ' + tagColorClass">
+    <div class="flex flex-wrap items-center gap-2 mb-6 text-[10px] font-bold uppercase tracking-widest" *ngIf="tagText || breadcrumbPath">
+      <span *ngIf="tagText" class="text-slate-400 font-black">
         {{ tagText }}
       </span>
       <span class="text-slate-700 font-bold hidden sm:inline" *ngIf="tagText && breadcrumbPath">/</span>
-      <span class="text-slate-400 text-[10px] font-bold uppercase tracking-widest" *ngIf="breadcrumbPath">
+      <span class="text-slate-500" *ngIf="breadcrumbPath">
         {{ breadcrumbPath }}
       </span>
     </div>
@@ -25,8 +24,7 @@
     </h1>
 
     <!-- Descrição (Tamanho Fixo: text-base / sm:text-lg) -->
-    <p class="text-slate-400 max-w-2xl text-base sm:text-lg font-medium leading-relaxed" *ngIf="description">
-      {{ description }}
+    <p class="text-slate-400 max-w-2xl text-base sm:text-lg font-medium leading-relaxed" *ngIf="description" [innerHTML]="description">
     </p>
 
     <!-- Slot para Ações / Botões -->

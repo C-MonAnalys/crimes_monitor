@@ -2,11 +2,9 @@
   
   <!-- HERO SECTION - Usando Componente Universal -->
   <app-page-hero 
-    tagText="Monitoramento de Crimes"
-    breadcrumbPath="Inteligência de Segurança"
-    titleNormal="Crimes"
-    titleHighlight="Stance"
-    description="Análise automatizada de operações policiais em vídeos e monitoramento do posicionamento da audiência através de modelos de inteligência artificial."
+    titleNormal="Urban"
+    titleHighlight="Violence Monitor"
+    description="Informações sobre eventos de violência urbana registrados em mídias sociais e processadas através de modelos de aprendizagem de máquina. Visite o projeto de pesquisa <a href='https://c-monanalys.github.io/' target='_blank' class='text-blue-400 hover:text-blue-300 underline transition-colors'>C-MonAnalys</a> e conheça o material técnico utilizado para processar essas informações."
     gradientClass="from-blue-400 to-indigo-300"
     bgCircle1Class="bg-blue-600/20"
     bgCircle2Class="bg-indigo-600/10"
@@ -14,10 +12,10 @@
     
     <div class="flex flex-wrap gap-4">
       <a routerLink="/eventos" class="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-black text-sm uppercase tracking-widest rounded-2xl transition-all shadow-lg shadow-blue-900/20 active:scale-95">
-        Ver Cenários Reais
+        VER EVENTOS
       </a>
-      <a routerLink="/avaliacoes/posicionamento" class="px-8 py-4 bg-slate-800 hover:bg-slate-700 text-white font-black text-sm uppercase tracking-widest rounded-2xl transition-all border border-slate-700 active:scale-95">
-        Explorar Métricas
+      <a routerLink="/posicionamento" class="px-8 py-4 bg-slate-800 hover:bg-slate-700 text-white font-black text-sm uppercase tracking-widest rounded-2xl transition-all border border-slate-700 active:scale-95">
+        EXPLORAR POSICIONAMENTOS
       </a>
     </div>
   </app-page-hero>
@@ -38,19 +36,19 @@
     <!-- QUICK STATS GRID (Badges mantêm padding natural) -->
     <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
       <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
-        <div class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Vídeos Coletados</div>
+        <div class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Volume de conteúdo coletado em mídias sociais</div>
         <div class="text-3xl font-black text-slate-900 tracking-tighter">{{ totalVideos() | number }}</div>
         <div class="text-[10px] font-bold text-slate-400 mt-2">{{ videosPeriodLabel() }}</div>
       </div>
 
       <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
-        <div class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Operações Monitoradas</div>
+        <div class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Eventos monitorados</div>
         <div class="text-3xl font-black text-slate-900 tracking-tighter">{{ uniqOperations() | number }}</div>
         <div class="text-[10px] font-bold text-slate-400 mt-2">Média: {{ avgPerOp() }} vídeos/op</div>
       </div>
 
       <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
-        <div class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Base de Treino (Modelos)</div>
+        <div class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Conteúdo rotulado para treinar modelos</div>
         <div class="text-3xl font-black text-slate-900 tracking-tighter">{{ trainTotal() | number }}</div>
         <div class="text-[10px] font-bold text-slate-400 mt-2">Comentários rotulados</div>
       </div>
@@ -63,23 +61,33 @@
     </section>
 
     <!-- MAIN MODULES (SPOILERS) -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      
-      <!-- SPOILER: CENÁRIO REAL EVENTOS - Breakout Mobile (Anula pl-6 do shell) -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+      <!-- SPOILER: CENÁRIO REAL EVENTOS -->
       <div class="group relative bg-white -mx-6 md:mx-0 rounded-none md:rounded-[2.5rem] border-y md:border border-slate-100 shadow-sm hover:shadow-xl transition-all overflow-hidden flex flex-col p-6 sm:p-8">
         <div class="flex items-center justify-between mb-8">
           <div>
-            <h3 class="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] mb-1">Módulo 01</h3>
-            <h4 class="text-2xl font-black text-slate-900 tracking-tight">Timeline de Eventos</h4>
+            <div class="flex items-center gap-2 mb-1">
+              <h3 class="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em]">Módulo 01</h3>
+              <button (click)="toggleHelp(1)" class="w-4 h-4 rounded-full border border-slate-200 bg-white hover:bg-blue-50 hover:border-blue-200 text-slate-400 hover:text-blue-600 flex items-center justify-center text-[10px] font-bold transition-all shadow-sm focus:outline-none cursor-pointer" title="Saiba mais sobre este módulo">
+                ?
+              </button>
+            </div>
+            <h4 class="text-2xl font-black text-slate-900 tracking-tight">Eventos</h4>
           </div>
           <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center">
             <i class="bi bi-collection-play text-xl"></i>
           </div>
         </div>
 
+        <!-- Popover Explicativo Módulo 01 -->
+        <div *ngIf="activeHelp() === 1" class="mb-6 p-4 bg-blue-50/50 border border-blue-100/50 rounded-2xl text-[10px] text-slate-600 font-medium leading-relaxed relative animate-in fade-in slide-in-from-top-2 duration-300">
+          <p class="mb-1"><strong>Sobre este módulo:</strong></p>
+          <p>Agrupa automaticamente menções e publicações em mídias sociais para identificar operações policiais e eventos de violência urbana no tempo.</p>
+        </div>
+
         <div class="flex-1">
           <p class="text-sm text-slate-500 font-medium leading-relaxed mb-6">
-            Foi usada a Heurística com melhor desempenho para agrupar os eventos (Heurística Temporal).
+            Heurísticas baseadas em reconhecimento de entidades nomeadas e aspectos temporais de mídias sociais identificam eventos de violência urbana automaticamente
           </p>
           
           <!-- Sparkline de tendência -->
@@ -88,26 +96,38 @@
           </div>
         </div>
 
-        <a routerLink="/eventos" class="w-fit flex items-center gap-3 text-[10px] font-black text-slate-900 uppercase tracking-widest hover:text-blue-600 transition-colors">
-          Abrir Painel Completo <i class="bi bi-arrow-right"></i>
+        <a routerLink="/eventos" class="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-blue-50 hover:bg-blue-600 text-blue-700 hover:text-white border border-blue-100 hover:border-blue-600 font-black text-xs uppercase tracking-widest rounded-2xl transition-all duration-300 shadow-sm hover:shadow-lg hover:shadow-blue-500/20 active:scale-[0.98] group/btn">
+          Explorar Painel de Eventos
+          <i class="bi bi-arrow-right text-sm transition-transform duration-300 group-hover/btn:translate-x-1"></i>
         </a>
       </div>
 
-      <!-- SPOILER: CENÁRIO REAL POSICIONAMENTO - Breakout Mobile (Anula pl-6 do shell) -->
+      <!-- SPOILER: CENÁRIO REAL POSICIONAMENTO -->
       <div class="group relative bg-white -mx-6 md:mx-0 rounded-none md:rounded-[2.5rem] border-y md:border border-slate-100 shadow-sm hover:shadow-xl transition-all overflow-hidden flex flex-col p-6 sm:p-8">
         <div class="flex items-center justify-between mb-8">
           <div>
-            <h3 class="text-[10px] font-black text-indigo-600 uppercase tracking-[0.2em] mb-1">Módulo 02</h3>
-            <h4 class="text-2xl font-black text-slate-900 tracking-tight">Opinião Pública</h4>
+            <div class="flex items-center gap-2 mb-1">
+              <h3 class="text-[10px] font-black text-indigo-600 uppercase tracking-[0.2em]">Módulo 02</h3>
+              <button (click)="toggleHelp(2)" class="w-4 h-4 rounded-full border border-slate-200 bg-white hover:bg-indigo-50 hover:border-indigo-200 text-slate-400 hover:text-indigo-600 flex items-center justify-center text-[10px] font-bold transition-all shadow-sm focus:outline-none cursor-pointer" title="Saiba mais sobre este módulo">
+                ?
+              </button>
+            </div>
+            <h4 class="text-2xl font-black text-slate-900 tracking-tight">Posicionamentos</h4>
           </div>
           <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center">
             <i class="bi bi-chat-square-text text-xl"></i>
           </div>
         </div>
 
+        <!-- Popover Explicativo Módulo 02 -->
+        <div *ngIf="activeHelp() === 2" class="mb-6 p-4 bg-indigo-50/50 border border-indigo-100/50 rounded-2xl text-[10px] text-slate-600 font-medium leading-relaxed relative animate-in fade-in slide-in-from-top-2 duration-300">
+          <p class="mb-1"><strong>Sobre este módulo:</strong></p>
+          <p>Mapeia a opinião pública analisando o posicionamento (apoio, neutralidade ou crítica) nos comentários associados a cada evento identificado.</p>
+        </div>
+
         <div class="flex-1">
           <p class="text-sm text-slate-500 font-medium leading-relaxed mb-6">
-            Foi usado o modelo com o melhor desempenho para o cenário para inferir o posicionamento nos comentários do Youtube, que foi o modelo treinado a partir do BERTimbau large.
+            Modelos de aprendizagem de máquina profunda identificam posicionamentos dos usuários que repercutem as postagens em mídias sociais
           </p>
 
           <!-- Listagem de Cobertura de Dados (Spoiler leve para o cenário real) -->
@@ -126,30 +146,44 @@
           </div>
         </div>
 
-        <a routerLink="/posicionamento" class="w-fit flex items-center gap-3 text-[10px] font-black text-slate-900 uppercase tracking-widest hover:text-indigo-600 transition-colors">
-          Explorar Cenário Real <i class="bi bi-arrow-right"></i>
+        <a routerLink="/posicionamento" class="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-indigo-50 hover:bg-indigo-600 text-indigo-700 hover:text-white border border-indigo-100 hover:border-indigo-600 font-black text-xs uppercase tracking-widest rounded-2xl transition-all duration-300 shadow-sm hover:shadow-lg hover:shadow-indigo-500/20 active:scale-[0.98] group/btn">
+          Explorar Posicionamentos
+          <i class="bi bi-arrow-right text-sm transition-transform duration-300 group-hover/btn:translate-x-1"></i>
         </a>
       </div>
 
-      <!-- SPOILER: AVALIAÇÕES EVENTOS - Breakout Mobile (Anula pl-6 do shell) -->
+      <!-- SPOILER: AVALIAÇÕES EVENTOS -->
       <div class="group relative bg-white -mx-6 md:mx-0 rounded-none md:rounded-[2.5rem] border-y md:border border-slate-100 shadow-sm hover:shadow-xl transition-all overflow-hidden flex flex-col p-6 sm:p-8">
         <div class="flex items-center justify-between mb-8">
           <div>
-            <h3 class="text-[10px] font-black text-emerald-600 uppercase tracking-[0.2em] mb-1">Módulo 03</h3>
-            <h4 class="text-2xl font-black text-slate-900 tracking-tight">Avaliações (Eventos)</h4>
+            <div class="flex items-center gap-2 mb-1">
+              <h3 class="text-[10px] font-black text-emerald-600 uppercase tracking-[0.2em]">Módulo 03</h3>
+              <button (click)="toggleHelp(3)" class="w-4 h-4 rounded-full border border-slate-200 bg-white hover:bg-emerald-50 hover:border-emerald-200 text-slate-400 hover:text-emerald-600 flex items-center justify-center text-[10px] font-bold transition-all shadow-sm focus:outline-none cursor-pointer" title="Saiba mais sobre este módulo">
+                ?
+              </button>
+            </div>
+            <h4 class="text-2xl font-black text-slate-900 tracking-tight">Confiabilidade nos Eventos Identificados</h4>
           </div>
           <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center">
             <i class="bi bi-bar-chart text-xl"></i>
           </div>
         </div>
 
+        <!-- Popover Explicativo Módulo 03 -->
+        <div *ngIf="activeHelp() === 3" class="mb-6 p-4 bg-emerald-50/50 border border-emerald-100/50 rounded-2xl text-[10px] text-slate-600 font-medium leading-relaxed relative animate-in fade-in slide-in-from-top-2 duration-300">
+          <p class="mb-1"><strong>Sobre este módulo:</strong></p>
+          <p class="mb-2">Mede o desempenho e precisão das heurísticas de detecção de eventos e mídias quando comparadas à rotulação humana e inteligências artificiais.</p>
+          <p class="mb-1"><strong>Sobre o gráfico:</strong></p>
+          <p>O gráfico de barras exibe a acurácia (porcentagem de acerto) de cada abordagem (Heurística Semântica, Heurística Temporal e GPT-4) quando avaliadas em relação à base de dados rotulada manualmente por especialistas (ground-truth).</p>
+        </div>
+
         <div class="flex-1">
           <div class="flex justify-between items-start mb-6">
             <p class="text-sm text-slate-500 font-medium leading-relaxed max-w-[70%]">
-              Dados usados para avaliar o desempenho de Heurísticas comparadas ao GPT-4.
+              Acurácia de heurísticas para identificar eventos comparadas ao GPT-4.
             </p>
             <div class="text-right">
-              <div class="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Base Ground-Truth</div>
+              <div class="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Base rotulada manualmente</div>
               <div class="text-xl font-black text-slate-900 leading-none mt-1">{{ evalTotal() | number }} amostras</div>
             </div>
           </div>
@@ -170,34 +204,49 @@
           </div>
         </div>
 
-        <a routerLink="/avaliacoes/eventos" class="w-fit flex items-center gap-3 text-[10px] font-black text-slate-900 uppercase tracking-widest hover:text-emerald-600 transition-colors">
-          Ver Avaliações Técnicas <i class="bi bi-arrow-right"></i>
+        <a routerLink="/avaliacoes/eventos" class="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white border border-emerald-100 hover:border-emerald-600 font-black text-xs uppercase tracking-widest rounded-2xl transition-all duration-300 shadow-sm hover:shadow-lg hover:shadow-emerald-500/20 active:scale-[0.98] group/btn">
+          Ver Avaliações Técnicas
+          <i class="bi bi-arrow-right text-sm transition-transform duration-300 group-hover/btn:translate-x-1"></i>
         </a>
       </div>
 
-      <!-- SPOILER: AVALIAÇÕES POSICIONAMENTO - Breakout Mobile (Anula pl-6 do shell) -->
+      <!-- SPOILER: AVALIAÇÕES POSICIONAMENTO -->
       <div class="group relative bg-white -mx-6 md:mx-0 rounded-none md:rounded-[2.5rem] border-y md:border border-slate-100 shadow-sm hover:shadow-xl transition-all overflow-hidden flex flex-col p-6 sm:p-8">
         <div class="flex items-center justify-between mb-8">
           <div>
-            <h3 class="text-[10px] font-black text-rose-600 uppercase tracking-[0.2em] mb-1">Módulo 04</h3>
-            <h4 class="text-2xl font-black text-slate-900 tracking-tight">Métricas (Modelos)</h4>
+            <div class="flex items-center gap-2 mb-1">
+              <h3 class="text-[10px] font-black text-rose-600 uppercase tracking-[0.2em]">Módulo 04</h3>
+              <button (click)="toggleHelp(4)" class="w-4 h-4 rounded-full border border-slate-200 bg-white hover:bg-rose-50 hover:border-rose-200 text-slate-400 hover:text-rose-600 flex items-center justify-center text-[10px] font-bold transition-all shadow-sm focus:outline-none cursor-pointer" title="Saiba mais sobre este módulo">
+                ?
+              </button>
+            </div>
+            <h4 class="text-2xl font-black text-slate-900 tracking-tight">Confiabilidade nos Posicionamentos Inferidos</h4>
           </div>
           <div class="w-12 h-12 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center">
             <i class="bi bi-patch-check text-xl"></i>
           </div>
         </div>
 
+        <!-- Popover Explicativo Módulo 04 -->
+        <div *ngIf="activeHelp() === 4" class="mb-6 p-4 bg-rose-50/50 border border-rose-100/50 rounded-2xl text-[10px] text-slate-600 font-medium leading-relaxed relative animate-in fade-in slide-in-from-top-2 duration-300">
+          <p class="mb-1"><strong>Sobre este módulo:</strong></p>
+          <p class="mb-2">Exibe as métricas de performance e confiabilidade estatística dos modelos de aprendizado profundo (como BERTimbau) usados nas inferências.</p>
+          <p class="mb-1"><strong>Sobre o gráfico:</strong></p>
+          <p>A barra tricolor representa a distribuição do equilíbrio na base de dados usada para o treinamento do modelo. Ela ilustra a porcentagem de comentários rotulados manualmente em cada uma das três classes de posicionamento: Aprova, Neutro e Desaprova.</p>
+        </div>
+
         <div class="flex-1">
           <p class="text-sm text-slate-500 font-medium leading-relaxed mb-6">
-            Foram rotulados comentários manualmente nas 3 classes e treinados diferentes modelos (BERTimbau, RF e SVM) e comparado o desempenho dos mesmos para o cenário.
+            Comentários rotulados manualmente para treinar modelo de inferência de posicionamentos
           </p>
 
           <!-- Barra de Sentimento Preview (Baseada no Treino - EXPOSTA AQUI NO Módulo de Avaliações) -->
           <div class="space-y-4 mb-8">
-            <div class="flex justify-between items-end mb-1">
+            <div class="flex justify-between items-center mb-1">
               <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Equilíbrio da Base de Treino</span>
               <span class="text-[10px] font-black text-rose-600 uppercase tracking-widest">{{ trainTotal() | number }} amostras</span>
             </div>
+
             <div class="h-2.5 w-full flex rounded-full overflow-hidden bg-slate-100 shadow-inner">
               <div class="h-full bg-emerald-500 transition-all duration-1000" [style.width.%]="wPos()"></div>
               <div class="h-full bg-slate-300 transition-all duration-1000" [style.width.%]="wNeu()"></div>
@@ -214,7 +263,7 @@
               </div>
               <div class="flex items-center gap-1.5">
                 <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
-                <span class="text-[9px] font-bold text-slate-500">{{ wNeg() }}% Desap.</span>
+                <span class="text-[9px] font-bold text-slate-500">{{ wNeg() }}% Desaprova</span>
               </div>
             </div>
           </div>
@@ -236,11 +285,11 @@
           </div>
         </div>
 
-        <a routerLink="/avaliacoes/posicionamento" class="w-fit flex items-center gap-3 text-[10px] font-black text-slate-900 uppercase tracking-widest hover:text-rose-600 transition-colors">
-          Ver Performance de IA <i class="bi bi-arrow-right"></i>
+        <a routerLink="/avaliacoes/posicionamento" class="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-rose-50 hover:bg-rose-600 text-rose-700 hover:text-white border border-rose-100 hover:border-rose-600 font-black text-xs uppercase tracking-widest rounded-2xl transition-all duration-300 shadow-sm hover:shadow-lg hover:shadow-rose-500/20 active:scale-[0.98] group/btn">
+          Ver Performance de IA
+          <i class="bi bi-arrow-right text-sm transition-transform duration-300 group-hover/btn:translate-x-1"></i>
         </a>
       </div>
-
     </div>
 
     <!-- FOOTER INFO (Mantém padding no mobile) -->
