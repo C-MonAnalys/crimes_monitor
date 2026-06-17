@@ -6,16 +6,19 @@ const dotenv = require('dotenv');
 dotenv.config({ path: path.join(__dirname, '../.env') });
 
 const baseDataUrl = process.env.VITE_BASE_DATA_URL || '';
+const hiddenRegions = process.env.HIDDEN_REGIONS || process.env.VITE_HIDDEN_REGIONS || '';
 
 const envFileContent = `export const environment = {
   production: false,
-  baseDataUrl: '${baseDataUrl}'
+  baseDataUrl: '${baseDataUrl}',
+  hiddenRegions: '${hiddenRegions}'
 };
 `;
 
 const prodEnvFileContent = `export const environment = {
   production: true,
-  baseDataUrl: '${baseDataUrl}'
+  baseDataUrl: '${baseDataUrl}',
+  hiddenRegions: '${hiddenRegions}'
 };
 `;
 
