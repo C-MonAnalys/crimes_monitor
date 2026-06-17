@@ -28,52 +28,63 @@ export class OrquestratorService {
    * Busca as regiões disponíveis para o módulo (events ou sentiment).
    * Retorna array ordenado pelo campo `ordem`.
    */
-  async getRegioes(modulo: 'events' | 'sentiment'): Promise<Regiao[]> {
+  async getRegioes(modulo: 'events' | 'sentiment', includeHidden = false): Promise<Regiao[]> {
+    let regioes: Regiao[] = [];
+
     if (this.cache[modulo]) {
-      return this.cache[modulo];
-    }
+      regioes = this.cache[modulo];
+    } else {
+      const url = `${this.getBaseUrl(modulo)}/orquestrator.json`;
 
-    const url = `${this.getBaseUrl(modulo)}/orquestrator.json`;
+      try {
+        const t = Date.now();
+        const resp = await fetch(`${url}?t=${t}`);
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const data = await resp.json();
 
-    try {
-      const t = Date.now();
-      const resp = await fetch(`${url}?t=${t}`);
-      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-      const data = await resp.json();
+        // Suporta formato array (recomendado) e formato objeto (legado)
+        if (Array.isArray(data.regioes)) {
+          regioes = data.regioes;
+        } else if (typeof data === 'object' && !Array.isArray(data)) {
+          // Formato legado: { "piaui": { "caminho": "piaui" }, "geral": { "caminho": "." } }
+          regioes = Object.entries(data).map(([id, cfg]: [string, any]) => ({
+            id,
+            nome: cfg.nome || id.charAt(0).toUpperCase() + id.slice(1),
+            caminho: cfg.caminho || id,
+            descricao: cfg.descricao || '',
+            icone: cfg.icone || 'bi-geo-alt',
+            ordem: cfg.ordem ?? 99
+          }));
+        }
 
-      let regioes: Regiao[] = [];
+        // Ordena pelo campo `ordem` (menor = primeiro)
+        regioes.sort((a, b) => (a.ordem ?? 99) - (b.ordem ?? 99));
 
-      // Suporta formato array (recomendado) e formato objeto (legado)
-      if (Array.isArray(data.regioes)) {
-        regioes = data.regioes;
-      } else if (typeof data === 'object' && !Array.isArray(data)) {
-        // Formato legado: { "piaui": { "caminho": "piaui" }, "geral": { "caminho": "." } }
-        regioes = Object.entries(data).map(([id, cfg]: [string, any]) => ({
-          id,
-          nome: cfg.nome || id.charAt(0).toUpperCase() + id.slice(1),
-          caminho: cfg.caminho || id,
-          descricao: cfg.descricao || '',
-          icone: cfg.icone || 'bi-geo-alt',
-          ordem: cfg.ordem ?? 99
-        }));
+        this.cache[modulo] = regioes;
+      } catch (e) {
+        console.error(`[OrquestratorService] Erro ao buscar orquestrator.json para ${modulo}:`, e);
+        return [];
       }
-
-      // Ordena pelo campo `ordem` (menor = primeiro)
-      regioes.sort((a, b) => (a.ordem ?? 99) - (b.ordem ?? 99));
-
-      this.cache[modulo] = regioes;
-      return regioes;
-    } catch (e) {
-      console.error(`[OrquestratorService] Erro ao buscar orquestrator.json para ${modulo}:`, e);
-      return [];
     }
+
+    if (includeHidden) {
+      return regioes;
+    }
+
+    const hiddenStr = DATA_CONFIG.HIDDEN_REGIONS || '';
+    const hiddenIds = hiddenStr
+      .split(',')
+      .map(s => s.trim().toLowerCase())
+      .filter(s => s.length > 0);
+
+    return regioes.filter(r => !hiddenIds.includes(r.id.toLowerCase()));
   }
 
   /**
    * Busca uma região específica pelo ID.
    */
   async getRegiao(modulo: 'events' | 'sentiment', regionId: string): Promise<Regiao | null> {
-    const regioes = await this.getRegioes(modulo);
+    const regioes = await this.getRegioes(modulo, true);
     return regioes.find(r => r.id === regionId) || null;
   }
 
